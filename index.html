@@ -97,6 +97,12 @@ nav button.on{background:var(--bg);color:var(--ac)}nav button span{display:block
 </section>
 
 <section class="tab" id="t-bak">
+ <h3>GitHub ile otomatik yedek</h3>
+ <div class="card"><div class="mut sm">Verilerin özel (private) bir GitHub deposuna kendiliğinden kaydedilir; uygulama açılınca oradan alınır. Telefon değişse de kaybolmaz.</div>
+ <div style="margin-top:10px"><label>Depo (kullanıcıadı/depo-adı)</label><input id="ghRepo" placeholder="kullaniciadin/portfoy-veri" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+ <div style="margin-top:8px"><label>Erişim anahtarı (token)</label><input id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off"></div>
+ <div class="btns"><button id="ghSave">Bağlan ve eşitle</button><button class="s" id="ghNow">Şimdi eşitle</button><button class="s" id="ghOff">Bağlantıyı kaldır</button></div>
+ <div id="ghSt" class="mut sm" style="margin-top:8px">Bağlı değil</div></div>
  <h3>Yedekle</h3>
  <div class="card"><div class="mut sm">Tüm işlemlerini ve fiyatlarını kaydet. Dosya İndirilenler klasörüne iner. Veriler bu tarayıcıda saklanır; tarayıcı verisini silersen kaybolur, o yüzden düzenli yedek al.</div>
  <div class="btns"><button id="exJ">Yedeği indir (.json)</button><button class="s" id="exC">Excel için indir (.csv)</button></div>
@@ -144,7 +150,8 @@ function localStore(){
  const K='portfoy_v2';let m={};
  try{m=JSON.parse(localStorage.getItem(K)||'{}')}catch(e){}
  const save=()=>{try{localStorage.setItem(K,JSON.stringify(m))}catch(e){}};
- return{set:async(id,o)=>{m[id]=o;save();apply(m)},del:async id=>{delete m[id];save();apply(m)},start:()=>apply(m)};
+ return{set:async(id,o)=>{m[id]={...o,upd:Date.now()};save();apply(m);dirty()},del:async id=>{m[id]={kind:'del',upd:Date.now()};save();apply(m);dirty()},
+  start:()=>apply(m),all:()=>m,replace:nm=>{m=nm;save();apply(m)}};
 }
 function dbStore(db,uid){
  const col=db.collection('data/users/'+uid);
@@ -336,6 +343,43 @@ async function bulkApply(){
   if(k==='USD'||k==='EUR')k='FX_'+k;await S.set('p_'+k,{kind:'price',sym:k,price:v,at:Date.now()});n++}
  msg(n+' fiyat uygulandı'+(bad.length?'; anlaşılmayan satırlar: '+bad.join(' | '):''),bad.length&&!n);if(n)$('bulk').value='';
 }
+/* ---------- GitHub eşitleme ---------- */
+const stamp=x=>(x&&(x.upd||x.at||x.ts))||0;
+const mergeMaps=(a,b)=>{const r={...a};for(const[k,v]of Object.entries(b||{}))if(!r[k]||stamp(v)>stamp(r[k]))r[k]=v;return r};
+const sameMaps=(a,b)=>{const ka=Object.keys(a);return ka.length===Object.keys(b).length&&ka.every(k=>b[k]&&stamp(a[k])===stamp(b[k]))};
+const ghCfg=()=>{try{return JSON.parse(localStorage.getItem('portfoy_gh')||'null')}catch(e){return null}};
+const ghSetCfg=v=>{try{v?localStorage.setItem('portfoy_gh',JSON.stringify(v)):localStorage.removeItem('portfoy_gh')}catch(e){}};
+const ghUrl=c=>`https://api.github.com/repos/${c.repo}/contents/veri.json`;
+const ghHdr=c=>({'Authorization':'Bearer '+c.token,'Accept':'application/vnd.github+json'});
+const ghErr=s=>s===401||s===403?'Erişim anahtarı geçersiz ya da bu depoya yetkisi yok ('+s+')':s===404?'Depo bulunamadı ya da anahtarın bu depoya erişimi yok (404)':'GitHub hatası ('+s+')';
+async function ghGet(c){const r=await fetch(ghUrl(c),{headers:ghHdr(c),cache:'no-store'});
+ if(r.status===404)return{m:null,sha:null};if(!r.ok)throw new Error(ghErr(r.status));
+ const j=await r.json(),d=JSON.parse(decodeURIComponent(escape(atob(String(j.content).replace(/\s/g,'')))));return{m:d.data||{},sha:j.sha}}
+async function ghPut(c,m,sha){const body={message:'Portföy verisi '+new Date().toISOString(),content:btoa(unescape(encodeURIComponent(JSON.stringify({app:'portfoy',saved:new Date().toISOString(),data:m})))) };if(sha)body.sha=sha;
+ const r=await fetch(ghUrl(c),{method:'PUT',headers:{...ghHdr(c),'Content-Type':'application/json'},body:JSON.stringify(body)});
+ if(r.status===409||r.status===422)return{conflict:true};if(!r.ok)throw new Error(ghErr(r.status));return{ok:true}}
+function setSt(t,bad){$('ghSt').textContent=t;$('ghSt').style.color=bad?'var(--dn)':'';$('mode').textContent=!ghCfg()?'💾 Bu tarayıcıda':bad?'⚠ Eşitlenemedi':t.startsWith('☁')?'☁️ GitHub ile eşit':'⏳ Eşitleniyor'}
+let syncing=false,again=false,gtimer=null;
+function dirty(){if(!ghCfg())return;clearTimeout(gtimer);setSt('⏳ Kaydedilecek…');gtimer=setTimeout(syncNow,2500)}
+async function syncNow(){const c=ghCfg();if(!c)return;if(syncing){again=true;return}
+ syncing=true;setSt('⏳ Eşitleniyor…');
+ try{let done=false;for(let i=0;i<3&&!done;i++){const g=await ghGet(c),loc=S.all(),mg=mergeMaps(loc,g.m);
+   if(!sameMaps(mg,loc))S.replace(mg);
+   if(g.m&&sameMaps(mg,g.m)){done=true;break}
+   const p=await ghPut(c,mg,g.sha);if(!p.conflict)done=true}
+  if(!done)throw new Error('Çakışma çözülemedi, tekrar dene');
+  setSt('☁️ GitHub ile eşit · '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}))}
+ catch(e){setSt('⚠ '+(e.message==='Failed to fetch'?'GitHub’a ulaşılamadı (internet?)':e.message),1)}
+ syncing=false;if(again){again=false;dirty()}}
+function initSync(){
+ const c=ghCfg();if(c){$('ghRepo').value=c.repo;$('ghTok').placeholder='Kayıtlı (değiştirmek için yaz)';setSt('Bağlı');syncNow()}
+ $('ghSave').addEventListener('click',()=>{let repo=$('ghRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$|\/$/g,'');const old=ghCfg(),token=$('ghTok').value.trim()||(old&&old.token)||'';
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return msg('Depo adı “kullaniciadi/depo-adi” biçiminde olmalı.',1);if(!token)return msg('Erişim anahtarını (token) yapıştır.',1);
+  ghSetCfg({repo,token});$('ghTok').value='';$('ghTok').placeholder='Kayıtlı (değiştirmek için yaz)';syncNow()});
+ $('ghNow').addEventListener('click',()=>ghCfg()?syncNow():msg('Önce depo ve anahtarı girip bağlan.',1));
+ $('ghOff').addEventListener('click',()=>{ghSetCfg(null);$('ghTok').placeholder='github_pat_…';setSt('Bağlı değil');msg('Bağlantı kaldırıldı. Veriler telefonda duruyor.')});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ghCfg())syncNow()});
+}
 /* ---------- olaylar ---------- */
 $('nav').addEventListener('click',e=>{const b=e.target.closest?e.target.closest('button'):e.target;if(b&&b.dataset.tab)go(b.dataset.tab)});
 $('sort').addEventListener('change',render);$('hs').addEventListener('change',renderHist);$('hside').addEventListener('change',renderHist);
@@ -365,7 +409,7 @@ $('file').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0
 (function(){
  $('dt').value=new Date().toISOString().slice(0,10);
  S=localStore();$('mode').textContent='💾 Bu tarayıcıda';
- S.start();
+ S.start();initSync();
  if(trades.length)setTimeout(refresh,600);
  setInterval(()=>{if(!document.hidden&&trades.length)refresh()},300000);
 })();
