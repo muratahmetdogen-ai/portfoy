@@ -659,7 +659,7 @@ function kapMarkAll(){kapVisible().forEach(x=>kap.read[x.id]=Date.now());kapSave
 function kapDelAll(){kapVisible().forEach(x=>{kap.del[x.id]=Date.now();kap.items=kap.items.filter(i=>i.id!==x.id)});kapSave();renderKap()}
 function kapOpen(){renderKap();if(!kap.t||Date.now()-kap.t>120000)refresh()}
 function kapTemplate(){const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!['Döviz','Nakit'].includes(mk(s))&&s.cur==='TRY').map(s=>s.sym))],rows=[];
- syms.forEach(sym=>{const u=`https://news.google.com/rss/search?q=${sym}+%22KAMUYU+AYDINLATMA+PLATFORMU%22+when:7d&hl=tr&gl=TR&ceid=TR:tr`;rows.push(['=IMPORTFEED("'+u+'";"items";FALSE;8)','','','','',sym]);for(let i=1;i<10;i++)rows.push(['','','','','',sym])});
+ syms.forEach(sym=>{const u=`https://news.google.com/rss/search?q=${sym}+%22KAMUYU+AYDINLATMA+PLATFORMU%22+when:7d&hl=tr&gl=TR&ceid=TR:tr`;rows.push(['=IMPORTFEED("'+u+'";"items";0;8)','','','','',sym]);for(let i=1;i<10;i++)rows.push(['','','','','',sym])});
  return rows.map(r=>r.join('\t')).join('\n')}
 async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('Önce en az bir hisse ekle.',1);$('kapTpl').style.display='block';$('kapTpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('kapTpl').select();ok=document.execCommand('copy')}catch(x){}}
  msg(ok?'Kopyalandı ✓ Google tablonda E1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda E1 hücresine yapıştır.',!ok)}
