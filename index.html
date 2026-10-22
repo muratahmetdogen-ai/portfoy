@@ -8,7 +8,7 @@
 :root[data-theme="dark"]{--bg:#0b0e17;--card:#151a27;--tx:#eef1f8;--mut:#9099b0;--bd:#252c3f;--up:#2ee59d;--dn:#ff6b61;--ac:#7c7fff;--ac2:#a78bfa;--sh:none}
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%;padding:14px 14px calc(88px + env(safe-area-inset-bottom,0px));max-width:760px;margin:auto}
+body{overflow-x:hidden;margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%;padding:14px 14px calc(88px + env(safe-area-inset-bottom,0px));max-width:760px;margin:auto}
 h1{font-size:19px;margin:2px 0 12px;display:flex;justify-content:space-between;align-items:center}
 h3{margin:18px 2px 8px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
 .badge{font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;background:var(--card);border:1px solid var(--bd);color:var(--mut)}
@@ -18,7 +18,7 @@ h3{margin:18px 2px 8px;font-size:13px;color:var(--mut);text-transform:uppercase;
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
 .stats div{background:rgba(255,255,255,.14);border-radius:14px;padding:9px 10px;font-size:12px}.stats b{display:block;font-size:14px;margin-top:2px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;margin-bottom:10px;box-shadow:var(--sh)}
-.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.row select{min-width:0;max-width:100%;flex-shrink:1}
 .up{color:var(--up)}.dn{color:var(--dn)}.mut{color:var(--mut)}.sm{font-size:13px}.r{text-align:right}
 .sym{font-size:17px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.chips span{font-size:12px;background:var(--bg);border-radius:99px;padding:4px 10px;color:var(--mut)}
@@ -39,7 +39,7 @@ nav button{background:none;color:var(--mut);padding:8px 1px;font-size:11px;font-
 nav button{position:relative}.nb{display:none;position:absolute;top:0;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:99px;background:linear-gradient(135deg,#f43f5e,#f59e0b);color:#fff;font-size:10px;line-height:16px;font-weight:800;text-align:center;padding:0 4px}
 .kc{position:relative;cursor:pointer}.kc.rd{opacity:.5}.kc .dot{position:absolute;top:12px;right:12px;width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,#f43f5e,#f59e0b);box-shadow:0 0 0 3px rgba(244,63,94,.18)}
 nav button.on{background:var(--bg);color:var(--ac)}nav button span{display:block;font-size:19px}
-.seg{display:flex;gap:6px;margin-bottom:12px}.seg button,.rng button{flex:1;background:var(--card);color:var(--mut);border:1px solid var(--bd);padding:8px 4px;font-size:13px;font-weight:600;border-radius:12px}
+.seg{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.seg button,.rng button{flex:1;background:var(--card);color:var(--mut);border:1px solid var(--bd);padding:8px 4px;font-size:13px;font-weight:600;border-radius:12px}
 .seg button.on,.rng button.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border-color:transparent}
 .rng{display:flex;gap:4px}.rng button{padding:4px 8px;font-size:12px;flex:none;width:auto}
 .sv{display:none}.sv.on{display:block}
@@ -66,7 +66,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 3px;t
 .ic{width:34px;height:34px;padding:0;border-radius:10px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);font-size:16px}
 .set{padding:0;overflow:hidden}.set>div{padding:13px 14px;border-bottom:1px solid var(--bd)}.set>div:last-child{border-bottom:0}
 .sl{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.tab{display:none}.tab.on{display:block}
+.tab{display:none}.tab:not([style*="none"]){overflow-x:hidden;max-width:100%}.tab.on{display:block}
 .empty{text-align:center;color:var(--mut);padding:26px 10px}
 .al.sig{display:flex;gap:8px;align-items:baseline}
 .tat tr.g td{padding-top:10px;color:var(--ac);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--bd)}
