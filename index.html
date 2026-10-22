@@ -497,13 +497,35 @@ async function fxRate(c){
   if(ks.length){const last=j.rates[ks[ks.length-1]].TRY,pv=ks.length>1?j.rates[ks[ks.length-2]].TRY:null;if(last>0)return{rate:last,prev:pv>0?pv:null}}}catch(e){}
  for(const f of FXAPIS){try{const j=await getJSON(f(c)),v=j.rates&&j.rates.TRY;if(v>0)return{rate:v,prev:null}}catch(e){}}
  return null}
+async function goldExt(){
+ try{const j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true',12000);
+  const o=j&&j['pax-gold'],px=o&&o.usd,ch=o&&o.usd_24h_change;
+  if(px>0)return{px:px,chg:(typeof ch==='number'&&Math.abs(ch)<50)?ch:null}}catch(e){}
+ return null}
+async function mktGoldFix(){
+ if(!(prices.MK_ONS&&prices.MK_ONS.prev>0)){
+  const g=await goldExt();
+  if(g&&g.px>0){
+   if(!prices.MK_ONS){const pv=g.chg!=null?g.px/(1+g.chg/100):null;
+    const nv={kind:'price',sym:'MK_ONS',price:g.px,prev:pv,at:Date.now()};
+    prices.MK_ONS=nv;await S.set('p_MK_ONS',{...nv,upd:Date.now()})}
+   else{const pv=g.chg!=null?prices.MK_ONS.price/(1+g.chg/100):null;
+    if(pv>0){const sc=Math.abs(g.px-prices.MK_ONS.price)/prices.MK_ONS.price<0.05;
+     prices.MK_ONS={...prices.MK_ONS,prev:pv,...(sc?{price:g.px}:{})};
+     await S.set('p_MK_ONS',{...prices.MK_ONS,upd:Date.now()})}}}}
+ if(prices.MK_GRAM&&!(prices.MK_GRAM.prev>0)&&prices.MK_GRAM.price>0&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.MK_ONS.price>0){
+  let pv2=null;
+  if(prices.FX_USD&&prices.FX_USD.prev>0)pv2=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;
+  if(!(pv2>0))pv2=prices.MK_GRAM.price/(prices.MK_ONS.price/prices.MK_ONS.prev);
+  if(pv2>0){prices.MK_GRAM={...prices.MK_GRAM,prev:pv2};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}
+}
 async function fillPrev(key,tick){
  if(prices[key]&&prices[key].prev>0)return;
  try{const j=await yJSON('https://query1.finance.yahoo.com/v8/finance/chart/'+tick+'?interval=1d&range=5d');
   const r=j.chart&&j.chart.result&&j.chart.result[0],q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0],cl=q&&q.close?q.close.filter(x=>x>0):[];
   if(cl.length>=2&&prices[key]){const pv=cl[cl.length-2];if(pv>0){prices[key]={...prices[key],prev:pv};await S.set('p_'+key,{...prices[key],upd:Date.now()})}}
   else if(!prices[key]&&cl.length>=2){const nv={kind:'price',sym:key,price:+cl[cl.length-1],prev:+cl[cl.length-2],at:Date.now()};prices[key]=nv;await S.set('p_'+key,{...nv,upd:Date.now()})}}catch(e){}}
-const ySym=(sym,cur)=>{const m3=meta[sym];if(m3&&m3.ytick)return m3.ytick;return /[.=]/.test(sym)?sym:cur==='TRY'?sym+'.IS':sym};
+const ySym=(sym,cur)=>{const m3=meta[sym];if(m3&&m3.ytick)return m3.ytick;if(typeof YBUILT!=='undefined'&&YBUILT[sym])return YBUILT[sym];return /[.=]/.test(sym)?sym:cur==='TRY'?sym+'.IS':sym};
 async function stockPrice(sym,cur){
  const r1=await _stockPrice(ySym(sym,cur),cur);
  if(r1)return r1;
@@ -554,6 +576,7 @@ async function refresh(){
   for(const {s,r} of res){if(r&&r.price){await S.set('p_'+s.sym,{kind:'price',sym:s.sym,price:r.price,prev:r.prev||null,at:Date.now()});ok.push(s.sym)}else fail.push(s.sym+(r&&r.bad?' (para birimi '+r.bad+')':''))}
  }catch(e){fail.push('beklenmeyen hata')}
  try{await Promise.all([['MK_BIST100','XU100.IS'],['FX_USD','USDTRY=X'],['FX_EUR','EURTRY=X'],['MK_ONS','XAUUSD=X'],['MK_BTC','BTC-USD'],['MK_SP500','%5EGSPC']].map(([k2,t2])=>fillPrev(k2,t2)))}catch(e){}
+ try{await mktGoldFix()}catch(e){}
  try{if(prices.MK_GRAM&&!(prices.MK_GRAM.prev>0)&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const gp=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(gp>0){prices.MK_GRAM={...prices.MK_GRAM,prev:gp};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
  try{if(!prices.MK_GRAM&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const g2=prices.MK_ONS.price/31.1035*prices.FX_USD.price,g2p=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(g2>0){prices.MK_GRAM={kind:'price',sym:'MK_GRAM',price:g2,prev:g2p,at:Date.now()};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
  try{if(ok.length)await snap()}catch(e){}
@@ -570,7 +593,7 @@ function histSave(){try{localStorage.setItem('portfoy_hist',JSON.stringify(HIST)
 /* Aktarım zinciri: tarayıcı Origin başlığını yansıtan kaynaklar önce; hatırlanan başarılı transport en başta denenir */
 const YTR=[u=>'https://r.jina.ai/'+u,u=>u,u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),u=>'https://api.cors.lol/?url='+encodeURIComponent(u)];
 let HPX=(()=>{try{return +localStorage.getItem('portfoy_hpx')||0}catch(e){return 0}})();
-const YBUILT={SIE:'SIE.DE',SHELL:'SHEL',MUV2:'MUV2.DE'};
+const YBUILT={SIE:'SIE.DE',SHELL:'SHEL',MUV2:'MUV2.DE',MSTF:'MSFT'};
 const YALIAS=(()=>{try{return JSON.parse(localStorage.getItem('portfoy_yalias')||'{}')}catch(e){return{}}})();
 const ySaveAlias=()=>{try{localStorage.setItem('portfoy_yalias',JSON.stringify(YALIAS))}catch(e){}};
 async function yAlias(sym,cur){
