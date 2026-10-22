@@ -116,6 +116,7 @@ body.print-rp h3{color:#555}}
 .kchip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:600}
 .kchip.g{background:#d9f5ea;color:#065f46;border-color:#b9ead4}
 .kchip.r{background:#fde5e5;color:#991b1b;border-color:#f7c9c9}
+.anlz{margin-top:9px;background:linear-gradient(135deg,#efeaff,#f7f2ff);border:1px solid #ddd3ff;border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:#5b4bd6}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
 <h1><span style="display:inline-flex;align-items:center;gap:7px"><svg width="23" height="23" viewBox="0 0 512 512" style="flex:none" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5ef4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(#lg1)"/><g fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><polyline points="82,358 184,256 256,297 358,174"/><polyline points="300,166 366,166 366,232"/></g><line x1="82" y1="420" x2="430" y2="420" stroke="rgba(255,255,255,.75)" stroke-width="16" stroke-linecap="round"/></svg> Portföyüm</span><span class="badge" id="mode">…</span></h1>
@@ -566,32 +567,92 @@ function portSeries(){
   for(const p of per){let c=p.m.get(d);if(c==null)c=p.last;if(c==null){ok=false;break}p.last=c;v+=p.r.qty*c*p.r.f}
   if(ok)out.push({d,v})}
  return out.length>=30?out:null}
+function anlzB(o){return o?`<div class="anlz">📊 <b>Analiz:</b> ${o}</div>`:''}
+function mapAnalysis(rows,tot){
+ if(!rows.length)return'';
+ const top=rows[0],pos=rows.filter(r=>r.day>0).length,neg=rows.filter(r=>r.day<0).length;
+ const dayTL=rows.reduce((a,r)=>a+(r.dtry||0),0);
+ const mv=rows.filter(r=>r.dtry!=null).sort((a,b)=>b.dtry-a.dtry);
+ let o=`En büyük kare ${top.sym} — portföyünün %${(top.val/tot*100).toFixed(1)}'i burada. Bugün ${rows.length} konumun ${pos} tanesi pozitif, ${neg} tanesi negatif; günün toplam etkisi ${sg(dayTL)} ₺.`;
+ if(mv.length&&mv[0].dtry>0)o+=` Günü en çok güçlendiren ${mv[0].sym} (${sg(mv[0].dtry)} ₺).`;
+ const w=mv[mv.length-1];
+ if(w&&w.dtry<0)o+=` En çok zorlayan ${w.sym} (${sg(w.dtry)} ₺).`;
+ if(top.val/tot*100>HS_CONF.maxw)o+=` ${top.sym} payı belirttiğin %${HS_CONF.maxw} tek hisse sınırının üzerinde; yoğunlaşma riski var.`;
+ return o}
+function calAnalysis(ms){
+ if(!ms||ms.length<2)return'';
+ const ps=ms.filter(m=>m.ch>0).length;
+ const bst=ms.slice().sort((a,b)=>b.ch-a.ch)[0],wst=ms.slice().sort((a,b)=>a.ch-b.ch)[0];
+ const son=ms.slice(-3),ort=son.reduce((a,b)=>a+b.ch,0)/son.length;
+ let o=`Son ${ms.length} ayın ${ps} tanesi pozitif kapandı. En güçlü ay ${MO[+bst.k.slice(5,7)-1]} '${bst.k.slice(2,4)} (${pct(bst.ch)}), en zayıf ay ${MO[+wst.k.slice(5,7)-1]} '${wst.k.slice(2,4)} (${pct(wst.ch)}).`;
+ o+=` Son üç ayın ortalaması ${pct(ort)}; kısa vadeli eğilim ${ort>=0?'yukarı':'aşağı'}.`;
+ return o}
+function corrAnalysis(C,rows){
+ let bp=null,bv=0.7,bn=null,nv=-0.3,sum=0,cnt=0;
+ for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){const c=C[i][j];sum+=c;cnt++;
+  if(c>bv){bv=c;bp=[rows[i].sym,rows[j].sym]}if(c<nv){nv=c;bn=[rows[i].sym,rows[j].sym]}}
+ let o='';
+ if(bp)o+=`En sıkı birliktelik ${bp[0]}–${bp[1]} çiftinde: günlük hareketleri yaklaşık %${Math.round(bv*100)} oranında aynı yönde; bu ikisi birlikte düşerse portföyü birlikte sarsar.`;
+ if(bn)o+=` En dengeli çift ${bn[0]} ↔ ${bn[1]}: çoğunlukla ters yönde hareket edip birbirini tamponluyor.`;
+ if(cnt)o+=` Çiftlerin ortalama birlikteliği ${(sum/cnt).toFixed(2).replace('.',',')}; bu ${sum/cnt>=0.5?'düşük çeşitlilik demek — portföy tek yönlü risk taşıyor':sum/cnt>=0.25?'orta düzey çeşitlilik demek':'iyi düzeyde çeşitlilik demek'}.`;
+ return o}
+function healthAnalysis(h){
+ const dims=[['Çeşitlendirme',h.p1,'etkin hisse sayısı yaklaşık '+h.effN.toFixed(1)],
+  ['Tek hisse yoğunluğu',h.p2,'en büyük pay '+h.los+' %'+Math.round(h.wmax)+' (sınır %'+HS_CONF.maxw+')'],
+  ['Oynaklık dengesi',h.p3,h.vol!=null?'yıllık oynaklık yaklaşık ±%'+Math.round(h.vol):'geçmiş verisi yok'],
+  ['Nakit tamponu',h.p4,'nakit payı yaklaşık %'+Math.round(h.cw)]].sort((a,b)=>a[1]-b[1]);
+ const band=h.sc>=70?'genel durum iyi':h.sc>=45?'genel durum orta; geliştirilecek alanlar var':'genel durum zayıf; riski azaltıcı adımlar düşünülebilir';
+ let o=`Skorun ${h.sc}/100 — ${band}. En zayıf halka ${dims[0][0]} (${dims[0][2]}).`;
+ if(dims[0][1]<7)o+=` Bu başlığı güçlendirmek portföy riskini belirgin azaltır.`;
+ if(dims[3][1]>=8)o+=` En güçlü halkan ${dims[3][0]}.`;
+ return o}
+function riskAnalysis(k){
+ if(!k)return'';
+ let o=`Yıllık oynaklığın ±%${k.sd.toLocaleString('tr-TR',{maximumFractionDigits:1})}; normal bir günde portföyün yaklaşık ±${shortTL(k.dayTL)} oynayabilir, kötü bir gün bu rakamın iki katına kadar çıkabilir.`;
+ o+=` Tarihin en derin düşüşü −%${k.mdd.toLocaleString('tr-TR',{maximumFractionDigits:1})}; şu an zirveden −%${k.cur.toLocaleString('tr-TR',{maximumFractionDigits:1})} uzaktasın — ${k.cur<5?'sakin bir bölgedesin':k.cur<15?'orta düzey bir geri çekilmedesin':'belirgin bir düzeltme içindesin'}.`;
+ return o}
+function mcAnalysis(mc){
+ if(!mc)return'';
+ const spread=(Math.max(mc.p10,mc.p90)-Math.min(mc.p10,mc.p90))/mc.v0*100;
+ return`Kötü senaryo ile iyi senaryo arasındaki bant, bugünkü değerin yaklaşık %${Math.round(spread)}'i kadar geniş — ${spread>=60?'oynaklığın yüksek, bir yıl sonraki sonuç çok farklı olabilir':spread>=30?'bant orta genişlikte':'bant dar; geçmişin sakin bir dönemine denk geliyorsun'}. Merkez değer ${shortTL(mc.p50)}; planlarını kötü senaryoyu da kaldırabilecek şekilde kurmak sağlıklı olur.`}
+function tqAnalysis(q){
+ const nb=q.buys.length,ns=q.sells.length;
+ if(nb+ns<3)return'';
+ let o='';
+ if(nb>=2){const avg=q.buys.reduce((a,b)=>a+b.ret,0)/nb;
+  o+=`Alış zamanlaman, 30 gün sonraki fiyatlara göre ortalama ${pct(avg)} — ${avg>=0?'seçimlerin isabetliydi':'son alımların ortalamada geride kaldı'}.`}
+ if(ns>=2){const pn=q.sells.filter(x=>x.ret>0).length;
+  o+=` Sattıklarının ${pn} tanesi satış sonrası ${pn*2>=ns?'yükselmiş':'düşmüş'} — ${pn*2>=ns?'kademeli satış ya da daha uzun tutmayı düşünebilirsin':'satış zamanlaman isabetli görünüyor'}.`}
+ return o}
 function renderMap(){
  const rows=posRows(),tot=rows.reduce((a,b)=>a+b.val,0);
  if(!rows.length){$('mpv').innerHTML='<div class="card empty">Açık konum yok.</div>';return}
  const rects=tmSplit(rows,0,0,100,100);
- let h=`<div class="card"><div class="row"><b>🗺️ Sıcaklık Haritası</b><span class="mut sm">kare = pay · renk = gün</span></div><div class="tmv">${rects.map(rc=>{const[bgi,fgi]=heatBg(rc.r.day);
+ let h=`<div class="card"><div class="row"><b>🗺️ Sıcaklık Haritası</b><span class="mut sm">kare büyüklüğü payı, renk günlük değişimi gösterir</span></div><div class="tmv">${rects.map(rc=>{const[bgi,fgi]=heatBg(rc.r.day);
   return`<div data-ts="${esc(rc.r.sym)}" title="${esc(rc.r.sym)}" style="left:${rc.x}%;top:${rc.y}%;width:${rc.w}%;height:${rc.h}%;background:${bgi};color:${fgi}"><b>${esc(rc.r.sym)}</b><span>${rc.r.day!=null?pct(rc.r.day):'—'} · pay ${(rc.r.val/tot*100).toFixed(1)}%</span></div>`}).join('')}</div>
-  <div class="mut sm" style="margin-top:6px">Yeşil kazanç, kırmızı kayıp; renk koyulaştıkça hareket büyüyor. Karelere dokununca hissenin kartına gider.</div></div>`;
- h+=`<div class="card"><div class="row"><b>📅 Takvim Isı Haritası</b><span class="mut sm">aylık K/Z</span></div>${calHeatHTML()}</div>`;
+  ${anlzB(mapAnalysis(rows,tot))}<div class="mut sm" style="margin-top:6px">Karelerin büyüklüğü hissenin portföydeki payını, rengi o günkü değişimini gösterir. Kareye dokunduğunda ilgili hissenin kartına gidersin.</div></div>`;
+ h+=`<div class="card"><div class="row"><b>📅 Takvim Isı Haritası</b><span class="mut sm">aylık getiri</span></div>${calHeatHTML()}</div>`;
  h+=`<div class="card"><div class="row"><b>🔗 Birliktelik Haritası</b><span class="mut sm">son ~3 ay, günlük</span></div>${corrHTML()}</div>`;
  $('mpv').innerHTML=h}
 function calHeatHTML(){
  const ser=portSeries();
- if(!ser)return'<div class="mut sm">Aylık kareler için geçmiş fiyat gerekli — Analiz → Teknik Veriler → 📊 ile geçmişleri indir.</div>';
+ if(!ser)return'<div class="mut sm">Aylık kutular için fiyat geçmişi gerekiyor. Ayarlar bölümündeki Geçmiş Verilerini Şimdi Yenile düğmesini kullanabilirsin.</div>';
  const bym={};for(const p of ser){const k=p.d.slice(0,7);(bym[k]??=[]).push(p.v)}
  const ks=Object.keys(bym).sort().slice(-12);
  if(!ks.length)return'<div class="mut sm">Veri yok.</div>';
- return '<div class="cal">'+ks.map(k=>{const a=bym[k][0],b=bym[k][bym[k].length-1];if(!(a>0))return'';const ch=(b/a-1)*100;
+ const ms=[];
+ const cells=ks.map(k=>{const a=bym[k][0],b=bym[k][bym[k].length-1];if(!(a>0))return'';const ch=(b/a-1)*100;ms.push({k,ch});
   const[bg,fg]=heatBg(ch,[1,2,3.5,6,9]);
-  return`<i style="background:${bg};color:${fg}">${MO[+k.slice(5,7)-1]} '${k.slice(2,4)}<br>${pct(ch)}</i>`}).join('')+'</div>'
- +'<div class="mut sm" style="margin-top:6px">Ayın ilk iş gününden sonuna; mevcut konumların geçmiş fiyatlarıyla yaklaşık seri.</div>'}
+  return`<i style="background:${bg};color:${fg}">${MO[+k.slice(5,7)-1]} '${k.slice(2,4)}<br>${pct(ch)}</i>`}).join('');
+ return '<div class="cal">'+cells+'</div>'
+ +'<div class="mut sm" style="margin-top:6px">Her kutu bir ayın getirisidir; değerler, elindeki hisselerin geçmiş kapanış fiyatlarından hesaplanır.</div>'
+ +anlzB(calAnalysis(ms))}
 function corrHTML(){
  const rows=posRows().filter(r=>HIST[r.sym]&&HIST[r.sym].c&&HIST[r.sym].c.length>=60).slice(0,8);
- if(rows.length<2)return'<div class="mut sm">Korelasyon için en az 2 hissenin 60+ günlük geçmişi gerekli (📊 ile indirilir).</div>';
+ if(rows.length<2)return'<div class="mut sm">Birliktelik tablosu için en az iki hissenin 60 günden uzun fiyat geçmişi gerekiyor. Ayarlar → Geçmiş Verilerini Şimdi Yenile ile indirebilirsin.</div>';
  const ret=rows.map(r=>{const c=HIST[r.sym].c.filter(x=>x>0),o=[];for(let i=1;i<c.length;i++)o.push(c[i]/c[i-1]-1);return o.slice(-90)});
  const n=Math.min(...ret.map(r=>r.length));
- if(n<20)return'<div class="mut sm">Ortak gün sayısı yetersiz.</div>';
+ if(n<20)return'<div class="mut sm">Ortak gün sayısı yetersiz; geçmişler güncellendikten sonra tekrar dene.</div>';
  const P=(a,b)=>{const ma=a.reduce((x,y)=>x+y,0)/a.length,mb=b.reduce((x,y)=>x+y,0)/b.length;let u=0,da=0,db=0;
   for(let i=0;i<a.length;i++){const x=a[i]-ma,y=b[i]-mb;u+=x*y;da+=x*x;db+=y*y}
   return da>0&&db>0?u/Math.sqrt(da*db):0};
@@ -602,11 +663,8 @@ function corrHTML(){
  for(let i=0;i<rows.length;i++){h+=`<h>${esc(rows[i].sym)}</h>`;
   for(let j=0;j<rows.length;j++){const c=C[i][j];h+=`<i style="background:${col(c)};color:${fg(c)}">${c.toFixed(1).replace('.',',')}</i>`}}
  h+='</div>';
- let bp=null,bv=0.7,bn=null,nv=-0.3;
- for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){if(C[i][j]>bv){bv=C[i][j];bp=[rows[i].sym,rows[j].sym]}if(C[i][j]<nv){nv=C[i][j];bn=[rows[i].sym,rows[j].sym]}}
- if(bp)h+=`<div class="mut sm" style="margin-top:6px">⚠ <b>${bp[0]}</b> ile <b>${bp[1]}</b> günlük hareketlerin ~%${Math.round(bv*100)}ında aynı yönde — çeşitliliğin sandığından az olabilir.</div>`;
- if(bn)h+=`<div class="mut sm" style="margin-top:4px">✅ <b>${bn[0]}</b> ↔ <b>${bn[1]}</b> çoğunlukla ters yönde — birbirini dengeliyor.</div>`;
- h+='<div class="mut sm" style="margin-top:4px">Kırmızı = birlikte düşer (risk). Yeşil = ters yönde (denge). 1\'e yakın = el ele.</div>';
+ h+=anlzB(corrAnalysis(C,rows));
+ h+='<div class="mut sm" style="margin-top:6px">Sayılar 0 ile 1 arasında olup iki hissenin günlük hareketlerinin ne kadar birlikte olduğunu gösterir. Kırmızı birlikte hareket eden (risk), yeşil ters yönde giden (dengeleyen) çiftlerdir.</div>';
  return h}
 function healthCalc(){
  const rows=posRows();if(!rows.length)return null;
@@ -662,47 +720,44 @@ function hsBar(label,score,note){
 function renderRisk(){
  const h=healthCalc();
  let out='';
- if(!h)out+='<div class="card empty">Puan için açık konum gerekli.</div>';
+ if(!h)out+='<div class="card empty">Puanlama için en az bir açık konum gerekiyor.</div>';
  else{
   const ring=`<div class="hsk" style="background:conic-gradient(${h.sc>=70?'#10b981':h.sc>=45?'#f59e0b':'#ef4444'} 0 ${h.sc*3.6}deg,#e8eaf6 ${h.sc*3.6}deg 360deg)"><div><b>${h.sc}</b><small>/100</small></div></div>`;
-  let note='';
-  if(h.p2<7)note+=`En büyük hissen ${h.los} payının %${Math.round(h.wmax)}'i — tek hisse riski taşıyor. `;
-  if(h.p3!=null&&h.p3<5)note+='Yıllık oynaklık yüksek; pozisyon büyüklüklerini gözden geçir. ';
-  if(h.p4<5)note+=h.cw<HS_CONF.cashlo?'Nakit tamponun düşük; fırsatlar için yedek tutmak esneklik sağlar. ':'Nakit oranı yüksek; uzun vadede getiriye katkısı sınırlı kalabilir.';
-  out+=`<div class="card"><div class="row"><b>🩺 Portföy Sağlık Karnesi</b><span class="mut sm">eşikler Ayarlar'dan</span></div>
+  const hA=healthAnalysis(h);
+  out+=`<div class="card"><div class="row"><b>🩺 Portföy Sağlık Karnesi</b><span class="mut sm">sınırlar Ayarlar'dan ayarlanır</span></div>
    <div class="hs">${ring}<div style="flex:1;min-width:0">${hsBar('Çeşitlendirme',h.p1,'etkin sayı ≈ '+h.effN.toFixed(1))}${hsBar('Tek hisse yoğunluğu',h.p2,'en büyük: '+esc(h.los)+' %'+Math.round(h.wmax)+' · sınır %'+HS_CONF.maxw)}${hsBar('Oynaklık dengesi',h.p3,h.vol!=null?'yıllık ≈ ±%'+Math.round(h.vol):'geçmiş gerekli')}${hsBar('Nakit tamponu',h.p4,'nakit payı ≈ %'+Math.round(h.cw))}</div></div>
-   ${note?`<div class="mut sm" style="margin-top:6px">${esc(note.trim())}</div>`:''}</div>`}
+   ${anlzB(hA)}</div>`}
  const k=riskCalc();
- out+=`<div class="card"><div class="row"><b>🌧️ Risk Kartı</b><span class="mut sm">geçmiş günlük hareketlerden</span></div>`;
- if(!k)out+='<div class="mut sm" style="margin-top:6px">Risk ölçümü için en az ~40 günlük geçmiş gerekli — Analiz → Teknik Veriler → 📊.</div>';
+ out+=`<div class="card"><div class="row"><b>🌧️ Risk Kartı</b><span class="mut sm">geçmiş verilere dayanır</span></div>`;
+ if(!k)out+='<div class="mut sm" style="margin-top:6px">Risk ölçümü için en az 40 günlük fiyat geçmişi gerekiyor. Ayarlar → Geçmiş Verilerini Şimdi Yenile ile indirebilirsin.</div>';
  else out+=`<div class="chips-row">
    <span class="kchip">📏 Günlük <span class="trm" data-trm="Oynaklık (volatilite)">oynaklık</span> ±%${k.sd.toLocaleString('tr-TR',{maximumFractionDigits:1})} ≈ ±${shortTL(k.dayTL)}</span>
    <span class="kchip r">🌧️ Kötü bir günde −${shortTL(k.badTL)}'ye kadar düşebilmek normaldir (2σ)</span>
    <span class="kchip">📉 En kötü dönemde <span class="trm" data-trm="Zirveden daluş (drawdown)">zirveden daluş</span> −%${k.mdd.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span>
    <span class="kchip ${k.cur<5?'g':''}">Şu an zirveden −%${k.cur.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span></div>
-   <div class="mut sm" style="margin-top:6px">Geçmişe dayalı ölçüdür; gelecek için garanti değildir.</div>`;
+   ${anlzB(riskAnalysis(k))}<div class="mut sm" style="margin-top:6px">Ölçümler geçmiş günlük hareketlerden hesaplanır; gelecek performansı garanti etmez.</div>`;
  out+='</div>';
  const mc=mcCalc();
  out+='<div class="card"><div class="row"><b>🎲 Monte Carlo Yelpazesi</b><span class="mut sm">1 yıl sonrası</span></div>';
- if(!mc)out+='<div class="mut sm" style="margin-top:6px">Simülasyon için en az ~2 aylık geçmiş gerekli.</div>';
+ if(!mc)out+='<div class="mut sm" style="margin-top:6px">Simülasyon için en az iki aylık fiyat geçmişi gerekiyor.</div>';
  else{const lo=Math.min(mc.p10,mc.p90),hi=Math.max(mc.p10,mc.p90);
   const pos=v=>Math.max(0,Math.min(100,(v-lo)/(hi-lo||1)*100));
   out+=`<div style="position:relative;height:46px;margin-top:12px"><div style="position:absolute;left:0;right:0;top:20px;height:10px;border-radius:99px;background:linear-gradient(90deg,#fca5a5,#fde68a,#86efac)"></div>
    <div style="position:absolute;left:${pos(mc.p50)}%;top:0;transform:translateX(-50%);font-size:11.5px;font-weight:800">${shortTL(mc.p50)}</div>
    <div style="position:absolute;left:0;top:32px;font-size:11px">kötü ${shortTL(lo)}</div>
    <div style="position:absolute;right:0;top:32px;font-size:11px">iyi ${shortTL(hi)}</div></div>
-   <div class="mut sm" style="margin-top:4px">Kendi geçmiş oynaklığınla 600 varsayımsal yol: 1 yıl sonra %10 olasılıkla ${shortTL(mc.p10)} altı, yarıda ${shortTL(mc.p50)} civarı, %90 olasılıkla ${shortTL(mc.p90)} altı. Tahmin değil olasılık aralığıdır.</div>`}
+   ${anlzB(mcAnalysis(mc))}<div class="mut sm" style="margin-top:6px">Simülasyon, portföyünün kendi geçmiş oynaklığıyla 600 farklı senaryo üretir. Bu bir tahmin değil, olasılık dağılımıdır.</div>`}
  out+='</div>';
  const q=tqCalc();
- out+='<div class="card"><div class="row"><b>🎯 İşlem Kalitesi</b><span class="mut sm">işlem +30 gün</span></div>';
- if(q.buys.length+q.sells.length<3)out+='<div class="mut sm" style="margin-top:6px">Değerlendirme için en az 3 eski işlem ve geçmiş fiyat gerekli.</div>';
+ out+='<div class="card"><div class="row"><b>🎯 İşlem Kalitesi</b><span class="mut sm">işlem sonrası 30 gün</span></div>';
+ if(q.buys.length+q.sells.length<3)out+='<div class="mut sm" style="margin-top:6px">Değerlendirme için en az üç eski işlem ve ilgili fiyat geçmişi gerekiyor.</div>';
  else{let ch='';
   if(q.buys.length>=2){const avg=q.buys.reduce((a,b)=>a+b.ret,0)/q.buys.length;
    const bst=q.buys.slice().sort((a,b)=>b.ret-a.ret)[0],wst=q.buys.slice().sort((a,b)=>a.ret-b.ret)[0];
    ch+=`<span class="kchip ${avg>=0?'g':'r'}">📈 ${q.buys.length} alışının 30 gün sonrası ort. ${pct(avg)} (en iyi ${esc(bst.sym)} ${pct(bst.ret)}, en kötü ${esc(wst.sym)} ${pct(wst.ret)})</span>`}
   if(q.sells.length>=2){const pn=q.sells.filter(x=>x.ret>0).length;
    ch+=`<span class="kchip ${pn>q.sells.length/2?'r':'g'}">✂️ Sattıklarının ${pn}/${q.sells.length} tanesi satışından sonraki 30 günde yükseldi${pn>q.sells.length/2?' — erken satma eğilimin olabilir':''}</span>`}
-  out+='<div class="chips-row">'+ch+'</div><div class="mut sm" style="margin-top:6px">Geçmiş fiyatı bulunan hisselerde, işlem tarihinden ~30 gün sonraki kapanışla hesaplanır.</div>'}
+  out+='<div class="chips-row">'+ch+'</div>'+anlzB(tqAnalysis(q))+'<div class="mut sm" style="margin-top:6px">Değerlendirme, geçmiş fiyatı bulunan hisselerde işlem tarihinden yaklaşık 30 gün sonraki kapanış fiyatıyla yapılır.</div>'}
  out+='</div>';
  $('rkv').innerHTML=out}
 const KPOS=['temettü','kâr artışı','kar artışı','kazanç','artırım','bedelsiz','rekor','büyüme','sipariş','ihale','net kâr','faaliyet kârı','yükseliş','ortaklık','satın alma'];
@@ -720,8 +775,11 @@ function kapSentRender(all){
  const sent=kapSentCalc(all);
  if(!sent.length){se.style.display='none';return}
  se.style.display='block';
+ const tp=sent.reduce((a,x)=>a+x[1].p,0),tn=sent.reduce((a,x)=>a+x[1].n,0);
+ let ko='';
+ if(sent.length)ko=`Son 30 günde ${tp} olumlu, ${tn} olumsuz başlık sayıldı; en çok gündemde olan ${sent[0][0]} (${sent[0][1].p+sent[0][1].n} haber). Genel ton ${tp>tn?'olumlu':tn>tp?'olumsuz':'dengede'}. Bu sonuç basit kelime sayımına dayanır, yatırım tavsiyesi değildir.`;
  se.innerHTML='<b>📰 Haber Duyarlılığı</b> <span class="mut sm">· son 30 gün · kelime analizi</span><div class="chips-row">'
-  +sent.slice(0,10).map(([sy,v])=>v.p&&!v.n?`<span class="kchip g">${esc(sy)}: ${v.p} olumlu</span>`:v.n&&!v.p?`<span class="kchip r">${esc(sy)}: ${v.n} olumsuz</span>`:`<span class="kchip">${esc(sy)}: ${v.p} olumlu / ${v.n} olumsuz</span>`).join('')+'</div>'}
+  +sent.slice(0,10).map(([sy,v])=>v.p&&!v.n?`<span class="kchip g">${esc(sy)}: ${v.p} olumlu</span>`:v.n&&!v.p?`<span class="kchip r">${esc(sy)}: ${v.n} olumsuz</span>`:`<span class="kchip">${esc(sy)}: ${v.p} olumlu / ${v.n} olumsuz</span>`).join('')+'</div>'+anlzB(ko)}
 function aiTodayTxt(){try{
  const T=summary();if(!T||!(T.dayBase>0)||!T.dayN)return'';
  const dp=T.day/T.dayBase*100;
