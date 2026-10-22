@@ -107,7 +107,7 @@ body.print-rp h3{color:#555}}
  <div class="hero" id="hero"></div>
  <div id="alerts"></div>
  <div class="card" id="pxBox">
-  <div class="row"><b>Güncel Fiyatlar</b><span class="mut sm" id="rfst">Henüz çekilmedi</span></div>
+  <div class="row"><b>Güncel Fiyatlar</b><span class="mut sm" id="rfst">Henüz çekilmedi...</span></div>
   <div class="btns"><button id="rf">🔄 Güncel Fiyatları Çek 🔄</button></div>
   <div class="mut sm" style="margin-top:8px">Fiyatlar 15-20 dakika gecikmelidir.</div>
   <details id="dbgBox" style="display:none;margin-top:10px"><summary>Hata Ayrıntısı</summary><pre id="dbg" style="white-space:pre-wrap;font-size:12px;color:var(--mut);margin:6px 0 0"></pre></details>
@@ -119,13 +119,13 @@ body.print-rp h3{color:#555}}
   <select id="sort" style="width:auto;padding:6px 10px"><option value="val">Toplam Tutara göre</option><option value="day">Günlük % değişime göre</option><option value="plp">K/Z % göre</option><option value="age">Elde tutma süresine göre</option><option value="az">Alfabetik (A-Z)</option></select></div>
  <div class="seg" id="kmode"><button class="on" data-m="day">Günlük K/Z</button><button data-m="tot">Toplam K/Z</button></div>
  <div id="pos"></div>
- <button class="s" id="closedBtn" style="margin-top:6px">Kapanan Pozisyonlar ›</button>
+ <button class="s" id="closedBtn" style="margin-top:6px">Kapanan Pozisyonlar</button>
 </section>
 
 <section class="tab" id="t-kz">
  <div class="seg" id="seg"><button class="on" data-v="kzv">Durum</button><button data-v="chv">Grafikler</button><button data-v="dsv">Dağılım Grafikleri</button><button data-v="tav">Teknik Veriler</button><button data-v="rpv">Rapor</button></div>
  <div class="sv on" id="kzv"><div class="hero" id="kzhero"></div><h3>Bugüne Kadar</h3><div id="kzlist"></div></div>
- <div class="sv" id="chv"><div class="card"><div class="row"><b id="cht">Portföy değeri (₺)</b><div class="rng" id="rng"><button data-r="30">1A</button><button data-r="90">3A</button><button data-r="180">6A</button><button data-r="365">1Y</button><button data-r="0">Tümü</button></div></div>
+ <div class="sv" id="chv"><div class="card"><div class="row"><b id="cht">Portföy Değeri (₺)</b><div class="rng" id="rng"><button data-r="30">1A</button><button data-r="90">3A</button><button data-r="180">6A</button><button data-r="365">1Y</button><button data-r="0">Tümü</button></div></div>
   <div class="seg" id="cmode" style="margin:10px 0 0"><button class="on" data-c="try">Değer (₺)</button><button data-c="pct">Getiri (%)</button></div>
   <div class="chp" id="ixsel" style="display:none"></div><div id="chart" style="margin-top:10px"></div><div class="leg" id="chleg"></div><div class="mut sm" id="chnote" style="margin-top:8px"></div></div></div>
  <div class="sv" id="dsv"><div class="card" id="dsT"></div><div class="card" id="dsB"></div><div class="card" id="dsC"></div></div>
@@ -148,12 +148,12 @@ body.print-rp h3{color:#555}}
   <div><label>İşlem</label><select id="side"><option value="buy">Alış</option><option value="sell">Satış</option><option value="div">Temettü</option></select></div>
   <div><label>Tarih</label><input id="dt" type="date"></div>
   <div class="full"><label>Pazar</label><select id="mkt2"><option>BIST</option><option>ABD</option><option>Avrupa</option><option>Fon</option><option>Döviz</option><option>Nakit</option></select></div>
-  <div><label>Hisse kodu</label><input id="sym" placeholder="HISSE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+  <div><label>Hisse Kodu</label><input id="sym" placeholder="HISSE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"></div>
   <div><label>Para Birimi</label><select id="cur"><option value="TRY">TL (₺)</option><option value="USD">Dolar ($)</option><option value="EUR">Euro (€)</option></select></div>
   <div><label id="qtyL">Adet</label><input id="qty" type="number" inputmode="decimal" step="any"></div>
   <div><label id="prcL">Fiyat</label><input id="prc" type="number" inputmode="decimal" step="any"></div>
   <div><label>Komisyon</label><input id="comm" type="number" inputmode="decimal" step="any" placeholder="0"></div>
-  <div><label>Aracı Kurum</label><input id="brk" placeholder="Nereden aldım"></div>
+  <div><label>Aracı Kurum</label><input id="brk" placeholder="Midas"></div>
   <div class="full"><label>Not</label><input id="note" placeholder="İsteğe bağlı"></div>
  </div>
  <div class="row" style="margin-top:12px"><span class="mut">Toplam Tutar</span><b id="tot">0,00 ₺</b></div>
@@ -161,7 +161,7 @@ body.print-rp h3{color:#555}}
 </section>
 
 <section class="tab" id="t-his">
- <input id="hq" placeholder="Ara: hisse, kurum, not…" style="margin-bottom:8px"><div class="g2"><select id="hs"></select><select id="hside"><option value="">Alış + Satış</option><option value="buy">Sadece alış</option><option value="sell">Sadece satış</option><option value="div">Sadece temettü</option></select></div>
+ <input id="hq" placeholder="Ara: Hisse, kurum, not…" style="margin-bottom:8px"><div class="g2"><select id="hs"></select><select id="hside"><option value="">Alış + Satış</option><option value="buy">Sadece alış</option><option value="sell">Sadece satış</option><option value="div">Sadece temettü</option></select></div>
  <h3 id="hcount">İşlemler</h3><div id="hist"></div>
 </section>
 
@@ -318,7 +318,7 @@ function render(){
  let dv=null,dp=0;
  if(sm.dayN){dv=sm.day;dp=sm.dayBase?sm.day/sm.dayBase*100:0}else{const ps=[...snaps].reverse().find(x=>x.date<today());if(ps){dv=sm.open-ps.pl;dp=ps.cost?dv/ps.cost*100:0}}
  const tp=sm.bought?sm.tot/sm.bought*100:0,hc=v=>v>=0?'gu':'gd';
- $('hero').innerHTML=`<div class="hrow"><span class="l">Portföy Değeri</span><button class="eye" id="eye" aria-label="Göster/gizle">${hide?'🙈':'👁'}</button></div>
+ $('hero').innerHTML=`<div class="hrow"><span class="l">Portföy Değeri</span><button class="eye" id="eye" aria-label="Göster/Gizle">${hide?'🙈':'👁'}</button></div>
  <div class="v" id="hv">${hide?'••••••':fmt(toD(sm.val,'TRY'))}<span class="cur">${cs(dcur())}</span></div>
  <div class="two"><div><span class="l">24 Saatte K/Z</span>${dv==null?'<b>—</b><small>veri yok</small>':`<b class="${hc(dv)}">${SD(dv,'TRY')}</b><small class="${hc(dv)}">${pct(dp)}</small>`}</div>
  <div><span class="l">Toplam K/Z</span><b class="${hc(sm.tot)}">${SD(sm.tot,'TRY')}</b><small class="${hc(sm.tot)}">${pct(tp)}</small></div></div>
@@ -344,10 +344,10 @@ function render(){
   return`<details class="grp" data-grp="${m}" ${coll.has(m)?'':'open'}><summary><span class="gt">${m}<small>${arr.length} pozisyon</small></span><span class="gs"><b>${D(gv,'TRY')}</b><br>${gp==null?'<span class="mut">—</span>':`<span class="${cls(ga)}">${SD(ga,'TRY')} · ${pct(gp)}</span>`}</span></summary>${arr.map(s=>posCard(s,sm.val)).join('')}</details>`}).join('')
   ||'<div class="card empty">'+(open.length?'Aramayla eşleşen pozisyon yok.':'Henüz açık pozisyon yok.<br>“İşlem” sekmesinden alış ekle.')+'</div>';
  document.querySelectorAll('#pos .card[data-card]').forEach(c=>{if(openD.has(c.dataset.card))c.querySelectorAll('details').forEach(d=>d.open=true)});
- const nClosed=all.filter(s=>s.qty<=1e-9&&Math.abs(s.realized)+Math.abs(s.div)>1e-9&&mk(s)!=='Nakit').length;$('closedBtn').textContent=`Kapanmış pozisyonlar (${nClosed}) ›`;
+ const nClosed=all.filter(s=>s.qty<=1e-9&&Math.abs(s.realized)+Math.abs(s.div)>1e-9&&mk(s)!=='Nakit').length;$('closedBtn').textContent=`Kapanan Pozisyonlar (${nClosed}) ›`;
  /* kurlar (elle) */
  if(!$('fxBox').contains(document.activeElement))$('fxBox').innerHTML=['USD','EUR'].map(c=>`<div><label>1 ${cs(c)} = ? ₺</label><input type="number" inputmode="decimal" step="any" data-sym="FX_${c}" value="${prices['FX_'+c]?prices['FX_'+c].price:''}" placeholder="${c}/TRY"></div>`).join('');
- const syms=[...new Set(trades.map(t=>t.sym))].sort(),cur=$('hs').value;$('hs').innerHTML='<option value="">Tüm hisseler</option>'+syms.map(x=>`<option ${x===cur?'selected':''} value="${esc(x)}">${esc(x)}</option>`).join('');
+ const syms=[...new Set(trades.map(t=>t.sym))].sort(),cur=$('hs').value;$('hs').innerHTML='<option value="">Tüm Hisseler</option>'+syms.map(x=>`<option ${x===cur?'selected':''} value="${esc(x)}">${esc(x)}</option>`).join('');
  renderHist();
 }
 function posCard(s,totVal){
