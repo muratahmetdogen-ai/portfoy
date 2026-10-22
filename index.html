@@ -68,8 +68,20 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 3px;t
 .sl{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .tab{display:none}.tab.on{display:block}
 .empty{text-align:center;color:var(--mut);padding:26px 10px}
+#offlineBanner{display:none;background:var(--dn);color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:100;border-radius:0 0 12px 12px;margin:-14px -14px 10px -14px}
+@media print {
+ nav, button, .eye, .chp, .seg, #offlineBanner, .nb, .qa, .t, #pxBox, .badge, #sort, #posSearch, #posFilter, #kapRf, #kapRead, #kapDel, #kapQ { display: none !important; }
+ body { padding: 0 !important; background: #fff !important; color: #000 !important; }
+ .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+ .hero { background: #eee !important; color: #000 !important; border: 1px solid #ccc !important; }
+ .hero .v, .hero .l { color: #000 !important; }
+ .tab { display: block !important; }
+ .sv { display: block !important; margin-bottom: 20px; }
+ h3 { color: #000 !important; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
+<div id="offlineBanner">⚠️ Çevrimdışısın, fiyatlar eski olabilir.</div>
 <h1><span>📈 Portföyüm</span><span class="badge" id="mode">…</span></h1>
 <div id="msg"></div>
 
@@ -85,7 +97,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 3px;t
  <div class="card" id="mkt"></div>
  <div class="card" id="allocBox"></div>
  <div class="row" style="margin:14px 2px 6px"><h3 style="margin:0">Pozisyonlar</h3>
-  <select id="sort" style="width:auto;padding:6px 10px"><option value="val">Değere göre</option><option value="plp">Kâr % göre</option><option value="age">Süreye göre</option></select></div>
+  <div style="display:flex;gap:6px">
+    <input id="posSearch" placeholder="Ara..." style="width:110px;padding:6px 10px;font-size:13px">
+    <select id="posFilter" style="width:auto;padding:6px 10px;font-size:13px"><option value="all">Tümü</option><option value="profit">Kârda</option><option value="loss">Zararda</option></select>
+    <select id="sort" style="width:auto;padding:6px 10px;font-size:13px"><option value="val">Değer</option><option value="plp">Kâr %</option><option value="dayp">Günlük %</option><option value="age">Süre</option><option value="az">A-Z</option></select>
+  </div>
+ </div>
  <div class="seg" id="kmode"><button class="on" data-m="day">Günlük K/Z</button><button data-m="tot">Toplam K/Z</button></div>
  <div id="pos"></div>
  <button class="s" id="closedBtn" style="margin-top:6px">Kapanmış pozisyonlar ›</button>
@@ -97,11 +114,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}td,th{padding:5px 3px;t
  <div class="sv" id="chv"><div class="card"><div class="row"><b>Portföy değeri (₺)</b><div class="rng" id="rng"><button data-r="30">1A</button><button data-r="90">3A</button><button data-r="180">6A</button><button data-r="365">1Y</button><button data-r="0">Tümü</button></div></div>
   <div id="chart" style="margin-top:10px"></div><div class="leg" id="chleg"></div><div class="mut sm" id="chnote" style="margin-top:8px"></div></div></div>
  <div class="sv" id="dsv"><div class="card" id="dsT"></div><div class="card" id="dsB"></div><div class="card" id="dsC"></div></div>
- <div class="sv" id="rpv"><div id="rpA"></div><h3>Yıllık satış raporu</h3><div class="chips" id="rpY"></div><div class="card" id="rpS"></div><div id="rpL"></div><button class="s" id="rpX" style="margin-top:8px">Raporu CSV olarak indir</button></div>
+ <div class="sv" id="rpv"><div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="s" id="pdfBtn" style="width:auto">🖨️ PDF Olarak Kaydet</button></div><div id="rpA"></div><h3>Yıllık satış raporu</h3><div class="chips" id="rpY"></div><div class="card" id="rpS"></div><div id="rpL"></div><button class="s" id="rpX" style="margin-top:8px">Raporu CSV olarak indir</button></div>
 </section>
 
 <section class="tab" id="t-kap">
  <div class="row"><h3 style="margin:0">KAP bildirimleri</h3><button class="s" id="kapRf" style="width:auto;padding:6px 12px">🔄 Yenile</button></div>
+ <input id="kapQ" placeholder="KAP haberlerinde ara..." style="margin:10px 0 6px">
  <div class="mut sm" id="kapSt" style="margin:6px 2px 10px"></div>
  <div class="g2" style="margin-bottom:10px"><button class="s" id="kapRead">✓ Tümünü oku</button><button class="s" id="kapDel">🗑 Tümünü sil</button></div>
  <div class="chp" id="kapChips" style="margin-bottom:10px"></div>
@@ -195,6 +213,7 @@ const CS={TRY:'₺',USD:'$',EUR:'€'},cs=c=>CS[c]||'₺';
 const _ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},_ss=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
 let disp=_ls('portfoy_disp','TRY'),hide=_ls('portfoy_hide','0')==='1',kmode=_ls('portfoy_kmode','day'),distDim='Hisse',distView=_ls('portfoy_dview','bar');
 let armed=null,at,S=null,dl=null,trades=[],prices={},editing=null,mode='local',snaps=[],meta={},goals={},rng=180,repYear=null;
+let searchQ='', posFilter='all';
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const num=v=>parseFloat(String(v??'').replace(',','.'));
 
@@ -278,14 +297,27 @@ function render(){
  $('alerts').innerHTML=open.flatMap(s=>{const g=goals[s.sym],p=s.p;if(!g||p==null)return[];const r=[];if(g.target>0&&p>=g.target)r.push(`🎯 ${esc(s.sym)} hedef fiyata ulaştı (${fmt(p)} ≥ ${fmt(g.target)})`);if(g.stop>0&&p<=g.stop)r.push(`🛑 ${esc(s.sym)} zarar-kes seviyesinde (${fmt(p)} ≤ ${fmt(g.stop)})`);return r}).map(t=>`<div class="al">${t}</div>`).join('');
  /* pozisyonlar */
  const openD=new Set([...document.querySelectorAll('#pos .card[data-card] details[open]')].map(d=>d.closest('.card').dataset.card)),coll=new Set((()=>{try{return JSON.parse(_ls('portfoy_coll','[]'))}catch(e){return[]}})());
- const sort=$('sort').value,groups={};open.forEach(s=>{(groups[mk(s)]??=[]).push(s)});
- const key=s=>sort==='plp'?(kmode==='day'?(s.dayPct??-1e9):s.plp):sort==='age'?heldDays(s.first):s.valTL;
+ const sort=$('sort').value,groups={};
+ 
+ // Arama ve Filtreleme
+ let filteredOpen = open;
+ if(searchQ){const q=searchQ.toLocaleLowerCase('tr');filteredOpen=filteredOpen.filter(s=>s.sym.toLocaleLowerCase('tr').includes(q));}
+ if(posFilter!=='all'){
+   filteredOpen=filteredOpen.filter(s=>{
+     const val=kmode==='day'?s.day:(s.pl);
+     if(val==null)return false;
+     return posFilter==='profit'?val>0:val<0;
+   });
+ }
+ 
+ filteredOpen.forEach(s=>{(groups[mk(s)]??=[]).push(s)});
+ const key=s=>sort==='plp'?(kmode==='day'?(s.dayPct??-1e9):s.plp):sort==='dayp'?(s.dayPct??-1e9):sort==='age'?heldDays(s.first):sort==='az'?s.sym:s.valTL;
  const dayOrTot=s=>kmode==='day'?s.dayTL:s.pl*fx(s.cur);
- $('pos').innerHTML=MKTS.filter(m=>groups[m]).map(m=>{const arr=groups[m].sort((a,b)=>key(b)-key(a));
+ $('pos').innerHTML=MKTS.filter(m=>groups[m]).map(m=>{const arr=groups[m].sort((a,b)=>sort==='az'?a.sym.localeCompare(b.sym):key(b)-key(a));
   const gv=arr.reduce((a,s)=>a+s.valTL,0),ga=arr.reduce((a,s)=>a+(dayOrTot(s)||0),0),gb=kmode==='day'?arr.reduce((a,s)=>a+s.prevTL,0):arr.reduce((a,s)=>a+s.costTL,0);
   const gp=gb?ga/gb*100:null;
   return`<details class="grp" data-grp="${m}" ${coll.has(m)?'':'open'}><summary><span class="gt">${m}<small>${arr.length} pozisyon</small></span><span class="gs"><b>${D(gv,'TRY')}</b><br>${gp==null?'<span class="mut">—</span>':`<span class="${cls(ga)}">${SD(ga,'TRY')} · ${pct(gp)}</span>`}</span></summary>${arr.map(s=>posCard(s,sm.val)).join('')}</details>`}).join('')
-  ||'<div class="card empty">Henüz açık pozisyon yok.<br>“İşlem” sekmesinden alış ekle.</div>';
+  ||'<div class="card empty">Arama/filtreye uygun açık pozisyon yok.</div>';
  document.querySelectorAll('#pos .card[data-card]').forEach(c=>{if(openD.has(c.dataset.card))c.querySelectorAll('details').forEach(d=>d.open=true)});
  const nClosed=all.filter(s=>s.qty<=1e-9&&Math.abs(s.realized)+Math.abs(s.div)>1e-9&&mk(s)!=='Nakit').length;$('closedBtn').textContent=`Kapanmış pozisyonlar (${nClosed}) ›`;
  /* kurlar (elle) */
@@ -303,8 +335,13 @@ function posCard(s,totVal){
  const ty=m;
  return`<div class="card" data-card="${esc(s.sym)}"><div class="row"><div><b class="sym">${esc(name)}</b><span class="mk">${m}</span>${tg}<div class="mut sm">${sub}</div></div><div class="r">${right}</div></div>
  <div class="chips">${chips}</div>
+ <div class="qa"><button data-buy="${esc(s.sym)}">+ Al</button><button class="s" data-sell="${esc(s.sym)}">- Sat</button></div>
  <details style="margin-top:8px"><summary>İşlem detayları</summary>
   <div style="margin-top:6px">${s.lots.map(l=>`<div class="lot"><span>${l.d} · ${heldDays(l.d)} gün${l.b?' · '+esc(l.b):''}</span><span>${qf(l.q)} × ${fmt(l.p)} ${cs(s.cur)}</span></div>`).join('')}</div>
+  <div style="margin-top:8px;border-top:1px solid var(--bd);padding-top:8px">
+    <label style="font-size:11px">Sektör (Dağılım için)</label>
+    <input type="text" class="secInput" data-sym="${esc(s.sym)}" value="${esc(me.sector||'')}" placeholder="Örn: Bankacılık" style="padding:6px;font-size:12px">
+  </div>
  </details></div>`}
 function renderMkt(){const l=lastInfo(),T=[['BIST 100','MK_BIST100',''],['Dolar','FX_USD','₺'],['Euro','FX_EUR','₺'],['Gram altın','MK_GRAM','₺'],['Ons','MK_ONS','$'],['BTC','MK_BTC','$']];
  $('mkt').innerHTML=`<div class="row"><b>Piyasa</b><span class="mut sm">${l?dts(l.t):'henüz çekilmedi'}</span></div><div class="mt">${T.map(([n,k,u])=>{const p=prices[k],ch=p&&p.prev>0?(p.price/p.prev-1)*100:null;return`<div><small>${n}</small><b>${p?fmt(p.price)+(u?' '+u:''):'—'}</b>${ch!=null?`<br><i class="${cls(ch)}">${pct(ch)}</i>`:''}</div>`}).join('')}</div>`}
@@ -544,7 +581,13 @@ function renderChart(){
  $('chnote').textContent=snaps.length?`${snaps.length} günlük kayıt var. Her gün fiyatları çektiğinde yeni nokta eklenir.`:'Değer çizgisi, fiyatları çektikçe günlük birikir (bugünden itibaren). Maliyet çizgisi işlemlerinden hesaplanıyor.'}
 function distData(open,dim){const m={};let tot=0;
  open.forEach(s=>{const f=fx(s.cur);if(!f)return;const p=priceOf(s),mm=mk(s);s.lots.forEach(l=>{const v=l.q*(p!=null?p:l.p)*f;tot+=v;
-  const k=dim==='Hisse'?(mm==='Nakit'?'Nakit':s.sym):dim==='Pazar'?mm:dim==='Kurum'?(l.b||'Belirtilmemiş'):(mm==='Döviz'?(s.sym==='USD'?'$ Dolar':'€ Euro'):s.cur==='TRY'?'₺ TL':s.cur==='USD'?'$ Dolar':'€ Euro');m[k]=(m[k]||0)+v})});
+  let k;
+  if(dim==='Hisse')k=(mm==='Nakit'?'Nakit':s.sym);
+  else if(dim==='Pazar')k=mm;
+  else if(dim==='Sektör')k=(meta[s.sym]&&meta[s.sym].sector)||'Belirtilmemiş';
+  else if(dim==='Kurum')k=(l.b||'Belirtilmemiş');
+  else k=(mm==='Döviz'?(s.sym==='USD'?'$ Dolar':'€ Euro'):s.cur==='TRY'?'₺ TL':s.cur==='USD'?'$ Dolar':'€ Euro');
+  m[k]=(m[k]||0)+v})});
  let items=Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({k,v}));
  if(items.length>8){const rest=items.slice(7).reduce((a,x)=>a+x.v,0);items=items.slice(0,7).concat({k:'Diğer',v:rest})}
  return{items,tot}}
@@ -556,8 +599,8 @@ function distHTML(open,dim){const{items,tot}=distData(open,dim);if(!items.length
  <div style="flex:1;min-width:150px">${items.map((it,i)=>`<div class="row sm" style="padding:3px 0"><span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:${COL[i%COL.length]}"></i>${esc(it.k)}</span><b>%${fmt(it.v/tot*100)}</b></div>`).join('')}</div></div>`}
 function renderDist(open){const ic=`<button class="ic dv" aria-label="Görünüm">${distView==='bar'?'🍩':'📊'}</button>`;
  $('allocBox').style.display=open.length?'block':'none';
- $('allocBox').innerHTML=`<div class="row"><b>Dağılım</b>${ic}</div><div class="chp" style="margin:10px 0">${['Hisse','Pazar','Kurum','Para'].map(x=>`<button class="dd ${x===distDim?'on':''}" data-d="${x}">${x}</button>`).join('')}</div>${distHTML(open,distDim)}`;
- $('dsv').innerHTML=`<div class="row" style="margin:0 2px 8px"><span class="mut sm">Seçili para biriminde gösterilir</span>${ic}</div>`+['Pazar','Hisse','Kurum','Para'].map(d=>`<div class="card"><b>${d==='Para'?'Para birimine göre':d+' bazında'}</b><div style="margin-top:10px">${distHTML(open,d)}</div></div>`).join('')}
+ $('allocBox').innerHTML=`<div class="row"><b>Dağılım</b>${ic}</div><div class="chp" style="margin:10px 0">${['Hisse','Pazar','Sektör','Kurum','Para'].map(x=>`<button class="dd ${x===distDim?'on':''}" data-d="${x}">${x}</button>`).join('')}</div>${distHTML(open,distDim)}`;
+ $('dsv').innerHTML=`<div class="row" style="margin:0 2px 8px"><span class="mut sm">Seçili para biriminde gösterilir</span>${ic}</div>`+['Pazar','Hisse','Sektör','Kurum','Para'].map(d=>`<div class="card"><b>${d==='Para'?'Para birimine göre':d+' bazında'}</b><div style="margin-top:10px">${distHTML(open,d)}</div></div>`).join('')}
 function repRows(all){const R=[],D=[];all.forEach(s=>{const f=fx(s.cur);s.sells.forEach(x=>R.push({...x,sym:s.sym,cur:s.cur,f}));s.divs.forEach(x=>D.push({...x,sym:s.sym,cur:s.cur,f}))});return{R,D}}
 function renderReport(all){const{R,D}=repRows(all),ys=[...new Set([...R,...D].map(x=>x.date.slice(0,4)))].sort().reverse();
  if(!ys.length){$('rpY').innerHTML='';$('rpS').innerHTML='<div class="empty">Henüz satış ya da temettü kaydı yok.</div>';$('rpL').innerHTML='';return}
@@ -633,7 +676,7 @@ function renderStats(all){const el=$('rpA'),T=trades.filter(t=>t.sym!=='NAKIT'),
 /* ---------- KAP ---------- */
 const KK='portfoy_kap';
 function kapLoad(){try{const d=JSON.parse(localStorage.getItem(KK)||'null');return d&&d.items?d:{items:[],read:{},del:{},t:0}}catch(e){return{items:[],read:{},del:{},t:0}}}
-let kap=kapLoad(),kapSym='';
+let kap=kapLoad(),kapSym='',kapQ='';
 const kapSave=()=>{try{localStorage.setItem(KK,JSON.stringify(kap))}catch(e){}};
 const hid=x=>{let h=5381;for(const c of String(x))h=((h<<5)+h+c.charCodeAt(0))|0;return'k'+(h>>>0).toString(36)};
 function pdate(v){if(!v)return 0;const m=String(v).match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);if(m)return+new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));const t=Date.parse(v);return isNaN(t)?0:t}
@@ -646,31 +689,41 @@ function ingestKap(table){let seen=0;const now=Date.now(),have=new Set(kap.items
   if(dt&&dt<now-7*864e5)return;const id=hid(sym+'|'+(url||title));if(have.has(id)||kap.del[id])return;have.add(id);
   kap.items.push({id,sym,title:title.trim(),src,url:url||'',t:dt,seen:now})});
  kap.t=now;kap.hasCols=seen>0;kapPrune();kapSave();renderKap()}
-function kapVisible(){const held=new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9).map(s=>s.sym));return kap.items.filter(x=>held.has(x.sym)).sort((a,b)=>(b.t||b.seen)-(a.t||a.seen))}
-function renderKap(){const items=kapVisible(),unread=items.filter(x=>!kap.read[x.id]),n=unread.length;
- const nb=$('kapN');nb.textContent=n>99?'99+':n;nb.style.display=n?'block':'none';
- $('kapSt').textContent=kap.t?`Son güncelleme ${dts(kap.t)} · ${items.length} haber · ${n} okunmamış · son 7 gün`:'Henüz çekilmedi. Ayarlar’dan KAP kaynağını kur, sonra yenile.';
- const syms=[...new Set(items.map(x=>x.sym))].sort();if(kapSym&&!syms.includes(kapSym))kapSym='';
- $('kapChips').innerHTML=items.length?`<button class="${kapSym?'':'on'}" data-ks="">Hepsi (${items.length})</button>`+syms.map(x=>`<button class="${kapSym===x?'on':''}" data-ks="${esc(x)}">${esc(x)} (${items.filter(i=>i.sym===x).length})</button>`).join(''):'';
- const list=items.filter(x=>!kapSym||x.sym===kapSym);
- $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
-  ||`<div class="card empty">${kap.t?(kap.hasCols?'Son 7 günde elindeki hisseler için KAP haberi bulunamadı.':'Tabloda KAP bölümü bulunamadı. Ayarlar → KAP haberleri kaynağı adımlarını uygula.'):'Henüz veri yok.'}</div>`}
+function kapVisible(){
+  const held=new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9).map(s=>s.sym));
+  return kap.items.filter(x=>held.has(x.sym)).sort((a,b)=>(b.t||b.seen)-(a.t||a.seen));
+}
+function renderKap(){
+  let items=kapVisible();
+  if(kapQ){
+    const q=kapQ.toLowerCase('tr');
+    items=items.filter(x=>x.title.toLowerCase('tr').includes(q)||x.sym.toLowerCase('tr').includes(q)||(x.src||'').toLowerCase('tr').includes(q));
+  }
+  const unread=kapVisible().filter(x=>!kap.read[x.id]),n=unread.length; // Badge için tüm okunmamışlar
+  
+  const nb=$('kapN');nb.textContent=n>99?'99+':n;nb.style.display=n?'block':'none';
+  $('kapSt').textContent=kap.t?`Son güncelleme ${dts(kap.t)} · ${kapVisible().length} haber · ${n} okunmamış · son 7 gün`:'Henüz çekilmedi. Ayarlar’dan KAP kaynağını kur, sonra yenile.';
+  
+  const syms=[...new Set(kapVisible().map(x=>x.sym))].sort();
+  if(kapSym&&!syms.includes(kapSym))kapSym='';
+  
+  $('kapChips').innerHTML=kapVisible().length?`<button class="${kapSym?'':'on'}" data-ks="">Hepsi (${kapVisible().length})</button>`+syms.map(x=>`<button class="${kapSym===x?'on':''}" data-ks="${esc(x)}">${esc(x)} (${kapVisible().filter(i=>i.sym===x).length})</button>`).join(''):'';
+  
+  const list=items.filter(x=>!kapSym||x.sym===kapSym);
+  
+  $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
+   ||`<div class="card empty">${kap.t?(kap.hasCols?'Arama/filtreye uygun KAP haberi bulunamadı.':'Tabloda KAP bölümü bulunamadı. Ayarlar → KAP haberleri kaynağı adımlarını uygula.'):'Henüz veri yok.'}</div>`
+}
 function kapMarkAll(){kapVisible().forEach(x=>kap.read[x.id]=Date.now());kapSave();renderKap()}
 function kapDelAll(){kapVisible().forEach(x=>{kap.del[x.id]=Date.now();kap.items=kap.items.filter(i=>i.id!==x.id)});kapSave();renderKap()}
 function kapOpen(){renderKap();if(!kap.t||Date.now()-kap.t>120000)refresh()}
 function kapTemplate(){const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!['Döviz','Nakit'].includes(mk(s))&&s.cur==='TRY').map(s=>s.sym))],rows=[];
- syms.forEach(sym=>{const u=`https://news.google.com/rss/search?q=${sym}+%22KAMUYU+AYDINLATMA+PLATFORMU%22+when:7d&hl=tr&gl=TR&ceid=TR:tr`;rows.push(['=IMPORTFEED("'+u+'";"items";0;8)','','','','',sym]);for(let i=1;i<10;i++)rows.push(['','','','','',sym])});
+ syms.forEach(sym=>{const u=`https://news.google.com/rss/search?q=${sym}+%22KAMUYU+AYDINLATMA+PLATFORMU%22+when:7d&hl=tr&gl=TR&ceid=TR:tr`;rows.push(['=IMPORTFEED("'+u+'";"items";FALSE;8)','','','','',sym]);for(let i=1;i<10;i++)rows.push(['','','','','',sym])});
  return rows.map(r=>r.join('\t')).join('\n')}
 async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('Önce en az bir hisse ekle.',1);$('kapTpl').style.display='block';$('kapTpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('kapTpl').select();ok=document.execCommand('copy')}catch(x){}}
  msg(ok?'Kopyalandı ✓ Google tablonda E1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda E1 hücresine yapıştır.',!ok)}
 /* ---------- kart araçları ---------- */
-function wiUpdate(box){const sym=box.dataset.box,s=calc(trades)[sym];if(!s)return;const mode=box.querySelector('.wm').value,q=num(box.querySelector('.wq').value),p=num(box.querySelector('.wp').value),o=box.querySelector('.wo'),c=cs(s.cur),pr=prices[sym]&&prices[sym].price;
- if(!(q>0)||!(p>0)){o.textContent='Adet ve fiyat gir';return}
- if(mode==='buy'){const nq=s.qty+q,nc=s.cost+q*p,na=nc/nq;o.innerHTML=`Yeni ort. maliyet <b>${fmt(na)} ${c}</b> (şimdi ${fmt(s.avg)})<br>Toplam ${qf(nq)} adet · maliyet ${fmt(nc)} ${c}`+(pr?`<br>Güncel fiyatla K/Z: ${pct((pr/na-1)*100)}`:'')}
- else{if(q>s.qty+1e-9){o.textContent='Elinde sadece '+qf(s.qty)+' adet var';return}let r=q,cost=0;for(const l of s.lots){if(r<=1e-9)break;const u=Math.min(r,l.q);cost+=u*l.p;r-=u}const k=q*p-cost;o.innerHTML=`Satış tutarı ${fmt(q*p)} ${c}<br>Kâr/zarar (FIFO): <b class="${cls(k)}">${sg(k)} ${c} (${pct(cost?k/cost*100:0)})</b><br>Kalan ${qf(s.qty-q)} adet`}}
-async function saveGoal(box){const sym=box.dataset.box,t=num(box.querySelector('.gt').value),st=num(box.querySelector('.gs').value);
- try{if(t>0||st>0)await S.set('g_'+sym,{kind:'goal',sym,target:t>0?t:0,stop:st>0?st:0});else if(goals[sym])await S.del('g_'+sym);msg('Hedef kaydedildi ✓')}catch(e){msg('Kaydedilemedi',1)}}
-async function saveMeta(box){const sym=box.dataset.box;try{await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:box.querySelector('.mty').value,manual:box.querySelector('.mman').checked});msg('Ayar kaydedildi ✓')}catch(e){msg('Kaydedilemedi',1)}}
+async function saveMeta(box){const sym=box.dataset.sym;try{await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:marketOf(sym,meta[sym]&&meta[sym].cur||'TRY'),sector:box.value.trim()});msg('Sektör kaydedildi ✓')}catch(e){msg('Kaydedilemedi',1)}}
 function quick(side,sym){const s=calc(trades)[sym];if(!s)return;resetForm();$('side').value=side;$('mkt2').value=mk(s);$('cur').value=s.cur;sideUI();mktUI();if(mk(s)!=='Nakit')$('sym').value=sym;const p=priceOf(s);if(mk(s)!=='Nakit')$('prc').value=p??'';upTot();go('add')}
 /* ---------- PIN ve tema ---------- */
 const PK='portfoy_pin';
@@ -686,9 +739,17 @@ async function setPin(){const v=$('pinNew').value.trim();if(!/^\d{4,8}$/.test(v)
  try{localStorage.setItem(PK,JSON.stringify({salt,hash:await hashPin(v,salt),len:v.length,after:old&&old.after!=null?old.after:60}))}catch(e){return msg('Kaydedilemedi',1)}$('pinNew').value='';updatePinUI();msg('PIN kaydedildi ✓ Uygulama her açılışta soracak.')}
 async function offPin(){const c=pinCfg();if(!c)return msg('PIN zaten kapalı.');if(await hashPin($('pinNew').value.trim(),c.salt)!==c.hash)return msg('Kaldırmak için kutuya mevcut PIN’i yaz.',1);try{localStorage.removeItem(PK)}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaldırıldı.')}
 function setTheme(v){_ss('portfoy_theme',v||null);v?document.documentElement.setAttribute('data-theme',v):document.documentElement.removeAttribute('data-theme');document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',(b.dataset.t||'')===(v||'')))}
+
+/* ---------- Çevrimdışı ---------- */
+window.addEventListener('online',()=>{$('offlineBanner').style.display='none';msg('İnternet bağlantısı sağlandı.');});
+window.addEventListener('offline',()=>{$('offlineBanner').style.display='block';msg('İnternet bağlantısı kesildi. Fiyatlar eski olabilir.',1);});
+
 /* ---------- olaylar ---------- */
 $('nav').addEventListener('click',e=>{const b=e.target.closest?e.target.closest('button'):e.target;if(b&&b.dataset.tab){closeWin();go(b.dataset.tab);if(b.dataset.tab==='kap')kapOpen()}});
 $('sort').addEventListener('change',render);$('hs').addEventListener('change',renderHist);$('hside').addEventListener('change',renderHist);$('hq').addEventListener('input',renderHist);
+$('posSearch').addEventListener('input',e=>{searchQ=e.target.value;render()});
+$('posFilter').addEventListener('change',e=>{posFilter=e.target.value;render()});
+$('kapQ').addEventListener('input',e=>{kapQ=e.target.value;renderKap()});
 ['qty','prc'].forEach(i=>$(i).addEventListener('input',upTot));$('cur').addEventListener('change',upTot);
 $('side').addEventListener('change',()=>{sideUI();mktUI();upTot()});$('mkt2').addEventListener('change',()=>{$('cur').value=MKCUR[$('mkt2').value];mktUI();upTot()});
 $('add').addEventListener('click',saveTrade);$('cancel').addEventListener('click',()=>{resetForm();go('his')});
@@ -697,13 +758,15 @@ const onPx=async e=>{
  try{if(v>0)await S.set('p_'+sym,{kind:'price',sym,price:v,prev:(prices[sym]&&prices[sym].prev)||null,at:Date.now()});else await S.del('p_'+sym)}catch(x){msg('Fiyat kaydedilemedi: '+(x.message||x.code),1)}
  snap()};
 $('pos').addEventListener('change',onPx);$('fxBox').addEventListener('change',onPx);
+$('pos').addEventListener('change',e=>{
+  const m=e.target.closest&&e.target.closest('.secInput');
+  if(m)saveMeta(m);
+});
 $('hero').addEventListener('click',e=>{
  if(e.target.closest('#eye')){hide=!hide;_ss('portfoy_hide',hide?'1':'0');render();return}
  if(e.target.closest('.v')){const order=['TRY','USD','EUR'].filter(c=>c==='TRY'||fx(c)>0),i=order.indexOf(dcur());disp=order[(i+1)%order.length];_ss('portfoy_disp',disp);render()}});
 $('kmode').addEventListener('click',e=>{const m=e.target.dataset&&e.target.dataset.m;if(!m)return;kmode=m;_ss('portfoy_kmode',m);render()});
 $('pos').addEventListener('toggle',e=>{const g=e.target.dataset&&e.target.dataset.grp;if(!g)return;const c=new Set((()=>{try{return JSON.parse(_ls('portfoy_coll','[]'))}catch(x){return[]}})());e.target.open?c.delete(g):c.add(g);_ss('portfoy_coll',JSON.stringify([...c]))},true);
-$('pos').addEventListener('input',e=>{const b=e.target.closest&&e.target.closest('.wiBox');if(b)wiUpdate(b)});
-$('pos').addEventListener('change',e=>{const t=e.target,w=t.closest&&t.closest('.wiBox'),g=t.closest&&t.closest('.goalBox'),m=t.closest&&t.closest('.metaBox');if(w)wiUpdate(w);if(g)saveGoal(g);if(m)saveMeta(m)});
 $('pos').addEventListener('click',e=>{const d=e.target.dataset||{};if(d.buy)quick('buy',d.buy);if(d.sell)quick('sell',d.sell)});
 document.addEventListener('click',e=>{const t=e.target.closest?e.target.closest('.dv,.dd'):null;if(!t)return;
  if(t.classList.contains('dv')){distView=distView==='bar'?'donut':'bar';_ss('portfoy_dview',distView)}else distDim=t.dataset.d;render()});
@@ -727,6 +790,7 @@ $('seg').addEventListener('click',e=>{const v=e.target.dataset&&e.target.dataset
 $('rng').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.r!=null){rng=+e.target.dataset.r;renderChart()}});
 $('rpY').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.y){repYear=e.target.dataset.y;renderReport(Object.values(calc(trades)))}});
 $('rpX').addEventListener('click',()=>exportFile('portfoy-rapor.csv',reportCSV()));
+$('pdfBtn').addEventListener('click',()=>window.print());
 $('rf').addEventListener('click',refresh);$('kapRf').addEventListener('click',refresh);$('kapRead').addEventListener('click',kapMarkAll);$('kapDel').addEventListener('click',kapDelAll);$('kapTplBtn').addEventListener('click',copyKapTpl);
 $('kapChips').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.ks!=null){kapSym=e.target.dataset.ks;renderKap()}});
 $('kapList').addEventListener('click',e=>{const c=e.target.closest('[data-kid]');if(!c)return;const it=kap.items.find(x=>x.id===c.dataset.kid);if(!it)return;kap.read[it.id]=Date.now();kapSave();renderKap();if(it.url)window.open(it.url,'_blank','noopener')});
@@ -751,6 +815,7 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  mktUI();
  if(!isLocked()&&trades.length)setTimeout(refresh,600);
  setInterval(()=>{if(!document.hidden&&!isLocked()&&trades.length)refresh()},300000);
+ if(!navigator.onLine)$('offlineBanner').style.display='block';
 })();
 render();
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
