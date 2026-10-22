@@ -108,15 +108,15 @@ body.print-rp h3{color:#555}}
 .corr i{font-style:normal;padding:8px 1px;border-radius:6px;font-weight:700}
 .hs{display:flex;gap:14px;align-items:center;margin-top:8px}
 .hsk{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
-.hsk>div{width:74px;height:74px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(20,20,60,.12)}
+.hsk>div{width:74px;height:74px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(20,20,60,.12)}
 .hsk b{font-size:22px}.hsk small{font-size:10px;color:var(--mut)}
-.bar{height:8px;border-radius:99px;background:#e8eaf6;overflow:hidden;margin:3px 0 9px}
+.bar{height:8px;border-radius:99px;background:rgba(128,132,180,.22);overflow:hidden;margin:3px 0 9px}
 .bar i{display:block;height:100%;border-radius:99px}
 .chips-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .kchip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:600}
 .kchip.g{background:#d9f5ea;color:#065f46;border-color:#b9ead4}
 .kchip.r{background:#fde5e5;color:#991b1b;border-color:#f7c9c9}
-.anlz{margin-top:9px;background:linear-gradient(135deg,#efeaff,#f7f2ff);border:1px solid #ddd3ff;border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:#5b4bd6}
+.anlz{margin-top:9px;background:linear-gradient(135deg,rgba(91,94,244,.12),rgba(139,92,246,.05));border:1px solid rgba(91,94,244,.35);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
 <h1><span style="display:inline-flex;align-items:center;gap:7px"><svg width="23" height="23" viewBox="0 0 512 512" style="flex:none" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5ef4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(#lg1)"/><g fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><polyline points="82,358 184,256 256,297 358,174"/><polyline points="300,166 366,166 366,232"/></g><line x1="82" y1="420" x2="430" y2="420" stroke="rgba(255,255,255,.75)" stroke-width="16" stroke-linecap="round"/></svg> Portföyüm</span><span class="badge" id="mode">…</span></h1>
@@ -722,7 +722,7 @@ function renderRisk(){
  let out='';
  if(!h)out+='<div class="card empty">Puanlama için en az bir açık konum gerekiyor.</div>';
  else{
-  const ring=`<div class="hsk" style="background:conic-gradient(${h.sc>=70?'#10b981':h.sc>=45?'#f59e0b':'#ef4444'} 0 ${h.sc*3.6}deg,#e8eaf6 ${h.sc*3.6}deg 360deg)"><div><b>${h.sc}</b><small>/100</small></div></div>`;
+  const ring=`<div class="hsk" style="background:conic-gradient(${h.sc>=70?'#10b981':h.sc>=45?'#f59e0b':'#ef4444'} 0 ${h.sc*3.6}deg,rgba(128,132,180,.25) ${h.sc*3.6}deg 360deg)"><div><b>${h.sc}</b><small>/100</small></div></div>`;
   const hA=healthAnalysis(h);
   out+=`<div class="card"><div class="row"><b>🩺 Portföy Sağlık Karnesi</b><span class="mut sm">sınırlar Ayarlar'dan ayarlanır</span></div>
    <div class="hs">${ring}<div style="flex:1;min-width:0">${hsBar('Çeşitlendirme',h.p1,'etkin sayı ≈ '+h.effN.toFixed(1))}${hsBar('Tek hisse yoğunluğu',h.p2,'en büyük: '+esc(h.los)+' %'+Math.round(h.wmax)+' · sınır %'+HS_CONF.maxw)}${hsBar('Oynaklık dengesi',h.p3,h.vol!=null?'yıllık ≈ ±%'+Math.round(h.vol):'geçmiş gerekli')}${hsBar('Nakit tamponu',h.p4,'nakit payı ≈ %'+Math.round(h.cw))}</div></div>
