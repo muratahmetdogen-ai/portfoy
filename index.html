@@ -182,7 +182,7 @@ body.print-rp h3{color:#555}}
   <div class="mut sm" style="margin-top:12px"><b>Kur gelmezse elle gir</b> (1 birim kaç ₺):</div><div id="fxBox" class="g2" style="margin-top:6px"></div>
  </div>
  <h3>Teknik analiz &amp; sinyaller</h3>
- <div class="card"><div class="mut sm">Açık pozisyonların 1 yıllık fiyat geçmişi (açılış/kapanış/en yüksek/en düşük/hacim) Yahoo’dan indirilir (sembol başına günde en fazla bir tazeleme, yalnızca bu cihazda tutulur) ve RSI, MACD, SMA, Stokastik, ADX, MFI, CCI, Williams %R, ATR, Bollinger, Ichimoku, Donchian ve OBV hesaplanır. Her fiyat çekiminde aşırı alım/satım ve teknik sinyaller otomatik kontrol edilir; sonuçlar Portföy sekmesinin üstünde ve Analiz → Teknik’te görünür.</div>
+ <div class="card"><div class="mut sm">Açık pozisyonların 1 yıllık fiyat geçmişi (açılış/kapanış/en yüksek/en düşük/hacim) Yahoo’dan indirilir (sembol başına günde en fazla bir tazeleme, yalnızca bu cihazda tutulur) ve RSI, MACD, SMA, Stokastik, ADX, MFI, CCI, Williams %R, ATR, Bollinger, Ichimoku, Donchian ve OBV hesaplanır. Kaynaklar: Yahoo (r.jina.ai / allorigins / codetabs / cors.lol yedekleriyle), CoinGecko–Coinbase (BTC), Frankfurter (USD/EUR). Bir kaynak engellenirse sıradaki denenir; başarılı kaynak hatırlanır. Her fiyat çekiminde aşırı alım/satım ve teknik sinyaller otomatik kontrol edilir; sonuçlar Portföy sekmesinin üstünde ve Analiz → Teknik’te görünür.</div>
   <div class="sl" style="margin-top:10px"><span>Teknik göstergeler ve sinyaller</span><button class="s" id="taTgl" style="width:auto">Açık</button></div>
   <div class="g2" style="margin-top:10px"><div><label>RSI aşırı alım eşiği</label><input id="taHi" type="number" inputmode="decimal" step="1"></div><div><label>RSI aşırı satım eşiği</label><input id="taLo" type="number" inputmode="decimal" step="1"></div></div>
   <div style="margin-top:8px"><label>Hacim patlaması oranı (× 20 gün ort.)</label><input id="taVol" type="number" inputmode="decimal" step="0.5"></div>
@@ -488,9 +488,9 @@ async function fxRate(c){for(const f of FXAPIS){try{const j=await getJSON(f(c)),
 const ySym=(sym,cur)=>/[.=]/.test(sym)?sym:cur==='TRY'?sym+'.IS':sym;
 async function stockPrice(sym,cur){
  const path='/v8/finance/chart/'+encodeURIComponent(ySym(sym,cur))+'?interval=1d&range=1d';
- const urls=['https://query1.finance.yahoo.com'+path,'https://query2.finance.yahoo.com'+path,'https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com'+path)];
- for(const u of urls){try{const j=await getJSON(u),m=j.chart&&j.chart.result&&j.chart.result[0]&&j.chart.result[0].meta;
-  if(m&&m.regularMarketPrice>0){if(m.currency&&String(m.currency).toUpperCase()!==cur)return{bad:m.currency};return{price:m.regularMarketPrice,prev:m.chartPreviousClose||m.previousClose||null}}}catch(e){}}
+ const j=await yChart('https://query1.finance.yahoo.com'+path,'https://query2.finance.yahoo.com'+path);
+ if(!j)return null;const m=j.chart&&j.chart.result&&j.chart.result[0]&&j.chart.result[0].meta;
+ if(m&&m.regularMarketPrice>0){if(m.currency&&String(m.currency).toUpperCase()!==cur)return{bad:m.currency};return{price:m.regularMarketPrice,prev:m.chartPreviousClose||m.previousClose||null}}
  return null}
 function sheetCandidates(u){const m=u.match(/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);if(!m||/\/d\/e\//.test(u))return[u];const id=m[1],g=(u.match(/[#&?]gid=(\d+)/)||[])[1]||'0';
  return[`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=0&gid=${g}`,`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${g}`]}
@@ -530,7 +530,7 @@ async function refresh(){
   for(const {s,r} of res){if(r&&r.price){await S.set('p_'+s.sym,{kind:'price',sym:s.sym,price:r.price,prev:r.prev||null,at:Date.now()});ok.push(s.sym)}else fail.push(s.sym+(r&&r.bad?' (para birimi '+r.bad+')':''))}
  }catch(e){fail.push('beklenmeyen hata')}
  try{if(ok.length)await snap()}catch(e){}
- try{if(taOn&&navigator.onLine)await histEnsure()}catch(e){}
+ try{if(taOn&&navigator.onLine){const hr=await histEnsure();if(hr&&hr.fail.length)dbg.push("Teknik geçmiş indirilemedi: "+hr.fail.join(", "))}}catch(e){}
  busy=false;b.disabled=false;b.textContent='🔄 Güncel fiyatları çek';
  _ss('portfoy_last',JSON.stringify({t:Date.now(),n:ok.length,f:fail.length}));showLast();render();
  $('dbgBox').style.display=dbg.length?'block':'none';$('dbg').textContent=[...new Set(dbg)].slice(0,10).join('\n');
@@ -540,22 +540,56 @@ async function refresh(){
 /* ---------- teknik analiz motoru ---------- */
 function histPrune(opens){const keep=new Set(opens.map(s=>s.sym));Object.keys(HIST).forEach(k=>{if(!keep.has(k))delete HIST[k]})}
 function histSave(){try{localStorage.setItem('portfoy_hist',JSON.stringify(HIST))}catch(e){try{Object.keys(HIST).forEach(k=>delete HIST[k])}catch(x){}}}
+/* Aktarım zinciri: tarayıcı Origin başlığını yansıtan kaynaklar önce; hatırlanan başarılı transport en başta denenir */
+const YTR=[u=>'https://r.jina.ai/'+u,u=>u,u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),u=>'https://api.cors.lol/?url='+encodeURIComponent(u)];
+let HPX=(()=>{try{return +localStorage.getItem('portfoy_hpx')||0}catch(e){return 0}})();
+async function yJSON(url){
+ const order=[HPX,0,1,2,3,4].filter((v,i2,a)=>a.indexOf(v)===i2);let lastErr=null;
+ for(const ti of order){try{const t=await getText(YTR[ti](url),15000);
+  const j=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
+  if(j&&typeof j==='object'){if(ti!==HPX){HPX=ti;try{localStorage.setItem('portfoy_hpx',String(ti))}catch(e){}}return j}}catch(e){lastErr=e}}
+ throw lastErr||new Error('tüm kaynaklar başarısız')}
+async function yChart(url1,url2){
+ for(const u of[url1,url2]){if(u===url2&&url2===url1)break;try{const j=await yJSON(u);if(j&&j.chart)return j}catch(e){}}
+ return await yJSON(url2)}
+async function histBTC(){
+ try{const j=await getJSON('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily');
+  const pr=j.prices||[],tv=j.total_volumes||[];
+  if(pr.length>=35)return{t:pr.map(x=>x[0]),c:pr.map(x=>x[1]),v:tv.map(x=>x[1]||0),h:null,l:null}}catch(e){}
+ try{const j=await getJSON('https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400');
+  if(Array.isArray(j)&&j.length>=35){const r=j.slice().reverse();
+   return{t:r.map(x=>x[0]*1000),c:r.map(x=>+x[4]),v:r.map(x=>+(x[5]||0)),h:r.map(x=>+x[2]),l:r.map(x=>+x[1])}}}catch(e){}
+ return null}
+async function histFX(cur){
+ const st=new Date(Date.now()-370*864e5).toISOString().slice(0,10),en=today();
+ const j=await getJSON('https://api.frankfurter.dev/v1/'+st+'..'+en+'?base='+cur+'&symbols=TRY');
+ const ks=Object.keys(j.rates||{}).sort();if(ks.length<35)return null;
+ return{t:ks.map(x=>+new Date(x+'T00:00:00')),c:ks.map(x=>+j.rates[x].TRY),v:ks.map(()=>0),h:null,l:null}}
 async function histFetch(sym,cur){
  const path='/v8/finance/chart/'+encodeURIComponent(ySym(sym,cur))+'?interval=1d&range=1y';
- const urls=['https://query1.finance.yahoo.com'+path,'https://query2.finance.yahoo.com'+path,'https://api.allorigins.win/raw?url='+encodeURIComponent('https://query1.finance.yahoo.com'+path)];
- for(const u of urls){try{const j=await getJSON(u),r=j&&j.chart&&j.chart.result&&j.chart.result[0],ts=r&&r.timestamp,q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
-  if(!ts||!q||!q.close)continue;const t=[],c=[],v=[],hi=[],lo=[];
-  for(let i=0;i<ts.length;i++){const cv=q.close[i];if(cv==null||!(cv>0))continue;t.push(ts[i]*1000);c.push(+cv);v.push(q.volume&&q.volume[i]!=null?+q.volume[i]:0);
-   hi.push(q.high&&q.high[i]!=null&&q.high[i]>0?+q.high[i]:cv);lo.push(q.low&&q.low[i]!=null&&q.low[i]>0?+q.low[i]:cv)}
-  if(c.length>=35)return{t,c,v,h:hi,l:lo}}catch(e){}}
+ const j=await yChart('https://query1.finance.yahoo.com'+path,'https://query2.finance.yahoo.com'+path);
+ const r=j&&j.chart&&j.chart.result&&j.chart.result[0],ts=r&&r.timestamp,q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+ if(!ts||!q||!q.close)return null;const t=[],c=[],v=[],hi=[],lo=[];
+ for(let i=0;i<ts.length;i++){const cv=q.close[i];if(cv==null||!(cv>0))continue;t.push(ts[i]*1000);c.push(+cv);v.push(q.volume&&q.volume[i]!=null?+q.volume[i]:0);
+  hi.push(q.high&&q.high[i]!=null&&q.high[i]>0?+q.high[i]:cv);lo.push(q.low&&q.low[i]!=null&&q.low[i]>0?+q.low[i]:cv)}
+ if(c.length>=35)return{t,c,v,h:hi,l:lo};
  return null}
 async function histEnsure(force){
- const opens=Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.sym!=='NAKIT'&&!['Nakit','Döviz'].includes(mk(s))),now=Date.now();
+ const opens=Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.sym!=='NAKIT'),now=Date.now();
  const need=opens.filter(s=>{const h=HIST[s.sym];return force||!h||!h.h||now-(h.at||0)>12*3600e3});
- for(let i=0;i<need.length;i+=3){await Promise.all(need.slice(i,i+3).map(async s=>{const d=await histFetch(s.sym,s.cur);if(!d)return;
-  HIST[s.sym]={t:d.t,c:d.c,v:d.v,h:d.h,l:d.l,at:now};
-  if(!(prices[s.sym]&&prices[s.sym].prev>0)){const pv=d.c[d.c.length-2];if(pv>0&&prices[s.sym])prices[s.sym].prev=pv}}))}
- histPrune(opens);histSave()}
+ const okA=[],failA=[];
+ for(let i=0;i<need.length;i+=3){await Promise.all(need.slice(i,i+3).map(async s=>{
+  try{let d=null;
+   if(s.sym==='BTC')d=await histBTC();
+   else if(mk(s)==='Döviz'&&(s.sym==='USD'||s.sym==='EUR'))d=await histFX(s.sym);
+   else d=await histFetch(s.sym,s.cur);
+   if(d){HIST[s.sym]={t:d.t,c:d.c,v:d.v,h:d.h,l:d.l,at:now};okA.push(s.sym);
+    if(!(prices[s.sym]&&prices[s.sym].prev>0)){const pv=d.c[d.c.length-2];if(pv>0&&prices[s.sym])prices[s.sym].prev=pv}}
+   else failA.push(s.sym)}catch(e){failA.push(s.sym)}}))
+  if(i+3<need.length)await new Promise(r=>setTimeout(r,500))}
+ histPrune(opens);histSave();
+ try{localStorage.setItem('portfoy_tast',JSON.stringify({t:Date.now(),ok:okA,fail:failA}))}catch(e){}
+ return{ok:okA,fail:failA}}
 function taCalc(sym){
  const h=HIST[sym];if(!h||!h.c||h.c.length<35)return null;
  const c=h.c,n=c.length,last=c[n-1],mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
@@ -755,6 +789,8 @@ function renderTa(open){const el=$('tav');if(!el)return;
   ${slog.slice().reverse().map(r=>`<div style="margin-top:8px"><b class="mut sm">${r.d}</b>${(r.s||[]).map(x=>`<div class="sm" style="padding:2px 0">· <b>${esc(x.sym)}</b> — ${esc(x.txt)}</div>`).join('')||'<div class="mut sm">sinyal yok</div>'}</div>`).join('')}</div>`:'';
  el.innerHTML=(SIGS.length?`<div style="margin-bottom:10px">${sigCards}</div>`:'')+logHtml+
   `<div class="card"><div class="row"><b>Teknik özet</b><span class="mut sm">${rows.length} hisse · skora göre</span></div>
+  <div class="mut sm" style="border-bottom:1px solid var(--bd);padding-bottom:8px;margin-bottom:6px">${(()=>{let st2=null;try{st2=JSON.parse(localStorage.getItem('portfoy_tast')||'null')}catch(e){}const hn=Object.keys(HIST).length;
+   return'Geçmiş: <b>'+hn+'</b> hisse hazır'+(st2?' · son tazeleme '+dts(st2.t)+(st2.fail&&st2.fail.length?' · <span class="dn">alınamadı: '+esc(st2.fail.join(', '))+'</span>':''):'')})()}</div>
   ${rows.length?`<div style="overflow-x:auto"><table><tr><th>Hisse</th><th>Skor</th><th>RSI</th><th>Stoch</th><th>MACD</th><th>ADX</th><th>MFI</th><th>SMA 20/50/200</th><th>52H</th><th>Hacim</th></tr>
   ${rows.map(s=>{const t=s.ta,R=t.rsi.v,md=t.macd;
    const mdSt=!md||md.h==null?'—':(md.ph!=null&&md.ph<=0&&md.h>0?'<span class="up">⚡AL</span>':md.ph!=null&&md.ph>=0&&md.h<0?'<span class="dn">⚡SAT</span>':md.h>0?'+':'−');
@@ -1057,7 +1093,13 @@ $('lforgot').addEventListener('click',()=>{if(prompt('Kilidi kaldırmak için SI
 $('themeSeg').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.t!=null)setTheme(e.target.dataset.t)});
 $('taTgl').addEventListener('click',()=>{taOn=!taOn;_ss('portfoy_ta',taOn?'1':'0');taSettingsUI();SIGS=[];render();msg(taOn?'Teknik analiz açık ✓':'Teknik analiz kapatıldı')});
 ['taHi','taLo','taVol'].forEach(id=>$(id).addEventListener('change',()=>{const v=parseFloat($(id).value);if(!(v>0))return;TA_CONF[id==='taHi'?'rsiHi':id==='taLo'?'rsiLo':'vol']=v;_ss('portfoy_tac',JSON.stringify(TA_CONF));render()}));
-$('taRef').addEventListener('click',async()=>{if(busy)return;if(!navigator.onLine)return msg('Çevrimdışısın — geçmiş yenilenemedi.',1);busy=true;msg('Geçmiş verileri indiriliyor…');try{await histEnsure(true);open.forEach===undefined;render();msg('Geçmiş verileri güncellendi ✓')}catch(e){msg('İndirilemedi: '+(e.message||e),1)}busy=false});
+$('taRef').addEventListener('click',async()=>{const b=$('taRef');if(b.disabled)return;if(!navigator.onLine)return msg('Çevrimdışısın — geçmiş yenilenemedi.',1);
+ b.disabled=true;const ob=b.textContent;b.textContent='İndiriliyor…';msg('Geçmiş verileri indiriliyor…');
+ try{const r=await histEnsure(true);render();
+  if(r.ok.length)msg('Geçmiş güncellendi ✓ ('+r.ok.length+' hisse)'+(r.fail.length?' · alınamadı: '+r.fail.join(', '):''),0);
+  else msg('Geçmiş indirilemedi ('+(r.fail.join(', ')||'sebep bilinmiyor')+'). Kaynaklar geçici olarak engelli olabilir; birkaç dakika sonra tekrar dene.',1)}
+ catch(e){msg('İndirilemedi: '+(e.message||e),1)}
+ b.disabled=false;b.textContent=ob});
 $('tav').addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-hs]');if(c)openHist(c.dataset.hs)});
 const offUp=()=>{const o=!navigator.onLine;$('offbar').style.display=o?'block':'none';return o};
 window.addEventListener('online',()=>{if(!offUp()&&trades.length)refresh()});
