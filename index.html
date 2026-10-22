@@ -101,7 +101,7 @@ body.print-rp h3{color:#555}}
 </head><body>
 <h1><span style="display:inline-flex;align-items:center;gap:7px"><svg width="23" height="23" viewBox="0 0 512 512" style="flex:none" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5ef4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(#lg1)"/><g fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><polyline points="82,358 184,256 256,297 358,174"/><polyline points="300,166 366,166 366,232"/></g><line x1="82" y1="420" x2="430" y2="420" stroke="rgba(255,255,255,.75)" stroke-width="16" stroke-linecap="round"/></svg> Portföyüm</span><span class="badge" id="mode">…</span></h1>
 <div id="msg"></div>
-<div id="offbar">✈️ Çevrimdışısın — fiyatlar eski olabilir</div>
+<div id="offbar">✈️ Çevrimdışısınız ✈️</div>
 
 <section class="tab on" id="t-pf">
  <div class="hero" id="hero"></div>
@@ -116,14 +116,14 @@ body.print-rp h3{color:#555}}
  <div class="card" id="allocBox"></div>
  <div class="srow" style="margin:14px 2px 0"><input id="pfq" placeholder="🔍 Ara: Hisse"><div class="chp" id="pff" style="margin:0"><button data-f="" class="on">Tümü</button><button data-f="win">Kârda</button><button data-f="lose">Zararda</button></div></div>
  <div class="row" style="margin:14px 2px 6px"><h3 style="margin:0">Pozisyonlar</h3>
-  <select id="sort" style="width:auto;padding:6px 10px"><option value="val">Tutara göre</option><option value="day">Günlük % değişime göre</option><option value="plp">Kâr % göre</option><option value="age">Elde tutma süresine göre</option><option value="az">Alfabetik (A-Z)</option></select></div>
+  <select id="sort" style="width:auto;padding:6px 10px"><option value="val">Toplam Tutara göre</option><option value="day">Günlük % değişime göre</option><option value="plp">K/Z % göre</option><option value="age">Elde tutma süresine göre</option><option value="az">Alfabetik (A-Z)</option></select></div>
  <div class="seg" id="kmode"><button class="on" data-m="day">Günlük K/Z</button><button data-m="tot">Toplam K/Z</button></div>
  <div id="pos"></div>
- <button class="s" id="closedBtn" style="margin-top:6px">Kapanmış pozisyonlar ›</button>
+ <button class="s" id="closedBtn" style="margin-top:6px">Kapanan Pozisyonlar ›</button>
 </section>
 
 <section class="tab" id="t-kz">
- <div class="seg" id="seg"><button class="on" data-v="kzv">Durum</button><button data-v="chv">Grafik</button><button data-v="dsv">Dağılım</button><button data-v="tav">Teknik Veriler</button><button data-v="rpv">Rapor</button></div>
+ <div class="seg" id="seg"><button class="on" data-v="kzv">Durum</button><button data-v="chv">Grafikler</button><button data-v="dsv">Dağılım Grafikleri</button><button data-v="tav">Teknik Veriler</button><button data-v="rpv">Rapor</button></div>
  <div class="sv on" id="kzv"><div class="hero" id="kzhero"></div><h3>Bugüne Kadar</h3><div id="kzlist"></div></div>
  <div class="sv" id="chv"><div class="card"><div class="row"><b id="cht">Portföy değeri (₺)</b><div class="rng" id="rng"><button data-r="30">1A</button><button data-r="90">3A</button><button data-r="180">6A</button><button data-r="365">1Y</button><button data-r="0">Tümü</button></div></div>
   <div class="seg" id="cmode" style="margin:10px 0 0"><button class="on" data-c="try">Değer (₺)</button><button data-c="pct">Getiri (%)</button></div>
@@ -134,10 +134,10 @@ body.print-rp h3{color:#555}}
 </section>
 
 <section class="tab" id="t-kap">
- <div class="row"><h3 style="margin:0">KAP bildirimleri</h3><button class="s" id="kapRf" style="width:auto;padding:6px 12px">🔄 Yenile</button></div>
+ <div class="row"><h3 style="margin:0">KAP bildirimleri</h3><button class="s" id="kapRf" style="width:auto;padding:6px 12px">🔄</button></div>
  <div class="mut sm" id="kapSt" style="margin:6px 2px 10px"></div>
  <input id="kapq" placeholder="🔍 Haber başlığında ara…" style="margin:8px 0 10px"><div class="chp" id="kapCats" style="margin:0 0 10px"></div>
- <div class="g2" style="margin-bottom:10px"><button class="s" id="kapRead">✓ Tümünü oku</button><button class="s" id="kapDel">🗑 Tümünü sil</button></div>
+ <div class="g2" style="margin-bottom:10px"><button class="s" id="kapRead">Tümünü Oku ✓</button><button class="s" id="kapDel">Tümünü Sil 🗑</button></div>
  <div class="chp" id="kapChips" style="margin-bottom:10px"></div>
  <div id="kapList"></div>
 </section>
@@ -148,15 +148,15 @@ body.print-rp h3{color:#555}}
   <div><label>İşlem</label><select id="side"><option value="buy">Alış</option><option value="sell">Satış</option><option value="div">Temettü</option></select></div>
   <div><label>Tarih</label><input id="dt" type="date"></div>
   <div class="full"><label>Pazar</label><select id="mkt2"><option>BIST</option><option>ABD</option><option>Avrupa</option><option>Fon</option><option>Döviz</option><option>Nakit</option></select></div>
-  <div><label>Hisse kodu</label><input id="sym" placeholder="THYAO" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-  <div><label>Para birimi</label><select id="cur"><option value="TRY">TL (₺)</option><option value="USD">Dolar ($)</option><option value="EUR">Euro (€)</option></select></div>
+  <div><label>Hisse kodu</label><input id="sym" placeholder="HISSE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+  <div><label>Para Birimi</label><select id="cur"><option value="TRY">TL (₺)</option><option value="USD">Dolar ($)</option><option value="EUR">Euro (€)</option></select></div>
   <div><label id="qtyL">Adet</label><input id="qty" type="number" inputmode="decimal" step="any"></div>
   <div><label id="prcL">Fiyat</label><input id="prc" type="number" inputmode="decimal" step="any"></div>
   <div><label>Komisyon</label><input id="comm" type="number" inputmode="decimal" step="any" placeholder="0"></div>
-  <div><label>Aracı kurum</label><input id="brk" placeholder="Nereden aldım"></div>
+  <div><label>Aracı Kurum</label><input id="brk" placeholder="Nereden aldım"></div>
   <div class="full"><label>Not</label><input id="note" placeholder="İsteğe bağlı"></div>
  </div>
- <div class="row" style="margin-top:12px"><span class="mut">Toplam tutar</span><b id="tot">0,00 ₺</b></div>
+ <div class="row" style="margin-top:12px"><span class="mut">Toplam Tutar</span><b id="tot">0,00 ₺</b></div>
  <div class="btns"><button id="add">Kaydet</button><button class="s" id="cancel" style="display:none">Vazgeç</button></div></div>
 </section>
 
@@ -170,52 +170,52 @@ body.print-rp h3{color:#555}}
  <div class="card set"><div class="sl"><span>Tema</span><div class="chp" id="themeSeg"><button data-t="light">Açık</button><button data-t="dark">Koyu</button><button data-t="" class="on">Otomatik</button></div></div></div>
  <h3>Güvenlik</h3>
  <div class="card set">
-  <div class="sl"><span>PIN kilidi</span><b id="pinState" class="mut">Kapalı</b></div>
-  <div><div class="g2"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="4-8 haneli PIN"><button id="pinSet">Kaydet</button></div><button class="s" id="pinOff" style="margin-top:8px">PIN’i kaldır (kutuya mevcut PIN’i yaz)</button></div>
-  <div class="sl"><span>Arka plandan dönünce sor</span><select id="lockAfter" style="width:auto"><option value="0">Hemen</option><option value="60">1 dk sonra</option><option value="300">5 dk sonra</option><option value="-1">Sorma</option></select></div>
-  <div class="mut sm">PIN açılışta her zaman sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
+  <div class="sl"><span>PIN Kilidi</span><b id="pinState" class="mut">Kapalı</b></div>
+  <div><div class="g2"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="4-8 haneli PIN"><button id="pinSet">Kaydet</button></div><button class="s" id="pinOff" style="margin-top:8px">PIN’i kaldır (Mevcut PIN’i yazın)</button></div>
+  <div class="sl"><span>Ekran kilitlenme süresi</span><select id="lockAfter" style="width:auto"><option value="0">Hemen</option><option value="60">1 dk sonra</option><option value="300">5 dk sonra</option><option value="-1">Sorma</option></select></div>
+  <div class="mut sm">PIN her açılışta sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
  </div>
  <h3>Uygulama güncellemesi</h3>
  <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v9</b></div>
- <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri kontrol et</button></div>
- <div class="mut sm" style="margin-top:8px">GitHub’a yeni dosya yükledikten sonra buraya bas; uygulama yeni sürümü indirip sayfayı kendiliğinden yeniler. GitHub Pages dağıtımı 1-10 dk gecikebilir — bu sürede “güncel” görünse bile gerçek dosya henüz yayınmamış olabilir.</div></div>
+ <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
+ <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayınmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
  <div class="card">
   <ol class="sm mut" style="padding-left:18px;margin:0 0 10px">
-   <li>“1) Şablonu kopyala”ya bas. Elindeki hisseler, kurlar ve piyasa satırları (BIST100, ons, gram altın, BTC, S&P 500) hazır gelir.</li>
+   <li>Şablonu kopyalaya bas. Elindeki hisseler, kurlar ve piyasa satırları (BIST100, ons, gram altın, BTC, S&P 500) hazır gelir.</li>
    <li>Google tablonda A1 hücresine yapıştır (eski satırların yerine). Fon satırlarını kendi formülünle yeniden ekle.</li>
    <li>A: kod, B: güncel fiyat, C: dünkü kapanış. C sütunu günlük K/Z içindir.</li>
    <li>Tabloyu “Bağlantıya sahip herkes görüntüleyebilir” yap, bağlantıyı aşağı yapıştır.</li></ol>
-  <button class="s" id="tplBtn">1) Şablonu kopyala</button>
+  <button class="s" id="tplBtn">Şablonu Kopyala</button>
   <textarea id="tpl" rows="5" readonly style="display:none;margin-top:8px"></textarea>
   <input id="sheet" placeholder="https://docs.google.com/spreadsheets/d/…" style="margin-top:8px">
-  <button class="s" id="sheetBtn" style="margin-top:8px">2) Bağlantıyı kaydet</button>
-  <div class="mut sm" style="margin-top:12px"><b>Kur gelmezse elle gir</b> (1 birim kaç ₺):</div><div id="fxBox" class="g2" style="margin-top:6px"></div>
+  <button class="s" id="sheetBtn" style="margin-top:8px">Bağlantıyı Kaydet</button>
+  <div class="mut sm" style="margin-top:12px"><b>Elle kur giriş alanı</b> :</div><div id="fxBox" class="g2" style="margin-top:6px"></div>
  </div>
  <h3>Teknik analiz &amp; sinyaller</h3>
  <div class="card"><div class="mut sm">Açık pozisyonların 1 yıllık fiyat geçmişi (açılış/kapanış/en yüksek/en düşük/hacim) Yahoo’dan indirilir (sembol başına günde en fazla bir tazeleme, yalnızca bu cihazda tutulur) ve RSI, MACD, SMA, Stokastik, ADX, MFI, CCI, Williams %R, ATR, Bollinger, Ichimoku, Donchian ve OBV hesaplanır. Kaynaklar: Yahoo (r.jina.ai / allorigins / codetabs / cors.lol yedekleriyle), CoinGecko–Coinbase (BTC), Frankfurter (USD/EUR). Bir kaynak engellenirse sıradaki denenir; başarılı kaynak hatırlanır. Her fiyat çekiminde aşırı alım/satım ve teknik sinyaller otomatik kontrol edilir; sonuçlar Portföy sekmesinin üstünde ve Analiz → Teknik’te görünür.</div>
   <div class="sl" style="margin-top:10px"><span>Teknik göstergeler ve sinyaller</span><button class="s" id="taTgl" style="width:auto">Açık</button></div>
   <div class="g2" style="margin-top:10px"><div><label>RSI aşırı alım eşiği</label><input id="taHi" type="number" inputmode="decimal" step="1"></div><div><label>RSI aşırı satım eşiği</label><input id="taLo" type="number" inputmode="decimal" step="1"></div></div>
   <div style="margin-top:8px"><label>Hacim patlaması oranı (× 20 gün ort.)</label><input id="taVol" type="number" inputmode="decimal" step="0.5"></div>
-  <div class="btns"><button class="s" id="taRef">📊 Geçmiş verilerini şimdi yenile</button></div></div>
+  <div class="btns"><button class="s" id="taRef">📊 Geçmiş Verilerini Şimdi Yenile</button></div></div>
  <h3>KAP haberleri kaynağı</h3>
- <div class="card"><div class="mut sm">Artık <b>Google tablo şart değil</b>: KAP sekmesindeki “Yenile”, haberleri doğrudan çeker (Google Haber + Bing + Yahoo üzerinden, ilk 8 BIST hissen). Tablo kuruluysa hem tablo hem doğrudan çekim çalışır.</div>
-  <div class="mut sm" style="margin-top:6px">İstersen eski yöntem de geçerli: tabloya Google Haberler beslemesi (son 7 gün) eklenir, uygulama bunları okur.</div>
-  <ol class="sm mut" style="padding-left:18px;margin:8px 0"><li>“KAP şablonunu kopyala”ya bas.</li><li>Google tablonda <b>E1</b> hücresine yapıştır (fiyat sütunlarının sağına).</li><li>Yeni hisse alırsan şablonu tekrar kopyalayıp E1’e yapıştır.</li></ol>
-  <button class="s" id="kapTplBtn">KAP şablonunu kopyala</button>
+ <div class="card"><div class="mut sm">KAP sekmesindeki “Yenile”, haberleri doğrudan çeker (Google Haber + Bing + Yahoo üzerinden, ilk 8 BIST hissen). Tablo kuruluysa hem tablo hem doğrudan çekim çalışır.</div>
+  <div class="mut sm" style="margin-top:6px"></div>
+  <ol class="sm mut" style="padding-left:18px;margin:8px 0"><li>“KAP Şablonunu Kopyala”ya bas.</li><li>Google tablonda <b>E1</b> hücresine yapıştır (fiyat sütunlarının sağına).</li><li>Yeni hisse alırsan şablonu tekrar kopyalayıp E1’e yapıştır.</li></ol>
+  <button class="s" id="kapTplBtn">KAP Şablonunu Kopyala</button>
   <textarea id="kapTpl" rows="4" readonly style="display:none;margin-top:8px"></textarea></div>
  <h3>GitHub ile otomatik yedek</h3>
- <div class="card"><div class="mut sm">Verilerin özel (private) bir GitHub deposuna kendiliğinden kaydedilir; uygulama açılınca oradan alınır. Telefon değişse de kaybolmaz.</div>
+ <div class="card"><div class="mut sm">Veriler özel (private) bir GitHub deposuna otomatik kaydedilir.</div>
  <div style="margin-top:10px"><label>Depo (kullanıcıadı/depo-adı)</label><input id="ghRepo" placeholder="kullaniciadin/portfoy-veri" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
  <div style="margin-top:8px"><label>Erişim anahtarı (token)</label><input id="ghTok" type="password" placeholder="github_pat_…" autocomplete="off"></div>
- <div class="btns"><button id="ghSave">Bağlan ve eşitle</button><button class="s" id="ghNow">Şimdi eşitle</button><button class="s" id="ghOff">Bağlantıyı kaldır</button></div>
- <div id="ghSt" class="mut sm" style="margin-top:8px">Bağlı değil</div></div>
+ <div class="btns"><button id="ghSave">Bağlan ve Eşitle</button><button class="s" id="ghNow">Şimdi Eşitle</button><button class="s" id="ghOff">Bağlantıyı Kaldır</button></div>
+ <div id="ghSt" class="mut sm" style="margin-top:8px">Bağlı Değil</div></div>
  <h3>Yedekle</h3>
- <div class="card"><div class="mut sm">Tüm işlemlerini ve fiyatlarını kaydet. Dosya İndirilenler klasörüne iner. Veriler bu tarayıcıda saklanır; tarayıcı verisini silersen kaybolur, o yüzden düzenli yedek al.</div>
- <div class="btns"><button id="exJ">Yedeği indir (.json)</button><button class="s" id="exC">Excel için indir (.csv)</button></div>
+ <div class="card"><div class="mut sm"></div>
+ <div class="btns"><button id="exJ">Yedeği İndir (.json)</button><button class="s" id="exC">Excel İçin İndir (.csv)</button></div>
  <textarea id="out" rows="4" style="display:none;margin-top:10px" readonly></textarea></div>
  <h3>Yedekten yükle</h3>
- <div class="card"><div class="mut sm">.json yedeği ya da .csv dosyası seç (sütunlar: tarih, islem, hisse, adet, fiyat, komisyon, kurum, not, para). Mevcut kayıtlar silinmez, aynı olanlar tekrar eklenmez.</div>
+ <div class="card"><div class="mut sm">.json yedeği ya da .csv dosyası seç.</div>
  <div class="btns"><input type="file" id="file" accept=".json,.csv,.txt,application/json,text/csv">
  <textarea id="paste" rows="4" placeholder="Dosya seçemiyorsan yedek metnini buraya yapıştır"></textarea>
  <button id="imp">Yükle</button></div></div>
