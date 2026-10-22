@@ -173,6 +173,10 @@ body.print-rp h3{color:#555}}
   <div class="sl"><span>Arka plandan dönünce sor</span><select id="lockAfter" style="width:auto"><option value="0">Hemen</option><option value="60">1 dk sonra</option><option value="300">5 dk sonra</option><option value="-1">Sorma</option></select></div>
   <div class="mut sm">PIN açılışta her zaman sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
  </div>
+ <h3>Uygulama güncellemesi</h3>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v9</b></div>
+ <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri kontrol et</button></div>
+ <div class="mut sm" style="margin-top:8px">GitHub’a yeni dosya yükledikten sonra buraya bas; uygulama yeni sürümü indirip sayfayı kendiliğinden yeniler. GitHub Pages dağıtımı 1-10 dk gecikebilir — bu sürede “güncel” görünse bile gerçek dosya henüz yayınmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
  <div class="card">
   <ol class="sm mut" style="padding-left:18px;margin:0 0 10px">
@@ -1236,6 +1240,12 @@ $('lockAfter').addEventListener('change',()=>{const c=pinCfg();if(!c)return msg(
 $('lgo').addEventListener('click',tryUnlock);$('lpin').addEventListener('input',()=>{const c=pinCfg();if(c&&$('lpin').value.length===c.len)tryUnlock()});
 $('lforgot').addEventListener('click',()=>{if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
 $('themeSeg').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.t!=null)setTheme(e.target.dataset.t)});
+$('updBtn').addEventListener('click',async()=>{const r=window.__swReg;
+ if(!r)return msg('Güncelleme kontrolü bu açılış modunda yok (dosyadan açtıysan yeni dosyayı kopyala yeter).',1);
+ msg('Kontrol ediliyor…');window.__updFound=false;
+ try{await r.update()}catch(e){}
+ setTimeout(()=>{if(window.__updFound||window.__reloaded)msg('Yeni sürüm indirildi — sayfa kendiliğinden yenilenecek…');
+  else msg('Uygulama güncel ✓ (GitHub tarafı 1-10 dk gecikebilir; birkaç dakika sonra tekrar dene)')},2500)});
 $('taTgl').addEventListener('click',()=>{taOn=!taOn;_ss('portfoy_ta',taOn?'1':'0');taSettingsUI();SIGS=[];render();msg(taOn?'Teknik analiz açık ✓':'Teknik analiz kapatıldı')});
 ['taHi','taLo','taVol'].forEach(id=>$(id).addEventListener('change',()=>{const v=parseFloat($(id).value);if(!(v>0))return;TA_CONF[id==='taHi'?'rsiHi':id==='taLo'?'rsiLo':'vol']=v;_ss('portfoy_tac',JSON.stringify(TA_CONF));render()}));
 $('taRef').addEventListener('click',async()=>{const b=$('taRef');if(b.disabled)return;if(!navigator.onLine)return msg('Çevrimdışısın — geçmiş yenilenemedi.',1);
@@ -1274,5 +1284,16 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  setInterval(()=>{if(!document.hidden&&!isLocked()&&navigator.onLine&&trades.length)refresh()},300000);
 })();
 render();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
+ window.__reloaded=false;window.__updFound=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(window.__reloaded)return;window.__reloaded=true;setTimeout(()=>location.reload(),1200)});
+ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+  window.__swReg=reg;
+  if(reg.waiting&&navigator.serviceWorker.controller)reg.waiting.postMessage('SKIP_WAITING');
+  reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(!nw)return;
+   nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller){window.__updFound=true;msg('Yeni sürüm indirildi — sayfa yenileniyor…')}})});
+ }).catch(()=>{});
+ setInterval(()=>{if(!document.hidden&&navigator.serviceWorker.controller&&window.__swReg)window.__swReg.update().catch(()=>{})},300000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&window.__swReg)window.__swReg.update().catch(()=>{})});
+}
 </script></body></html>
