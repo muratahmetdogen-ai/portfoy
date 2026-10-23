@@ -1600,34 +1600,17 @@ async function kapDirect(){
   const stEl=$('kapSt');if(stEl)stEl.textContent='Haberler doğrudan çekiliyor ('+syms.length+' hisse)…';
   let added=0,fail=0;const now=Date.now();
   for(const sym of syms){
-   const feeds=[
-    ['Google Haber','https://news.google.com/rss/search?q='+encodeURIComponent(sym+' "KAMUYU AYDINLATMA PLATFORMU" when:7d')+'&hl=tr&gl=TR&ceid=TR:tr'],
-    ['Bing','https://www.bing.com/news/search?q='+encodeURIComponent(sym+' KAP')+'&format=RSS'],
-    ['Yahoo','https://feeds.finance.yahoo.com/rss/2.0/headline?s='+encodeURIComponent(ySym(sym,'TRY'))+'&region=TR&lang=tr-TR']];
-   let gotN=0;const otherRe=new RegExp('\\b('+syms.filter(o=>o!==sym).join('|')+')\\b');
+   const otherRe=new RegExp('\\b('+syms.filter(o=>o!==sym).join('|')+')\\b');
    const skipIfOther=ti=>syms.length>1&&otherRe.test(ti.toLocaleUpperCase('en'));
+   let gotN=false;
    try{let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+encodeURIComponent(sym);
     for(const tx of KTR){try{mt=await getText(tx(mu),12000);if(mt)break}catch(e){}}
     if(mt){const mi=midasItems(mt);
      if(mi.length){const have=new Set(kap.items.map(x=>x.id));
       for(const it of mi.slice(0,6)){if(skipIfOther(it.ti)||kap.del[hid(sym+'|'+it.ti)])continue;
        have.add(hid(sym+'|'+it.ti));
-       kap.items.push({id:hid(sym+'|'+it.ti),sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN++}}}
+       kap.items.push({id:hid(sym+'|'+it.ti),sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN=true}}}
    }catch(e){}
-   for(const [srcName,u] of (gotN?[]:feeds)){
-    try{let txt=null;for(const tx of KTR){try{txt=await getText(tx(u),12000);if(txt)break}catch(e){}}
-   if(!txt)throw new Error('kaynak yok');
-     let items=[];
-     try{const doc=new DOMParser().parseFromString(txt,'text/xml');const its=[...doc.querySelectorAll('item')];
-      if(its.length)items=its.map(it=>({t:((it.querySelector('title')||{}).textContent||'').trim(),u:((it.querySelector('link')||{}).textContent||'').trim()}))}catch(x){}
-     if(!items.length)items=mdLinks(txt).map(x=>({t:x.t,u:x.u}));
-     const have=new Set(kap.items.map(x=>x.id));
-     for(const it of items.slice(0,6)){if(!it.t||it.t.length<9||skipIfOther(it.t))continue;
-      const id=hid(sym+'|'+(it.u||it.t));if(have.has(id)||kap.del[id])continue;have.add(id);
-      let ti=it.t,art='';const i3=ti.lastIndexOf(' - ');if(i3>10){art=ti.slice(i3+3);ti=ti.slice(0,i3)}
-      kap.items.push({id,sym,title:ti,src:art||srcName,url:it.u||'',t:0,seen:now});added++;gotN++}
-     if(gotN)break}catch(e){}
-   }
    if(!gotN)fail++;
    await new Promise(r=>setTimeout(r,350));
   }
