@@ -836,12 +836,12 @@ function rssItems(t){t=String(t||'');
  const x=i1>-1&&i2>i1?t.slice(i1,i2+7):t;
  try{const doc=new DOMParser().parseFromString('<rss><channel>'+x+'</channel></rss>','text/xml');
   const its=[...doc.querySelectorAll('item,entry')];
-  if(its.length)return its.slice(0,26).map(it=>{const g=n=>{const e=it.querySelector(n);return e&&e.textContent?e.textContent:''};
+  if(its.length)return its.slice(0,26).map(it=>{const g=n=>{const e=it.querySelector(n);if(!e)return'';const h=e.getAttribute&&e.getAttribute('href');return(h&&/^https?:/.test(h))?h:(e.textContent||'')};
    const ti=g('title'),d=g('pubDate')||g('published')||g('updated');
-   let src=g('source');
-   return{ti:ti.trim(),t:d?+new Date(d):0,src:(src||'Basın').trim()||'Basın'}}).filter(x2=>x2.ti)}catch(e){}
+   let src=g('source'),li=g('link');
+   return{ti:ti.trim(),t:d?+new Date(d):0,src:(src||'Basın').trim()||'Basın',li:/^https?:/.test(li)?li:''}}).filter(x2=>x2.ti)}catch(e){}
  const out=[],re=/\[([^\]\n]{15,300})\]\((https?:\/\/[^\s)]+)\)/g;let m2;
- while((m2=re.exec(t))&&out.length<26){const ti=m2[1].trim();if(!/^https?:/.test(ti)&&out.findIndex(z=>z.ti===ti)<0)out.push({ti:ti,t:0,src:'Basın'})}
+ while((m2=re.exec(t))&&out.length<26){const ti=m2[1].trim();if(!/^https?:/.test(ti)&&out.findIndex(z=>z.ti===ti)<0)out.push({ti:ti,t:0,src:'Basın',li:m2[2]})}
  return out}
 async function gNews(when){
  const qs=['(borsa istanbul OR dolar kur OR enflasyon OR faiz kararı OR altın OR fed OR tcmb) when:'+when,'borsa dolar altın enflasyon faiz when:'+when];
@@ -871,7 +871,7 @@ function evRow(x,saatli){const d=new Date(x.t);
  const fpx=(x.f||x.p)?`<small>${x.f?'beklenti '+x.f:''}${x.f&&x.p?' · ':''}${x.p?'önceki '+x.p:''}</small>`:'';
  return`<div class="nev"><span class="ndt">${hh}</span>${imDot(x.im)}<span class="nfl">${NFL[x.c]||'🌍'}</span><div class="ntt">${esc(x.ti)}${fpx}</div></div>`}
 function newsRow(x){const dtsm=x.t?new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(x.t)):'';
- return`<a class="nws" href="https://news.google.com/rss/search?q=${encodeURIComponent(x.ti.slice(0,60))}&hl=tr&gl=TR&ceid=TR:tr" target="_blank" rel="noopener">${esc(x.ti)}<small>${esc(x.src)} · ${dtsm}</small></a>`}
+ return`<a class="nws" href="${esc(x.li||('https://www.google.com/search?hl=tr&q='+encodeURIComponent(x.ti.slice(0,70))))}" target="_blank" rel="noopener">${esc(x.ti)}<small>${esc(x.src)} · ${dtsm}</small></a>`}
 function themeChip(t,n){return`<span class="kchip">${esc(t)} · ${n} haber</span>`}
 function pastSum(cal,news){const done=cal.filter(x=>x.t<Date.now()&&x.im!=='Holiday'),hi=done.filter(x=>x.im==='High');
  const th=newsThemes(news),top=th.slice(0,3);
@@ -894,20 +894,53 @@ function futureSum(cal){const up=cal.filter(x=>x.t>Date.now()&&x.im!=='Holiday')
  let o=`Önümüzdeki günlerde ${up.length} veri bekleniyor; ${hi.length} tanesi yüksek etkili. En kritikleri: ${hi.slice(0,3).map(x=>x.ti).join(', ')||up.slice(0,3).map(x=>x.ti).join(', ')}.`;
  const f=hi[0]||up[0];if(f)o+=` ${f.ti} öncesi temkinli, sonrası yön arayışı görülebilir — ${evImpact(f.ti).toLowerCase()}`;
  return o}
+function dataAnalysis(cal,mode){
+ const done=cal.filter(x=>x.t<Date.now()&&x.im!=='Holiday'),hi=done.filter(x=>x.im==='High');
+ if(mode==='past'){
+  if(!done.length)return'Açıklanmış veri görünmüyor; takvim güncellendikçe burada listelenir.';
+  const f=hi.filter(x=>x.f).slice(-2).map(x=>{const fa=parseFloat(String(x.f).replace(',','.')),pr=parseFloat(String(x.p).replace(',','.'));
+   const y=isFinite(fa)&&isFinite(pr)?(fa>pr?'piyasa beklentisi öncekinin üstündeydi':fa<pr?'beklenti öncekinin altındaydı':'beklenti öncekiyle aynıydı'):'';
+   return x.ti+(y?' ('+y+')':'')}).join('; ');
+  return`${done.length} veri açıklandı, ${hi.length} tanesi yüksek etkili${hi.length?' ('+hi.slice(-3).map(x=>x.ti).join(', ')+')':''}. ${f?'Beklenti yönü: '+f+'. ':''}Yüksek etkili verilerin açıklanma anındaki sert hareketler normaldir; yönü genelde beklentiyle karşılaştırma belirler.`}
+ if(mode==='today'){
+  const td=trDate(new Date()),tod=cal.filter(x=>trDate(new Date(x.t))===td&&x.im!=='Holiday').sort((a,b)=>a.t-b.t),hi2=tod.filter(x=>x.im==='High');
+  if(!tod.length)return'Bugün takvimde öne çıkan veri yok; yönü basın akışı ve küresel gelişmeler belirleyebilir.';
+  let o=`Bugün ${tod.length} veri açıklanıyor, ${hi2.length} tanesi yüksek etkili. Veri saatlerine yakın hareketlenme görülebilir.`;
+  const f=tod.find(x=>x.f);
+  if(f)o+=` ${f.ti}: beklenti ${f.f||'—'}, önceki ${f.p||'—'} — ${evImpact(f.ti).toLowerCase()}`;
+  return o}
+ const up=cal.filter(x=>x.t>Date.now()&&x.im!=='Holiday').sort((a,b)=>a.t-b.t),hi3=up.filter(x=>x.im==='High');
+ if(!up.length)return'Haftanın kalanında kayıtlı veri görünmüyor; yeni haftanın takvimi pazartesi netleşir.';
+ let o=`${up.length} veri bekleniyor, ${hi3.length} tanesi yüksek etkili. En kritikleri: ${(hi3.length?hi3.slice(0,3):up.slice(0,3)).map(x=>x.ti).join(', ')}.`;
+ const f=hi3[0]||up[0];
+ if(f)o+=` ${f.ti}: beklenti ${f.f||'—'}, önceki ${f.p||'—'} — ${evImpact(f.ti).toLowerCase()}`;
+ return o}
+function newsAnalysis(list){
+ if(!list||!list.length)return'Haber akışı alınamadı; 🔄 ile yenilemeyi deneyebilirsin.';
+ const th=newsThemes(list),top=th.slice(0,3);
+ const POS=/yükseldi|arttı|artırdı|rekor|kazanç|toparlan|güçlen|zirve|pozitif/i,NEG=/düştü|geriledi|kaybetti|endişe|düşüş|zarar|baskı|temkinli/i;
+ let p=0,n=0;for(const x of list){if(POS.test(x.ti||''))p++;if(NEG.test(x.ti||''))n++}
+ const ton=p>n?'başlıkların genel tonu olumlu görünüyor':n>p?'genel ton temkinli/olumsuz görünüyor':'ton karışık; net bir yön baskın değil';
+ let o=`${list.length} haber tarandı; gündem en çok ${top.map(x=>x[0]+' ('+x[1]+')').join(', ')} üzerinde — ${ton}.`;
+ if(top.length){const t2=THEMES.find(x=>x[1]===top[0][0]);if(t2)o+=` ${t2[2]}`}
+ o+=` Öne çıkan başlık: "${(list[0].ti||'').slice(0,90)}".`;
+ return o}
 function newsRender(){if(!newsData)return;
  $('newsSt').textContent='Son güncelleme '+dts(newsData.t);
  const cal=newsData.cal||[],n7=newsData.n7||[],n1=newsData.n1||[];
  const done=cal.filter(x=>x.t<Date.now()).sort((a,b)=>b.t-a.t).slice(0,14);
  $('nsp').innerHTML=`<div class="card"><b>📈 Açıklanan veriler (bu hafta)</b><div style="margin-top:4px">${done.length?done.map(x=>evRow(x,false)).join(''):'<div class="mut sm">Kayıttan gösterilecek veri yok.</div>'}</div></div>`
+  +anlzB(dataAnalysis(cal,'past'))
   +`<div class="card"><b>🗞️ Son 1 haftanın öne çıkan haberleri</b><div style="margin-top:4px">${(n7.slice(0,10).map(newsRow).join(''))||'<div class="mut sm">Haber akışı alınamadı.</div>'}</div></div>`
-  +anlzB(pastSum(cal,n7));
+  +anlzB(newsAnalysis(n7));
  const td=trDate(new Date()),tod=cal.filter(x=>trDate(new Date(x.t))===td&&x.im!=='Holiday').sort((a,b)=>a.t-b.t);
  $('nst').innerHTML=`<div class="card"><b>⏰ Bugün açıklanacak veriler</b><div style="margin-top:4px">${tod.length?tod.map(x=>evRow(x,true)).join(''):'<div class="mut sm">Bugün takvimde öne çıkan veri yok.</div>'}</div></div>`
+  +anlzB(dataAnalysis(cal,'today'))
   +`<div class="card"><b>🗞️ Bugünün gündemi</b><div style="margin-top:4px">${(n1.slice(0,10).map(newsRow).join(''))||'<div class="mut sm">Haber akışı alınamadı.</div>'}</div></div>`
-  +anlzB(todaySum(cal,n1));
+  +anlzB(newsAnalysis(n1));
  const up=cal.filter(x=>x.t>Date.now()).sort((a,b)=>a.t-b.t).slice(0,16);
  $('nsf').innerHTML=`<div class="card"><b>🗓️ Beklenen veriler (haftanın kalanı)</b><div style="margin-top:4px">${up.length?up.map(x=>evRow(x,true)).join(''):'<div class="mut sm">Kalan günlerde kayıtlı veri yok; yeni haftanın takvimi hafta başında yayımlanır.</div>'}</div></div>`
-  +anlzB(futureSum(cal))}
+  +anlzB(dataAnalysis(cal,'future'))}
 async function newsLoad(){if(newsBusy)return;newsBusy=true;
  const st=$('newsSt');if(st)st.textContent='⏳ Gündem yükleniyor…';
  try{const[cal,n7,n1]=await Promise.all([ffCal().catch(()=>[]),gNews('7d').catch(()=>[]),gNews('1d').catch(()=>[])]);
