@@ -116,7 +116,7 @@ body.print-rp h3{color:#555}}
 .kchip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:600}
 .kchip.g{background:#d9f5ea;color:#065f46;border-color:#b9ead4}
 .kchip.r{background:#fde5e5;color:#991b1b;border-color:#f7c9c9}
-.anlz{margin-top:9px;background:linear-gradient(135deg,rgba(91,94,244,.12),rgba(139,92,246,.05));border:1px solid rgba(91,94,244,.35);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}
+.anlz{margin-top:9px;background:linear-gradient(135deg,rgba(91,94,244,.12),rgba(139,92,246,.05));border:1px solid rgba(91,94,244,.35);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
 <h1><span style="display:inline-flex;align-items:center;gap:7px"><svg width="23" height="23" viewBox="0 0 512 512" style="flex:none" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5ef4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(#lg1)"/><g fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><polyline points="82,358 184,256 256,297 358,174"/><polyline points="300,166 366,166 366,232"/></g><line x1="82" y1="420" x2="430" y2="420" stroke="rgba(255,255,255,.75)" stroke-width="16" stroke-linecap="round"/></svg> Portföyüm</span><span class="badge" id="mode">…</span></h1>
@@ -394,9 +394,23 @@ function posCard(s,totVal){
   <div class="secBox" data-box="${esc(s.sym)}" style="margin-top:10px"><label>Sektör</label><input class="sec" list="secList" value="${esc(secv)}" placeholder="örn. Savunma"></div>
   <div style="margin-top:6px"><label>Yahoo Kodu (eksik veri düzeltmek için)</label><input class="yt" value="${esc((meta[s.sym]&&meta[s.sym].ytick)||'')}" placeholder="${esc(ySym(s.sym,s.cur))}"></div>
  </details>${taOn?taDetailsHTML(s):''}</div>`}
-function renderMkt(){const l=lastInfo(),T=[['BIST 100','MK_BIST100',''],['Dolar','FX_USD','₺'],['Euro','FX_EUR','₺'],['Gram altın','MK_GRAM','₺'],['Ons','MK_ONS','$'],['BTC','MK_BTC','$'],['S&P 500','MK_SP500','$']];
- $('mkt').innerHTML=`<div class="row"><b>Piyasa</b><span class="mut sm">${l?dts(l.t):'henüz çekilmedi'}</span></div><div class="mt">${T.map(([n,k,u])=>{const p=prices[k];let ch=p&&p.prev>0?(p.price/p.prev-1)*100:null;
-   if(ch==null&&k==='MK_GRAM'&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0)ch=((prices.MK_ONS.price/prices.MK_ONS.prev)*(prices.FX_USD.price/prices.FX_USD.prev)-1)*100;return`<div class="tile" data-mk="${k}"><small>${n}</small><b>${p?fmt(p.price)+(u?' '+u:''):'—'}</b>${ch!=null?`<br><i class="${cls(ch)}">${pct(ch)}</i>`:''}</div>`}).join('')}</div>`}
+const MKTZ={TR:['Europe/Istanbul',[580,600],[600,1080]],US:['America/New_York',[540,570],[570,960]],DE:['Europe/Berlin',[530,540],[540,1050]],NL:['Europe/Amsterdam',[530,540],[540,1050]]};
+function mktState(zn,now){const z=MKTZ[zn];if(!z)return null;const d=now||new Date();
+ let wd='',hh='',mm='';
+ try{const ps=new Intl.DateTimeFormat('en-GB',{timeZone:z[0],weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d);
+  for(const x of ps){if(x.type==='weekday')wd=x.value;else if(x.type==='hour')hh=x.value;else if(x.type==='minute')mm=x.value}}catch(e){return null}
+ const m=(+hh)%24*60+ +mm;
+ if(wd==='Sat'||wd==='Sun')return{st:'c',msg:'Kapalı · hafta sonu'};
+ if(m>=z[1][0]&&m<z[1][1])return{st:'a',msg:'Emir toplama · açılış '+(z[2][0]/60|0)+':'+String(z[2][0]%60).padStart(2,'0')};
+ if(m>=z[2][0]&&m<z[2][1])return{st:'o',msg:'Açık · kapanış '+(z[2][1]/60|0)+':'+String(z[2][1]%60).padStart(2,'0')+' (borsa saati)'};
+ return{st:'c',msg:'Kapalı'}}
+setInterval(()=>{try{renderMkt()}catch(e){}},60000);
+function renderMkt(){const l=lastInfo(),T=[['BIST 100','MK_BIST100','','TR','TR'],['NASDAQ 100','MK_NDX100','','ABD','US'],['DJIA','MK_DJIA','','ABD','US'],['S&P 500','MK_SP500','','ABD','US'],['DAX','MK_DAX','','DE','DE'],['AEX','MK_AEX','','NL','NL'],['Dolar','FX_USD','₺'],['Euro','FX_EUR','₺'],['Gram altın','MK_GRAM','₺'],['Ons','MK_ONS','$'],['BTC','MK_BTC','$']];
+ $('mkt').innerHTML=`<div class="row"><b>Piyasa</b><span class="mut sm">${l?dts(l.t):'henüz çekilmedi'}</span></div><div class="mt">${T.map(([n,k,u,cc,zk])=>{const p=prices[k];let ch=p&&p.prev>0?(p.price/p.prev-1)*100:null;
+   if(ch==null&&k==='MK_GRAM'&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0)ch=((prices.MK_ONS.price/prices.MK_ONS.prev)*(prices.FX_USD.price/prices.FX_USD.prev)-1)*100;
+   const st=zk?mktState(zk):null,sti=!st?'':st.st==='o'?`<i class="mop" title="${st.msg}"></i>`:st.st==='a'?`<i class="mpre" title="${st.msg}"></i>`:`<span class="mcl" title="${st.msg}">🌙</span>`;
+   const tint=ch==null?'':ch>0.05?' style="background:rgba(16,185,129,.13)"':ch<-0.05?' style="background:rgba(229,56,45,.12)"':' style="background:rgba(128,132,180,.10)"';
+   return`<div class="tile" data-mk="${k}"${tint}><small>${n}${cc?`<span class="mcc">${cc}</span>`:''}${sti}</small><b>${p?fmt(p.price)+(u?' '+u:''):'—'}</b>${ch!=null?`<br><i class="${cls(ch)}">${pct(ch)}</i>`:''}</div>`}).join('')}</div>`}
 function renderKz(all){
  const rows=perSym(all).sort((a,b)=>b.total*b.f-a.total*a.f),sum=rows.reduce((a,r)=>a+r.total*r.f,0),inv=rows.reduce((a,r)=>a+r.bought*r.f,0);
  const vol=trades.filter(t=>t.side!=='div'&&t.sym!=='NAKIT').reduce((a,t)=>a+t.qty*t.price*(fx(t.cur||'TRY')||0),0);
@@ -876,7 +890,7 @@ async function refresh(){
   const pend=open.filter(s=>!got.has(s.sym)),res=[];for(let i=0;i<pend.length;i+=4)res.push(...await Promise.all(pend.slice(i,i+4).map(async s=>({s,r:await stockPrice(s.sym,s.cur)}))));
   for(const {s,r} of res){if(r&&r.price){await S.set('p_'+s.sym,{kind:'price',sym:s.sym,price:r.price,prev:r.prev||null,at:Date.now()});ok.push(s.sym)}else fail.push(s.sym+(r&&r.bad?' (para birimi '+r.bad+')':''))}
  }catch(e){fail.push('beklenmeyen hata')}
- try{await Promise.all([['MK_BIST100','XU100.IS'],['FX_USD','USDTRY=X'],['FX_EUR','EURTRY=X'],['MK_ONS','XAUUSD=X'],['MK_BTC','BTC-USD'],['MK_SP500','%5EGSPC']].map(([k2,t2])=>fillPrev(k2,t2)))}catch(e){}
+ try{await Promise.all([['MK_BIST100','XU100.IS'],['FX_USD','USDTRY=X'],['FX_EUR','EURTRY=X'],['MK_ONS','XAUUSD=X'],['MK_BTC','BTC-USD'],['MK_SP500','%5EGSPC'],['MK_NDX100','%5ENDX'],['MK_DJIA','%5EDJI'],['MK_DAX','%5EGDAXI'],['MK_AEX','%5EAEX']].map(([k2,t2])=>fillPrev(k2,t2)))}catch(e){}
  try{await mktGoldFix()}catch(e){}
  try{if(prices.MK_GRAM&&!(prices.MK_GRAM.prev>0)&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const gp=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(gp>0){prices.MK_GRAM={...prices.MK_GRAM,prev:gp};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
  try{if(!prices.MK_GRAM&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const g2=prices.MK_ONS.price/31.1035*prices.FX_USD.price,g2p=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(g2>0){prices.MK_GRAM={kind:'price',sym:'MK_GRAM',price:g2,prev:g2p,at:Date.now()};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
@@ -1468,7 +1482,7 @@ async function kapDirect(){
  }catch(e){msg('KAP çekilemedi: '+(e.message||e),1)}
  kapBusy=false}
 /* ---------- grafik pencereleri ---------- */
-const MKCH={MK_BIST100:{n:'BIST 100',tick:'XU100.IS'},FX_USD:{n:'Dolar/TL',tick:'USDTRY=X'},FX_EUR:{n:'Euro/TL',tick:'EURTRY=X'},MK_ONS:{n:'Ons Altın ($)',tick:'XAUUSD=X'},MK_BTC:{n:'Bitcoin ($)',btc:true},MK_SP500:{n:'S&P 500',tick:'^GSPC'},MK_GRAM:{n:'Gram Altın (₺)',gram:true}};
+const MKCH={MK_BIST100:{n:'BIST 100',tick:'XU100.IS'},FX_USD:{n:'Dolar/TL',tick:'USDTRY=X'},FX_EUR:{n:'Euro/TL',tick:'EURTRY=X'},MK_ONS:{n:'Ons Altın ($)',tick:'XAUUSD=X'},MK_BTC:{n:'Bitcoin ($)',btc:true},MK_SP500:{n:'S&P 500',tick:'^GSPC'},MK_NDX100:{n:'NASDAQ 100',tick:'^NDX'},MK_DJIA:{n:'Dow Jones',tick:'^DJI'},MK_DAX:{n:'DAX',tick:'^GDAXI'},MK_AEX:{n:'AEX',tick:'^AEX'},MK_GRAM:{n:'Gram Altın (₺)',gram:true}};
 const MRR=[['G','Gün'],['H','Hafta'],['1A','1 Ay'],['3A','3 Ay'],['6A','6 Ay'],['1Y','1 Yıl']];
 let MWC={},MCW=null,MWR='1A';
 function symChartCfg(sym){const s=calc(trades)[sym];if(!s)return null;
