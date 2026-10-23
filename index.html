@@ -262,7 +262,7 @@ body.print-rp h3{color:#555}}
  <button class="t" id="lforgot">PIN’i unuttum</button></div>
 <div id="tip"></div>
 <datalist id="secList"><option>Savunma</option><option>Bankacılık</option><option>Holding</option><option>Enerji</option><option>Teknoloji</option><option>Telekomünikasyon</option><option>Otomotiv</option><option>Gıda</option><option>Perakende</option><option>Sağlık</option><option>Kimya</option><option>Metal</option><option>İnşaat</option><option>Ulaştırma</option><option>Turizm</option><option>Çimento</option><option>Sigorta</option><option>Tekstil</option><option>Madencilik</option><option>Kâğıt</option><option>Fon</option><option>Kripto</option><option>Diğer</option></datalist>
-<nav id="nav"><button class="on" data-tab="pf"><span><svg viewBox="0 0 24 24" width="19" height="19" style="display:block;margin:auto"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v3M12 14v3M7 12h3M14 12h3" stroke="currentColor" stroke-width="2"/></svg></span>Portföy</button><button data-tab="kz"><span>📊</span>Analiz</button><button data-tab="add"><span style="font-size:15px;font-weight:900;letter-spacing:-.5px">+/-</span>Al/Sat</button><button data-tab="his"><span>🧾</span>İşlemler</button><button data-tab="kap"><span style="font-size:15px;font-weight:900;letter-spacing:.02em">KAP</span><b class="nb" id="kapN"></b></button><button data-tab="news"><span>📰</span>Haberler</button><button data-tab="bak"><span>⚙️</span>Ayarlar</button></nav>
+<nav id="nav"><button class="on" data-tab="pf"><span><svg viewBox="0 0 24 24" width="19" height="19" style="display:block;margin:auto"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v3M12 14v3M7 12h3M14 12h3" stroke="currentColor" stroke-width="2"/></svg></span>Portföy</button><button data-tab="kz"><span>📊</span>Analiz</button><button data-tab="his"><span>🧾</span>İşlemler</button><button data-tab="add"><span style="font-size:15px;font-weight:900;letter-spacing:-.5px">+/-</span>Al/Sat</button><button data-tab="kap"><span style="font-size:15px;font-weight:900;letter-spacing:.02em">KAP</span><b class="nb" id="kapN"></b></button><button data-tab="news"><span>📰</span>Haberler</button><button data-tab="bak"><span>⚙️</span>Ayarlar</button></nav>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -824,9 +824,6 @@ try{const hm=$('hsMaxw'),hl=$('hsVollo'),hv=$('hsVolhi');if(hm&&hl&&hv&&$('hsSav
 
 /* ---------- v19: 📰 Haberler ---------- */
 let newsBusy=false,newsData=null;
-function ktrText(url){let lastErr=null;
- for(const f of KTR){try{return Promise.resolve('x')}catch(e){}}
- return Promise.reject(lastErr||new Error('yok'))}
 async function newsFetch(url){let lastErr=null;
  for(const f of KTR){try{return await getText(f(url),15000)}catch(e){lastErr=e}}
  throw lastErr||new Error('kaynaklara ulaşılamadı')}
@@ -834,11 +831,25 @@ async function ffCal(){
  const t=await newsFetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
  const d=JSON.parse(t.slice(t.indexOf('['),t.lastIndexOf(']')+1));
  return(Array.isArray(d)?d:[]).map(x=>({t:x.date?+new Date(x.date):0,ti:x.title||'',c:x.country||'',im:x.impact||'Low',f:x.forecast||'',p:x.previous||''})).filter(x=>x.t>0)}
+function rssItems(t){t=String(t||'');
+ const i1=t.indexOf('<item'),i2=t.lastIndexOf('</item>');
+ const x=i1>-1&&i2>i1?t.slice(i1,i2+7):t;
+ try{const doc=new DOMParser().parseFromString('<rss><channel>'+x+'</channel></rss>','text/xml');
+  const its=[...doc.querySelectorAll('item,entry')];
+  if(its.length)return its.slice(0,26).map(it=>{const g=n=>{const e=it.querySelector(n);return e&&e.textContent?e.textContent:''};
+   const ti=g('title'),d=g('pubDate')||g('published')||g('updated');
+   let src=g('source');
+   return{ti:ti.trim(),t:d?+new Date(d):0,src:(src||'Basın').trim()||'Basın'}}).filter(x2=>x2.ti)}catch(e){}
+ const out=[],re=/\[([^\]\n]{15,300})\]\((https?:\/\/[^\s)]+)\)/g;let m2;
+ while((m2=re.exec(t))&&out.length<26){const ti=m2[1].trim();if(!/^https?:/.test(ti)&&out.findIndex(z=>z.ti===ti)<0)out.push({ti:ti,t:0,src:'Basın'})}
+ return out}
 async function gNews(when){
- const u='https://news.google.com/rss/search?q='+encodeURIComponent('(borsa istanbul OR dolar kur OR enflasyon OR faiz kararı OR altın OR fed OR tcmb) when:'+when)+'&hl=tr&gl=TR&ceid=TR:tr';
- const t=await newsFetch(u);
- try{const doc=new DOMParser().parseFromString(t,'text/xml');
-  return[...doc.querySelectorAll('item')].slice(0,26).map(it=>({ti:(it.querySelector('title')||{}).textContent||'',d:(it.querySelector('pubDate')||{}).textContent||'',src:((it.querySelector('source')||{}).textContent)||'Basın'})).filter(x=>x.ti).map(x=>({ti:x.ti,t:x.d?+new Date(x.d):0,src:x.src}))}catch(e){return[]}}
+ const qs=['(borsa istanbul OR dolar kur OR enflasyon OR faiz kararı OR altın OR fed OR tcmb) when:'+when,'borsa dolar altın enflasyon faiz when:'+when];
+ for(const q of qs){
+  const urls=['https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=tr&gl=TR&ceid=TR:tr',
+   'https://www.bing.com/news/search?q='+encodeURIComponent(q)+'&format=RSS'];
+  for(const u of urls){try{const t=await newsFetch(u);const it=rssItems(t);if(it.length)return it}catch(e){}}}
+ return[]}
 const NFL={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',TRY:'🇹🇷',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',CHF:'🇨🇭',CNY:'🇨🇳',NZD:'🇳🇿'};
 const THEMES=[[/enflasyon|tüfe|üfe|cpi|piyasa fiyatları/i,'Enflasyon','Şirket maliyetleri ve faiz beklentileri üzerinden kura ve BIST\'e yön verebilir.'],[/faiz|tcmb|politika oranı|pdk|fed|fomc/i,'Faiz / Para politikası','Faiz beklentisi hisse, kur ve tahvilin en güçlü tetikleyicisi; beklenti dışı adım sert hareket getirebilir.'],[/dolar|kur|euro|döviz/i,'Döviz kuru','Kur hareketi yabancı hisselerdeki TL kârını ve ihracatçı hisseleri doğrudan etkiler.'],[/altın|ons/i,'Altın','Güvenli liman talebi; gram altın ve madenci hisseleri üzerinde belirleyici.'],[/borsa|bist|hisse/i,'Borsa','Risk iştahıyla birlikte hareket eder; yabancı takas yön verebilir.'],[/petrol|enerji|doğalgaz/i,'Enerji','Enerji maliyetleri enflasyon ve enerji hisseleri üzerinden okunur.'],[/istihdam|tarım dışı|işsizlik|employment/i,'İstihdam','İstihdam verisi Fed politikasının pusulası; dolar ve küresel risk iştahını oynatır.'],[/büyüme|gsyh|gdp|pmi/i,'Büyüme / PMI','Konjonktür görünümünü değiştirirse kârlılık beklentilerini günceller.'],[/savaş|jeopolitik|seçim|ambargo/i,'Jeopolitik','Risk primini yükseltir; altın ve dolar gibi güvenli limanlara akış getirebilir.']];
 function newsThemes(list){const cnt={};
@@ -1532,7 +1543,7 @@ function kapTemplate(){const syms=[...new Set(Object.values(calc(trades)).filter
 async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('Önce en az bir hisse ekle.',1);$('kapTpl').style.display='block';$('kapTpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('kapTpl').select();ok=document.execCommand('copy')}catch(x){}}
  msg(ok?'Kopyalandı ✓ Google tablonda E1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda E1 hücresine yapıştır.',!ok)}
 /* ---------- KAP doğrudan çekme (tablosuz) ---------- */
-const KTR=[u=>'https://r.jina.ai/'+u,u=>'https://api.cors.lol/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)];
+const KTR=[u=>'https://r.jina.ai/'+u,u=>'https://api.cors.lol/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
 function mdLinks(txt){const out=[],re=/\[([^\]]{9,300})\]\((https?:\/\/[^\s)]+)\)/g;let m2;
  while((m2=re.exec(txt))){let ti=m2[1].trim(),li=m2[2];
   if(/apiclick\.aspx/.test(li)){try{const mm=/[?&]url=([^&]+)/.exec(li);if(mm)li=decodeURIComponent(mm[1])}catch(x){}}
