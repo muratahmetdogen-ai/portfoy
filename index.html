@@ -234,11 +234,12 @@ body.print-rp h3{color:#555}}
   <div style="margin-top:8px"><label>Oynaklık kötü sınır (%)</label><input id="hsVolhi" type="number" inputmode="decimal" step="1"></div>
   <div class="btns"><button class="s" id="hsSave">Kaydet</button></div></div>
  <h3>KAP haberleri kaynağı</h3>
- <div class="card"><div class="mut sm">KAP sekmesindeki “Yenile”, haberleri doğrudan çeker (Google Haber + Bing + Yahoo üzerinden, ilk 8 BIST hissen). Tablo kuruluysa hem tablo hem doğrudan çekim çalışır.</div>
+ <div class="card"><div class="mut sm">KAP sekmesindeki “Yenile”, getmidas.com/kap-haberleri sayfalarını (ilk 10 sayfa) tarar ve yalnızca elindeki BIST hisselerine ait haberleri gösterir. Midas’a ulaşılamazsa Google/Bing yedek olarak denenir. Tablo kuruluysa o da çalışır.</div>
   <div class="mut sm" style="margin-top:6px"></div>
   <ol class="sm mut" style="padding-left:18px;margin:8px 0"><li>“KAP Şablonunu Kopyala”ya bas.</li><li>Google tablonda <b>E1</b> hücresine yapıştır (fiyat sütunlarının sağına).</li><li>Yeni hisse alırsan şablonu tekrar kopyalayıp E1’e yapıştır.</li></ol>
   <button class="s" id="kapTplBtn">KAP Şablonunu Kopyala</button>
   <textarea id="kapTpl" rows="4" readonly style="display:none;margin-top:8px"></textarea></div>
+ <div class="card"><div class="mut sm">Midas haberlerinde şirketler kısa adlarıyla geçer (ör. “Kardemir”). Eşleşme hisse koduna ve bu adlara göre yapılır. Haber çıkmayan bir hisse için kısa adı buraya ekle. Her satıra <b>KOD=Ad</b> yaz (birden fazla ad için | kullan).</div><textarea id="kapAl" rows="4" placeholder="KRDMD=Kardemir&#10;TRALT=TR Anadolu Metal|Anadolu Metal" style="margin-top:8px" autocapitalize="off" spellcheck="false"></textarea><div class="btns"><button class="s" id="kapAlSave">Adları Kaydet</button></div></div>
  <h3>GitHub ile otomatik yedek</h3>
  <div class="card"><div class="mut sm">Veriler özel (private) bir GitHub deposuna otomatik kaydedilir.</div>
  <div style="margin-top:10px"><label>Depo (kullanıcıadı/depo-adı)</label><input id="ghRepo" placeholder="kullaniciadin/portfoy-veri" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
@@ -965,7 +966,7 @@ async function symNameLearn(){try{
  const first=mi[0].ti.split(/[ ,]/)[0].trim();
  if(first&&first.length>=3)addSymName(sym,first.toLocaleLowerCase('tr'))
 }catch(e){}}
-try{setInterval(()=>{if(navigator.onLine&&!kapBusy)symNameLearn()},30*60*1000)}catch(e){}
+/* eski symNameLearn (Midas ?search desteklemiyor) devre dışı */
 
 async function goldExt(){
  try{const j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true',12000);
@@ -1601,8 +1602,12 @@ function mdLinks(txt){const out=[],re=/\[([^\]]{9,300})\]\((https?:\/\/[^\s)]+)\
  return out}
 let kapBusy=false;
 const SYMAP={ASELS:'Aselsan',TUPRS:'Tüpraş',THYAO:'Türk Hava Yolları',KCHOL:'Koç Holding',BIMAS:'BİM',SISE:'Şişecam',EREGL:'Ereğli',SASA:'Sasa',AKBNK:'Akbank',GARAN:'Garanti',YKBNK:'Yapı ve Kredi',ISCTR:'İş Bankası',KRDMD:'Kardemir',OTKAR:'Otokar',VESTL:'Vestel',ARCLK:'Arçelik',PETKM:'Petkim',SAHOL:'Sabancı',ENKAI:'Enka',TCELL:'Turkcell',FROTO:'Ford Otosan',TOASO:'Tofaş',CVKMD:'CVK Maden',EKIM:'Ekim Turizm',SSAAT:'SSB',SISE:'Şişecam',ALARK:'Alarko',TKFEN:'Tekfen',TABGD:'Tab Gıda'};
-function symNames(sym){const out=[SYMAP[sym]||''];try{const x=JSON.parse(localStorage.getItem('portfoy_symnames')||'{}');if(x[sym])out.unshift(x[sym])}catch(e){}
- return out.filter(Boolean)}
+Object.assign(SYMAP,{KRDMD:'Kardemir',TRALT:'TR Anadolu Metal',TRCAS:'Turcas',AKSA:'Aksa Akrilik',AKSEN:'Aksa Enerji',AKKOK:'Akkök',KLGYO:'Kiler GYO',ISMEN:'İş Yatırım',ISGYO:'İş GYO',DOHOL:'Doğan Holding',HEKTS:'Hektaş',PGSUS:'Pegasus',MGROS:'Migros',SOKM:'Şok Marketler',ASTOR:'Astor',KONTR:'Kontrolmatik',EUPWR:'Europower',GESAN:'Girişim Elektrik',SMRTG:'Smart Güneş',ALFAS:'Alfa Solar',CWENE:'CW Enerji',ODAS:'Odaş',ENJSA:'Enerjisa',ZOREN:'Zorlu Enerji',TTKOM:'Türk Telekom',TAVHL:'TAV Havalimanları',HALKB:'Halkbank',VAKBN:'Vakıfbank',TSKB:'TSKB',ALBRK:'Albaraka',SKBNK:'Şekerbank',ULKER:'Ülker',CCOLA:'Coca-Cola İçecek',AEFES:'Anadolu Efes',MAVI:'Mavi',BRSAN:'Borusan',CIMSA:'Çimsa',OYAKC:'Oyak Çimento',AKCNS:'Akçansa',GUBRF:'Gübre Fabrikaları',KOZAL:'Koza Altın',KOZAA:'Koza Anadolu',NETAS:'Netaş',YEOTK:'Yeo Teknoloji',MIATK:'Mia Teknoloji',REEDR:'Reeder',BIOEN:'Biotrend',HRKET:'Hareket Proje',MEYSU:'Meysu Gıda',DMRGD:'DMR Unlu Mamuller',ISDMR:'İskenderun Demir Çelik',DOAS:'Doğuş Otomotiv',TTRAK:'Türk Traktör',KARSN:'Karsan',EKGYO:'Emlak Konut',SNGYO:'Sinpaş',TRGYO:'Torunlar GYO',AGHOL:'AG Anadolu Grubu',GLYHO:'Global Yatırım Holding',KONYA:'Konya Çimento',BRYAT:'Borusan Yatırım',SELEC:'Selçuk Ecza',MPARK:'MLP Care',LKMNH:'Lokman Hekim',AKFGY:'Akfen GYO',AKFYE:'Akfen Yenilenebilir',GWIND:'Galata Wind',BTCIM:'Batıçim',BUCIM:'Bursa Çimento',CANTE:'Çan2 Termik',ISBTR:'İş Bankası B',TMSN:'Tümosan',FENER:'Fenerbahçe',GSRAY:'Galatasaray',BJKAS:'Beşiktaş',TSPOR:'Trabzonspor'});
+const SYMALT={KCHOL:['Koç Holding'],YKBNK:['Yapı Kredi'],GARAN:['Garanti BBVA'],ISCTR:['İş Bankası','İşbank'],THYAO:['THY'],EREGL:['Ereğli Demir','Erdemir'],FROTO:['Ford Otosan'],TOASO:['Tofaş'],SAHOL:['Sabancı Holding'],TCELL:['Turkcell'],AKSA:['Aksa'],TRALT:['Anadolu Metal'],HEKTS:['Hektaş'],ASELS:['Aselsan'],BIMAS:['BİM Birleşik Mağazalar'],DOHOL:['Doğan Şirketler Grubu']};
+const kn=s=>String(s||'').toLocaleLowerCase('tr').replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ş/g,'s').replace(/ü/g,'u').replace(/[^a-z0-9]+/g,' ').trim();
+function kapAliasGet(){try{return JSON.parse(localStorage.getItem('portfoy_kapalias')||'{}')||{}}catch(e){return{}}}
+function symNames(sym){const out=[];const a=kapAliasGet()[sym];if(a)out.push(...a);try{const x=JSON.parse(localStorage.getItem('portfoy_symnames')||'{}');if(x[sym])out.push(x[sym])}catch(e){}
+ if(SYMAP[sym])out.push(SYMAP[sym]);if(SYMALT[sym])out.push(...SYMALT[sym]);return[...new Set(out.filter(Boolean))]}
 function addSymName(sym,name){try{const x=JSON.parse(localStorage.getItem('portfoy_symnames')||'{}');x[sym]=name;localStorage.setItem('portfoy_symnames',JSON.stringify(x))}catch(e){}}
 function midasItems(t){t=String(t||'');const out=[],now=Date.now();
  const re=/((?:\d{1,3}|Bir|bir) (?:Dakika|Saat|Gün) Önce)\s*\n+\s*([^\n]{12,400})/g;let m;
@@ -1611,58 +1616,55 @@ function midasItems(t){t=String(t||'');const out=[],now=Date.now();
   let ts=now;if(/Dakika/i.test(ago))ts=now-n*6e4;else if(/Saat/i.test(ago))ts=now-n*36e5;else if(/Gün/i.test(ago))ts=now-n*864e5;
   if(ti.length>=12)out.push({ti:ti,ts:ts})}
  return out}
+/* Midas KAP: sayfalar (?sayfa=N) taranır, haberler hisse koduna / şirket adına göre eşleştirilir */
+async function kapFallback(syms,have,now){let added=0;
+ for(const sym of syms){const nm2=symNames(sym)[0]||sym,lts=nm2.toLocaleLowerCase('tr'),ltsym=sym.toLocaleLowerCase('tr');
+  const us=[['Google KAP','https://news.google.com/rss/search?q='+encodeURIComponent(nm2+' KAP when:30d')+'&hl=tr&gl=TR&ceid=TR:tr'],['Bing KAP','https://www.bing.com/news/search?q='+encodeURIComponent(nm2+' KAP')+'&format=RSS']];
+  let got=false;
+  for(const[sl,u]of us){if(got)break;let a=null;
+   try{const rt=sl==='Google KAP'?(gSkip24()?null:await getText('https://r.jina.ai/'+u,9000)):await newsFetch(u);a=rt?rssItems(rt):null}catch(e){}
+   if(a&&a.length)for(const x of a){const t2=(x.ti||'').toLocaleLowerCase('tr');if(!t2.includes(ltsym)&&!t2.includes(lts))continue;
+    const kid=hid(sym+'|'+x.ti);if(kap.del[kid]||have.has(kid))continue;have.add(kid);
+    kap.items.push({id:kid,sym:sym,title:x.ti,src:sl,url:x.li||'',t:x.t||now,seen:now});added++;got=true;
+    if(kap.items.filter(z=>z.sym===sym).length>=6)break}}
+  await new Promise(r=>setTimeout(r,350))}
+ return added}
 async function kapDirect(){
  if(kapBusy)return;kapBusy=true;
  try{
-  const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.cur==='TRY'&&mk(s)==='BIST').map(s=>s.sym))].sort().slice(0,10);
+  const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.cur==='TRY'&&mk(s)==='BIST').map(s=>s.sym))].sort();
   if(!syms.length){msg('KAP taraması için elinde en az bir BIST hissesi olmalı.',1);kapBusy=false;return}
-  const stEl=$('kapSt');if(stEl)stEl.textContent='Haberler doğrudan çekiliyor ('+syms.length+' hisse)…';
-  let added=0,fail=0;const now=Date.now();
-  const have=new Set(kap.items.map(x=>x.id));
-  for(const sym of syms){
-   const otherRe=new RegExp('\\b('+syms.filter(o=>o!==sym).join('|')+')\\b');
-   const skipIfOther=ti=>syms.length>1&&otherRe.test(ti.toLocaleUpperCase('en'));
-   let gotN=false;
-   try{let mi=null;
-    const q=[encodeURIComponent(sym)],nm=symNames(sym)[0];
-    if(nm&&nm.toLocaleLowerCase('tr')!==sym.toLocaleLowerCase('tr'))q.push(encodeURIComponent(nm));
-    for(let qi=0;qi<q.length&&!mi;qi++){
-     if(qi)await new Promise(r=>setTimeout(r,900));
-     let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+q[qi];
-     try{mt=await kGet(mu,12000)}catch(e){}
-     if(mt){const m2=midasItems(mt);if(m2.length)mi=m2}}
-    if(mi){gotN=true;for(const it of mi.slice(0,6)){
-     const kid=hid(sym+'|'+it.ti);
-     if(skipIfOther(it.ti)||kap.del[kid]||have.has(kid))continue;
-     have.add(kid);
-     kap.items.push({id:kid,sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN=true}}
-    if(!gotN){
-     const nm2=symNames(sym)[0]||sym;
-     const qp=encodeURIComponent(nm2+' KAP'),qg=encodeURIComponent(nm2+' KAP when:30d');
-     const us=[['Google KAP','https://news.google.com/rss/search?q='+qg+'&hl=tr&gl=TR&ceid=TR:tr'],['Bing KAP','https://www.bing.com/news/search?q='+qp+'&format=RSS']];
-     const lts=nm2.toLocaleLowerCase('tr'),ltsym=sym.toLocaleLowerCase('tr');
-     for(const[sl2,u2]of us){
-      if(gotN)break;
-      let a=null;
-      try{const rt=sl2==='Google KAP'?(gSkip24()?null:await getText('https://r.jina.ai/'+u2,9000)):await newsFetch(u2);a=rt?rssItems(rt):null}catch(e){}
-      if(a&&a.length)for(const x of a){
-       const t2=(x.ti||'').toLocaleLowerCase('tr');
-       if(!t2.includes(ltsym)&&!t2.includes(lts))continue;
-       const kid=hid(sym+'|'+x.ti);
-       if(kap.del[kid]||have.has(kid))continue;
-       have.add(kid);
-       kap.items.push({id:kid,sym:sym,title:x.ti,src:sl2,url:x.li||'',t:x.t||now,seen:now});added++;gotN=true;
-       if(kap.items.filter(z=>z.sym===sym).length>=6)break}}}
-   }catch(e){}
-   if(!gotN)fail++;
-   await new Promise(r=>setTimeout(r,350));
-  }
-  if(added||fail<syms.length){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();renderKap()}
-  if(added)msg(added+' haber eklendi ✓'+(fail?' · '+fail+' hissede haber bulunamadı':''));
-  else if(fail>=syms.length)msg('Haber kaynaklarına ulaşılamadı — birkaç dakika sonra tekrar dene.',1);
-  else msg('Son 7 günde yeni haber yok');
- }catch(e){msg('KAP çekilemedi: '+(e.message||e),1)}
+  if(!kap.v2){kap.items=kap.items.filter(x=>x.src!=='Midas KAP');kap.v2=1}
+  const stEl=$('kapSt'),now=Date.now(),PG=10,BASE='https://www.getmidas.com/kap-haberleri/';
+  const pages=[];let firstTi='';
+  for(let p=1;p<=PG;p+=2){
+   if(stEl)stEl.textContent='Midas KAP taranıyor… sayfa '+p+'/'+PG+' · '+syms.length+' hisse';
+   const grp=[p,p+1].filter(n=>n<=PG);
+   const rs=await Promise.all(grp.map(async n=>{try{const a=midasItems(await kGet(BASE+(n>1?'?sayfa='+n:''),14000));return a.length?{n,a}:null}catch(e){return null}}));
+   for(const r of rs){if(!r)continue;if(r.n===1)firstTi=r.a[0].ti;else if(firstTi&&r.a[0].ti===firstTi)continue;pages.push(r)}
+   await new Promise(r=>setTimeout(r,400))}
+  const have=new Set(kap.items.map(x=>x.id));let added=0,scanned=0;const hit=new Set();
+  if(pages.length){
+   const mt=syms.map(s=>({s,tk:new RegExp('(^|[^A-Za-z0-9ÇĞİıÖŞÜçğöşü])'+s+'(?![A-Za-z0-9ÇĞİıÖŞÜçğöşü])'),ns:symNames(s).map(kn).filter(x=>x.length>=3)}));
+   for(const pg of pages)for(const it of pg.a){scanned++;const tn=' '+kn(it.ti)+' ';
+    for(const q of mt){if(!(q.tk.test(it.ti)||q.ns.some(x=>tn.includes(' '+x+' '))))continue;
+     hit.add(q.s);const kid=hid(q.s+'|'+it.ti);if(kap.del[kid]||have.has(kid))continue;have.add(kid);
+     kap.items.push({id:kid,sym:q.s,title:it.ti,src:'Midas KAP',url:BASE+(pg.n>1?'?sayfa='+pg.n:''),t:it.ts,seen:now});added++}}
+   kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();renderKap();
+   const nn=syms.filter(s=>!symNames(s).length);
+   if(added)msg(added+' yeni KAP haberi eklendi ✓ ('+scanned+' haber tarandı, '+hit.size+'/'+syms.length+' hissede eşleşme)');
+   else msg('Taranan '+scanned+' haber arasında yeni eşleşme yok'+(nn.length?' · Adı tanımsız: '+nn.join(', ')+' (Ayarlar → KAP’tan kısa ad ekle)':''))}
+  else{
+   if(stEl)stEl.textContent='Midas’a ulaşılamadı, yedek kaynaklar deneniyor…';
+   const a2=await kapFallback(syms,have,now);
+   if(a2){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();msg(a2+' haber eklendi (yedek kaynak) ✓')}
+   else msg('KAP kaynaklarına ulaşılamadı — birkaç dakika sonra tekrar dene.',1);
+   renderKap()}
+ }catch(e){msg('KAP çekilemedi: '+(e.message||e),1);try{renderKap()}catch(x){}}
  kapBusy=false}
+function kapAlUI(){const a=kapAliasGet();const el=$('kapAl');if(el)el.value=Object.keys(a).map(k=>k+'='+a[k].join('|')).join('\n')}
+$('kapAlSave').addEventListener('click',()=>{const o={};$('kapAl').value.split('\n').forEach(l=>{const m=/^\s*([A-Za-z0-9]{2,8})\s*=\s*(.+)$/.exec(l);if(m){const n=m[2].split('|').map(s=>s.trim()).filter(Boolean);if(n.length)o[m[1].toUpperCase()]=n}});
+ try{localStorage.setItem('portfoy_kapalias',JSON.stringify(o))}catch(e){}kapAlUI();msg('Adlar kaydedildi ✓ — KAP sekmesinde 🔄’e bas')});
 /* ---------- grafik pencereleri ---------- */
 const MKCH={MK_BIST100:{n:'BIST 100',tick:'XU100.IS'},FX_USD:{n:'Dolar/TL',tick:'USDTRY=X'},FX_EUR:{n:'Euro/TL',tick:'EURTRY=X'},MK_ONS:{n:'Ons Altın ($)',tick:'XAUUSD=X'},MK_BTC:{n:'Bitcoin ($)',btc:true},MK_SP500:{n:'S&P 500',tick:'^GSPC'},MK_NDX100:{n:'NASDAQ',tick:'^NDX'},MK_DJIA:{n:'Dow Jones',tick:'^DJI'},MK_DAX:{n:'DAX',tick:'^GDAXI'},MK_AEX:{n:'AEX',tick:'^AEX'},MK_GRAM:{n:'Gram Altın (₺)',gram:true}};
 const MRR=[['G','Gün'],['H','Hafta'],['1A','1 Ay'],['3A','3 Ay'],['6A','6 Ay'],['1Y','1 Yıl']];
@@ -1840,7 +1842,7 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  S=localStore();$('mode').textContent='💾 Bu tarayıcıda';
  S.start();initSync();updatePinUI();setTheme(_ls('portfoy_theme',''));showLast();
  try{$('sheet').value=localStorage.getItem(SK)||''}catch(e){}
- taSettingsUI();
+ taSettingsUI();kapAlUI();
  mktUI();
  if(!isLocked()&&trades.length)setTimeout(refresh,600);
  setInterval(()=>{if(!document.hidden&&!isLocked()&&navigator.onLine&&trades.length)refresh()},300000);
