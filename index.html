@@ -1579,7 +1579,7 @@ function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]
  $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
   ||`<div class="card empty">${kap.t?(kap.hasCols?'Son 14 günde elindeki hisseler için KAP haberi bulunamadı.':'Tabloda KAP bölümü bulunamadı. Ayarlar → KAP haberleri kaynağı adımlarını uygula.'):'Henüz veri yok — üstteki “Yenile” ile doğrudan çekebilirsin.'}</div>`}
 function kapMarkAll(){kapVisible().forEach(x=>kap.read[x.id]=Date.now());kapSave();renderKap()}
-function kapDelAll(){kapVisible().forEach(x=>{kap.del[x.id]=Date.now();kap.items=kap.items.filter(i=>i.id!==x.id)});kapSave();renderKap()}
+function kapDelAll(){kap.items=[];kap.read={};kap.del={};kap.t=0;kapSave();renderKap();msg('Tüm KAP kayıtları temizlendi — 🔄 ile yeniden çekin')}
 function kapOpen(){renderKap();if(!kap.t||Date.now()-kap.t>10*60e3)kapDirect()}
 function kapTemplate(){const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!['Döviz','Nakit'].includes(mk(s))&&s.cur==='TRY').map(s=>s.sym))],rows=[];
  syms.forEach(sym=>{const u=`https://news.google.com/rss/search?q=${sym}+%22KAMUYU+AYDINLATMA+PLATFORMU%22+when:7d&hl=tr&gl=TR&ceid=TR:tr`;rows.push(['=IMPORTFEED("'+u+'";"items";FALSE;8)','','','','',sym]);for(let i=1;i<10;i++)rows.push(['','','','','',sym])});
@@ -1614,17 +1614,24 @@ async function kapDirect(){
   if(!syms.length){msg('KAP taraması için elinde en az bir BIST hissesi olmalı.',1);kapBusy=false;return}
   const stEl=$('kapSt');if(stEl)stEl.textContent='Haberler doğrudan çekiliyor ('+syms.length+' hisse)…';
   let added=0,fail=0;const now=Date.now();
+  const have=new Set(kap.items.map(x=>x.id));
   for(const sym of syms){
    const otherRe=new RegExp('\\b('+syms.filter(o=>o!==sym).join('|')+')\\b');
    const skipIfOther=ti=>syms.length>1&&otherRe.test(ti.toLocaleUpperCase('en'));
    let gotN=false;
-   try{let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+encodeURIComponent(sym);
-    for(const tx of KTR){try{mt=await getText(tx(mu),12000);if(mt)break}catch(e){}}
-    if(mt){const mi=midasItems(mt);
-     if(mi.length){const have=new Set(kap.items.map(x=>x.id));
-      for(const it of mi.slice(0,6)){if(skipIfOther(it.ti)||kap.del[hid(sym+'|'+it.ti)])continue;
-       have.add(hid(sym+'|'+it.ti));
-       kap.items.push({id:hid(sym+'|'+it.ti),sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN=true}}}
+   try{let mi=null;
+    const q=[encodeURIComponent(sym)],nm=symNames(sym)[0];
+    if(nm&&nm.toLocaleLowerCase('tr')!==sym.toLocaleLowerCase('tr'))q.push(encodeURIComponent(nm));
+    for(let qi=0;qi<q.length&&!mi;qi++){
+     if(qi)await new Promise(r=>setTimeout(r,900));
+     let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+q[qi];
+     for(const tx of KTR){try{mt=await getText(tx(mu),12000);if(mt)break}catch(e){}}
+     if(mt){const m2=midasItems(mt);if(m2.length)mi=m2}}
+    if(mi){gotN=true;for(const it of mi.slice(0,6)){
+     const kid=hid(sym+'|'+it.ti);
+     if(skipIfOther(it.ti)||kap.del[kid]||have.has(kid))continue;
+     have.add(kid);
+     kap.items.push({id:kid,sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN=true}}
    }catch(e){}
    if(!gotN)fail++;
    await new Promise(r=>setTimeout(r,350));
