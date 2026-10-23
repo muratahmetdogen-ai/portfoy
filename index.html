@@ -414,7 +414,7 @@ function mktState(zn,now){const z=MKTZ[zn];if(!z)return null;const d=now||new Da
  if(m>=z[2][0]&&m<z[2][1])return{st:'o',msg:'Açık · kapanış '+(z[2][1]/60|0)+':'+String(z[2][1]%60).padStart(2,'0')+' (borsa saati)'};
  return{st:'c',msg:'Kapalı'}}
 setInterval(()=>{try{renderMkt()}catch(e){}},60000);
-function renderMkt(){const l=lastInfo(),T=[['BIST 100','MK_BIST100','','TR','TR'],['NASDAQ 100','MK_NDX100','','ABD','US'],['DJIA','MK_DJIA','','ABD','US'],['S&P 500','MK_SP500','','ABD','US'],['DAX','MK_DAX','','DE','DE'],['AEX','MK_AEX','','NL','NL'],['Dolar','FX_USD','₺'],['Euro','FX_EUR','₺'],['Gram altın','MK_GRAM','₺'],['Ons','MK_ONS','$'],['BTC','MK_BTC','$']];
+function renderMkt(){const l=lastInfo(),T=[['BIST 100','MK_BIST100','','TR','TR'],['NASDAQ','MK_NDX100','','ABD','US'],['DJIA','MK_DJIA','','ABD','US'],['S&P 500','MK_SP500','','ABD','US'],['DAX','MK_DAX','','DE','DE'],['AEX','MK_AEX','','NL','NL'],['Dolar','FX_USD','₺'],['Euro','FX_EUR','₺'],['Gram altın','MK_GRAM','₺'],['Ons','MK_ONS','$'],['BTC','MK_BTC','$']];
  $('mkt').innerHTML=`<div class="row"><b>Piyasa</b><span class="mut sm">${l?dts(l.t):'henüz çekilmedi'}</span></div><div class="mt">${T.map(([n,k,u,cc,zk])=>{const p=prices[k];let ch=p&&p.prev>0?(p.price/p.prev-1)*100:null;
    if(ch==null&&k==='MK_GRAM'&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0)ch=((prices.MK_ONS.price/prices.MK_ONS.prev)*(prices.FX_USD.price/prices.FX_USD.prev)-1)*100;
    const st=zk?mktState(zk):null,sti=!st?'':st.st==='o'?`<i class="mop" title="${st.msg}"></i>`:st.st==='a'?`<i class="mpre" title="${st.msg}"></i>`:`<span class="mcl" title="${st.msg}">🌙</span>`;
@@ -824,9 +824,7 @@ try{const hm=$('hsMaxw'),hl=$('hsVollo'),hv=$('hsVolhi');if(hm&&hl&&hv&&$('hsSav
 
 /* ---------- v19: 📰 Haberler ---------- */
 let newsBusy=false,newsData=null;
-async function newsFetch(url){let lastErr=null;
- for(const f of KTR){try{return await getText(f(url),15000)}catch(e){lastErr=e}}
- throw lastErr||new Error('kaynaklara ulaşılamadı')}
+async function newsFetch(url,ms){return kGet(url,ms||9000)}
 async function ffCal(){
  const t=await newsFetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
  const d=JSON.parse(t.slice(t.indexOf('['),t.lastIndexOf(']')+1));
@@ -845,10 +843,12 @@ function rssItems(t){t=String(t||'');
  return out}
 async function gNews(when){
  const qs=['(borsa istanbul OR dolar kur OR enflasyon OR faiz kararı OR altın OR fed OR tcmb) when:'+when,'borsa dolar altın enflasyon faiz when:'+when];
+ let gsk=gSkip24();
  for(const q of qs){
-  const urls=['https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=tr&gl=TR&ceid=TR:tr',
-   'https://www.bing.com/news/search?q='+encodeURIComponent(q)+'&format=RSS'];
-  for(const u of urls){try{const t=await newsFetch(u);const it=rssItems(t);if(it.length)return it}catch(e){}}}
+  if(!gsk){
+   try{const t=await getText('https://r.jina.ai/https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=tr&gl=TR&ceid=TR:tr',9000);const a=rssItems(t);if(a.length)return a}catch(e){}
+   try{_ss('portfoy_gskip',String(Date.now()))}catch(e){}gsk=true}
+  try{const t=await newsFetch('https://www.bing.com/news/search?q='+encodeURIComponent(q)+'&format=RSS');const it=rssItems(t);if(it.length)return it}catch(e){}}
  return[]}
 const NFL={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',TRY:'🇹🇷',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',CHF:'🇨🇭',CNY:'🇨🇳',NZD:'🇳🇿'};
 const THEMES=[[/enflasyon|tüfe|üfe|cpi|piyasa fiyatları/i,'Enflasyon','Şirket maliyetleri ve faiz beklentileri üzerinden kura ve BIST\'e yön verebilir.'],[/faiz|tcmb|politika oranı|pdk|fed|fomc/i,'Faiz / Para politikası','Faiz beklentisi hisse, kur ve tahvilin en güçlü tetikleyicisi; beklenti dışı adım sert hareket getirebilir.'],[/dolar|kur|euro|döviz/i,'Döviz kuru','Kur hareketi yabancı hisselerdeki TL kârını ve ihracatçı hisseleri doğrudan etkiler.'],[/altın|ons/i,'Altın','Güvenli liman talebi; gram altın ve madenci hisseleri üzerinde belirleyici.'],[/borsa|bist|hisse/i,'Borsa','Risk iştahıyla birlikte hareket eder; yabancı takas yön verebilir.'],[/petrol|enerji|doğalgaz/i,'Enerji','Enerji maliyetleri enflasyon ve enerji hisseleri üzerinden okunur.'],[/istihdam|tarım dışı|işsizlik|employment/i,'İstihdam','İstihdam verisi Fed politikasının pusulası; dolar ve küresel risk iştahını oynatır.'],[/büyüme|gsyh|gdp|pmi/i,'Büyüme / PMI','Konjonktür görünümünü değiştirirse kârlılık beklentilerini günceller.'],[/savaş|jeopolitik|seçim|ambargo/i,'Jeopolitik','Risk primini yükseltir; altın ve dolar gibi güvenli limanlara akış getirebilir.']];
@@ -1149,13 +1149,13 @@ function taCalc(sym){
  const wnd=c.slice(-252),hi=Math.max(...wnd),lo=Math.min(...wnd),dHi=(last/hi-1)*100,dLo=(last/lo-1)*100;
  let vol=null;if(n>=91){const r=[];for(let i=n-90;i<n;i++)r.push(Math.log(c[i]/c[i-1]));const m=mean(r);vol=Math.sqrt(mean(r.map(x=>(x-m)*(x-m)))*252)*100}
  let vr=null;if(h.v&&n>=21){const a=h.v.slice(-21,-1).filter(x=>x>0),lv=h.v[n-1];if(a.length>=10&&lv>0&&mean(a)>0)vr=lv/mean(a)}
- let score=50;
- if(s20!=null)score+=last>=s20?8:-8;
- if(s50!=null)score+=last>=s50?12:-12;
- if(s200!=null)score+=last>=s200?15:-15;
- if(s50!=null&&s200!=null)score+=s50>s200?5:-5;
- if(rv!=null)score+=Math.max(-15,Math.min(15,(rv-50)/3));
- if(md&&md.h!=null){score+=md.h>0?8:-8;if(pmd&&pmd.h!=null)score+=md.h>pmd.h?4:-4}
+ let vs=0,ws=0;const vote=(v,w)=>{if(v!=null&&isFinite(v)){vs+=v*w;ws+=w}};
+ if(s20!=null)vote(last>=s20?1:-1,0.5);
+ if(s50!=null)vote(last>=s50?1:-1,1);
+ if(s200!=null)vote(last>=s200?1:-1,1.5);
+ if(s50!=null&&s200!=null)vote(s50>s200?1:-1,0.5);
+ if(rv!=null)vote(Math.max(-1,Math.min(1,(rv-50)/25)),2);
+ if(md&&md.h!=null){vote(md.h>0?1:-1,2);if(pmd&&pmd.h!=null)vote(md.h>pmd.h?1:-1,1)}
  /* --- TA v2: Stokastik(14,3) --- */
  let st=null;
  if(hasHL){const K=[];for(let i=13;i<n;i++){let hh=-1e18,ll=1e18;for(let j=i-13;j<=i;j++){if(H[j]>hh)hh=H[j];if(L[j]<ll)ll=L[j]}K.push(hh>ll?(c[i]-ll)/(hh-ll)*100:50)}
@@ -1219,11 +1219,12 @@ function taCalc(sym){
  if(n>=60){const sPrev=mean(c.slice(-60,-10));if(s50!=null&&sPrev>0)sl50=(s50/sPrev-1)*10}
  const w60=c.slice(-60),sRes=Math.max(...w60),sSup=Math.min(...w60);
  /* --- skora yeni bileşenler --- */
- if(st)score+=Math.max(-10,Math.min(10,(st.k-50)/3));
- if(mfi)score+=Math.max(-8,Math.min(8,(mfi.v-50)/4));
- if(adx&&adx.v>=25)score+=adx.pdi>adx.mdi?5:-5;
- if(pb!=null)score+=Math.max(-6,Math.min(6,(pb-0.5)*12));
- score=Math.max(0,Math.min(100,Math.round(score)));
+ if(sl50!=null)vote(Math.max(-1,Math.min(1,sl50/5)),1);
+ if(st)vote(Math.max(-1,Math.min(1,(st.k-50)/30)),1);
+ if(mfi)vote(Math.max(-1,Math.min(1,(mfi.v-50)/30)),1);
+ if(adx&&adx.v>=25)vote(adx.pdi>adx.mdi?1:-1,Math.min(2,adx.v/25));
+ if(pb!=null)vote(Math.max(-1,Math.min(1,(pb-0.5)*2)),1);
+ let score=ws>0?Math.round(50+50*vs/ws):50;score=Math.max(0,Math.min(100,score));
  return{n,last,s20,s50,s200,p50,p200,rsi:{v:rv,p:rp},macd:md?{h:md.h,s:sig,ph:pmd?pmd.h:null}:null,boll,hi,lo,dHi,dLo,vol,vr,score,at:h.at,
   st,atr,adx,cci,wpr,mfi,obv,ich,don,roc,pb,sl50,sRes,sSup,noHL:!hasHL}}
 function scanSignals(openAll){
@@ -1588,6 +1589,9 @@ async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('Önce en az 
  msg(ok?'Kopyalandı ✓ Google tablonda E1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda E1 hücresine yapıştır.',!ok)}
 /* ---------- KAP doğrudan çekme (tablosuz) ---------- */
 const KTR=[u=>'https://r.jina.ai/'+u,u=>'https://api.cors.lol/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
+let KTRi=0;
+async function kGet(u,ms){const ord=[];for(let i=0;i<KTR.length;i++)ord.push((KTRi+i)%KTR.length);let le=null;for(const ix of ord){try{const r=await getText(KTR[ix](u),ms);KTRi=ix;return r}catch(e){le=e}}throw le||new Error('kaynak yok')}
+function gSkip24(){try{const g=_ls('portfoy_gskip',0)*1;return !!(g&&Date.now()-g<24*3600e3)}catch(e){return false}}
 function mdLinks(txt){const out=[],re=/\[([^\]]{9,300})\]\((https?:\/\/[^\s)]+)\)/g;let m2;
  while((m2=re.exec(txt))){let ti=m2[1].trim(),li=m2[2];
   if(/apiclick\.aspx/.test(li)){try{const mm=/[?&]url=([^&]+)/.exec(li);if(mm)li=decodeURIComponent(mm[1])}catch(x){}}
@@ -1625,13 +1629,30 @@ async function kapDirect(){
     for(let qi=0;qi<q.length&&!mi;qi++){
      if(qi)await new Promise(r=>setTimeout(r,900));
      let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+q[qi];
-     for(const tx of KTR){try{mt=await getText(tx(mu),12000);if(mt)break}catch(e){}}
+     try{mt=await kGet(mu,12000)}catch(e){}
      if(mt){const m2=midasItems(mt);if(m2.length)mi=m2}}
     if(mi){gotN=true;for(const it of mi.slice(0,6)){
      const kid=hid(sym+'|'+it.ti);
      if(skipIfOther(it.ti)||kap.del[kid]||have.has(kid))continue;
      have.add(kid);
      kap.items.push({id:kid,sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN=true}}
+    if(!gotN){
+     const nm2=symNames(sym)[0]||sym;
+     const qp=encodeURIComponent(nm2+' KAP'),qg=encodeURIComponent(nm2+' KAP when:30d');
+     const us=[['Google KAP','https://news.google.com/rss/search?q='+qg+'&hl=tr&gl=TR&ceid=TR:tr'],['Bing KAP','https://www.bing.com/news/search?q='+qp+'&format=RSS']];
+     const lts=nm2.toLocaleLowerCase('tr'),ltsym=sym.toLocaleLowerCase('tr');
+     for(const[sl2,u2]of us){
+      if(gotN)break;
+      let a=null;
+      try{const rt=sl2==='Google KAP'?(gSkip24()?null:await getText('https://r.jina.ai/'+u2,9000)):await newsFetch(u2);a=rt?rssItems(rt):null}catch(e){}
+      if(a&&a.length)for(const x of a){
+       const t2=(x.ti||'').toLocaleLowerCase('tr');
+       if(!t2.includes(ltsym)&&!t2.includes(lts))continue;
+       const kid=hid(sym+'|'+x.ti);
+       if(kap.del[kid]||have.has(kid))continue;
+       have.add(kid);
+       kap.items.push({id:kid,sym:sym,title:x.ti,src:sl2,url:x.li||'',t:x.t||now,seen:now});added++;gotN=true;
+       if(kap.items.filter(z=>z.sym===sym).length>=6)break}}}
    }catch(e){}
    if(!gotN)fail++;
    await new Promise(r=>setTimeout(r,350));
@@ -1643,7 +1664,7 @@ async function kapDirect(){
  }catch(e){msg('KAP çekilemedi: '+(e.message||e),1)}
  kapBusy=false}
 /* ---------- grafik pencereleri ---------- */
-const MKCH={MK_BIST100:{n:'BIST 100',tick:'XU100.IS'},FX_USD:{n:'Dolar/TL',tick:'USDTRY=X'},FX_EUR:{n:'Euro/TL',tick:'EURTRY=X'},MK_ONS:{n:'Ons Altın ($)',tick:'XAUUSD=X'},MK_BTC:{n:'Bitcoin ($)',btc:true},MK_SP500:{n:'S&P 500',tick:'^GSPC'},MK_NDX100:{n:'NASDAQ 100',tick:'^NDX'},MK_DJIA:{n:'Dow Jones',tick:'^DJI'},MK_DAX:{n:'DAX',tick:'^GDAXI'},MK_AEX:{n:'AEX',tick:'^AEX'},MK_GRAM:{n:'Gram Altın (₺)',gram:true}};
+const MKCH={MK_BIST100:{n:'BIST 100',tick:'XU100.IS'},FX_USD:{n:'Dolar/TL',tick:'USDTRY=X'},FX_EUR:{n:'Euro/TL',tick:'EURTRY=X'},MK_ONS:{n:'Ons Altın ($)',tick:'XAUUSD=X'},MK_BTC:{n:'Bitcoin ($)',btc:true},MK_SP500:{n:'S&P 500',tick:'^GSPC'},MK_NDX100:{n:'NASDAQ',tick:'^NDX'},MK_DJIA:{n:'Dow Jones',tick:'^DJI'},MK_DAX:{n:'DAX',tick:'^GDAXI'},MK_AEX:{n:'AEX',tick:'^AEX'},MK_GRAM:{n:'Gram Altın (₺)',gram:true}};
 const MRR=[['G','Gün'],['H','Hafta'],['1A','1 Ay'],['3A','3 Ay'],['6A','6 Ay'],['1Y','1 Yıl']];
 let MWC={},MCW=null,MWR='1A';
 function symChartCfg(sym){const s=calc(trades)[sym];if(!s)return null;
