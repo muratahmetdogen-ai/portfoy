@@ -1610,26 +1610,29 @@ function midasItems(t){t=String(t||'');const out=[],now=Date.now();
 async function kapDirect(){
  if(kapBusy)return;kapBusy=true;
  try{
-  const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.cur==='TRY'&&mk(s)==='BIST').map(s=>s.sym))].sort().slice(0,8);
+  const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.cur==='TRY'&&mk(s)==='BIST').map(s=>s.sym))].sort().slice(0,10);
   if(!syms.length){msg('KAP taraması için elinde en az bir BIST hissesi olmalı.',1);kapBusy=false;return}
-  const stEl=$('kapSt');if(stEl)stEl.textContent='KAP haberleri Midas\'tan çekiliyor…';
-  let added=0;const now=Date.now();
-  try{let mt=null;const mu='https://www.getmidas.com/kap-haberleri/';
-   for(const tx of KTR){try{mt=await getText(tx(mu),15000);if(mt)break}catch(e){}}
-   if(!mt)throw new Error('Midas\'a ulaşılamadı');
-   const mi=midasItems(mt),have=new Set(kap.items.map(x=>x.id));
-   const lows=syms.map(sym=>({sym,names:symNames(sym).map(x=>x.toLocaleLowerCase('tr'))}));
-   for(const it of mi){
-    const lt=it.ti.toLocaleLowerCase('tr');
-    const hit=lows.find(o=>o.names.some(n=>lt.includes(n)));
-    if(!hit)continue;
-    if(kap.del[hid(hit.sym+'|'+it.ti)])continue;
-    have.add(hid(hit.sym+'|'+it.ti));
-    kap.items.push({id:hid(hit.sym+'|'+it.ti),sym:hit.sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++}
-   if(!added)msg('Ana sayfada elindeki hisselere ait yeni KAP bildirimi görünmüyor (en güncel 100 haber tarandı).');
-  }catch(e){msg('KAP haberleri alınamadı: '+(e.message||'kaynak yok'),1)}
-
-  if(added){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();renderKap();msg(added+' haber eklendi ✓')}
+  const stEl=$('kapSt');if(stEl)stEl.textContent='Haberler doğrudan çekiliyor ('+syms.length+' hisse)…';
+  let added=0,fail=0;const now=Date.now();
+  for(const sym of syms){
+   const otherRe=new RegExp('\\b('+syms.filter(o=>o!==sym).join('|')+')\\b');
+   const skipIfOther=ti=>syms.length>1&&otherRe.test(ti.toLocaleUpperCase('en'));
+   let gotN=false;
+   try{let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+encodeURIComponent(sym);
+    for(const tx of KTR){try{mt=await getText(tx(mu),12000);if(mt)break}catch(e){}}
+    if(mt){const mi=midasItems(mt);
+     if(mi.length){const have=new Set(kap.items.map(x=>x.id));
+      for(const it of mi.slice(0,6)){if(skipIfOther(it.ti)||kap.del[hid(sym+'|'+it.ti)])continue;
+       have.add(hid(sym+'|'+it.ti));
+       kap.items.push({id:hid(sym+'|'+it.ti),sym:sym,title:it.ti,src:'Midas KAP',url:'',t:it.ts,seen:now});added++;gotN=true}}}
+   }catch(e){}
+   if(!gotN)fail++;
+   await new Promise(r=>setTimeout(r,350));
+  }
+  if(added||fail<syms.length){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();renderKap()}
+  if(added)msg(added+' haber eklendi ✓'+(fail?' · '+fail+' hissede haber bulunamadı':''));
+  else if(fail>=syms.length)msg('Haber kaynaklarına ulaşılamadı — birkaç dakika sonra tekrar dene.',1);
+  else msg('Son 7 günde yeni haber yok');
  }catch(e){msg('KAP çekilemedi: '+(e.message||e),1)}
  kapBusy=false}
 /* ---------- grafik pencereleri ---------- */
