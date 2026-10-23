@@ -116,7 +116,7 @@ body.print-rp h3{color:#555}}
 .kchip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:600}
 .kchip.g{background:#d9f5ea;color:#065f46;border-color:#b9ead4}
 .kchip.r{background:#fde5e5;color:#991b1b;border-color:#f7c9c9}
-.anlz{margin-top:9px;background:linear-gradient(135deg,rgba(91,94,244,.12),rgba(139,92,246,.05));border:1px solid rgba(91,94,244,.35);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}
+.anlz{margin-top:9px;background:linear-gradient(135deg,rgba(91,94,244,.12),rgba(139,92,246,.05));border:1px solid rgba(91,94,244,.35);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}.mt .tile{min-width:0}.mhd{display:flex;align-items:center;white-space:nowrap;overflow:hidden}.mnm{overflow:hidden;text-overflow:ellipsis}.mhd .mcc,.mhd .mop,.mhd .mpre,.mhd .mcl{flex:none}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
 <h1><span style="display:inline-flex;align-items:center;gap:7px"><svg width="23" height="23" viewBox="0 0 512 512" style="flex:none" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5ef4"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(#lg1)"/><g fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><polyline points="82,358 184,256 256,297 358,174"/><polyline points="300,166 366,166 366,232"/></g><line x1="82" y1="420" x2="430" y2="420" stroke="rgba(255,255,255,.75)" stroke-width="16" stroke-linecap="round"/></svg> Portföyüm</span><span class="badge" id="mode">…</span></h1>
@@ -410,7 +410,7 @@ function renderMkt(){const l=lastInfo(),T=[['BIST 100','MK_BIST100','','TR','TR'
    if(ch==null&&k==='MK_GRAM'&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0)ch=((prices.MK_ONS.price/prices.MK_ONS.prev)*(prices.FX_USD.price/prices.FX_USD.prev)-1)*100;
    const st=zk?mktState(zk):null,sti=!st?'':st.st==='o'?`<i class="mop" title="${st.msg}"></i>`:st.st==='a'?`<i class="mpre" title="${st.msg}"></i>`:`<span class="mcl" title="${st.msg}">🌙</span>`;
    const tint=ch==null?'':ch>0.05?' style="background:rgba(16,185,129,.13)"':ch<-0.05?' style="background:rgba(229,56,45,.12)"':' style="background:rgba(128,132,180,.10)"';
-   return`<div class="tile" data-mk="${k}"${tint}><small>${n}${cc?`<span class="mcc">${cc}</span>`:''}${sti}</small><b>${p?fmt(p.price)+(u?' '+u:''):'—'}</b>${ch!=null?`<br><i class="${cls(ch)}">${pct(ch)}</i>`:''}</div>`}).join('')}</div>`}
+   return`<div class="tile" data-mk="${k}"${tint}><small class="mhd"><span class="mnm">${n}</span>${cc?`<span class="mcc">${cc}</span>`:''}${sti}</small><b>${p?fmt(p.price)+(u?' '+u:''):'—'}</b>${ch!=null?`<br><i class="${cls(ch)}">${pct(ch)}</i>`:''}</div>`}).join('')}</div>`}
 function renderKz(all){
  const rows=perSym(all).sort((a,b)=>b.total*b.f-a.total*a.f),sum=rows.reduce((a,r)=>a+r.total*r.f,0),inv=rows.reduce((a,r)=>a+r.bought*r.f,0);
  const vol=trades.filter(t=>t.side!=='div'&&t.sym!=='NAKIT').reduce((a,t)=>a+t.qty*t.price*(fx(t.cur||'TRY')||0),0);
@@ -1158,11 +1158,8 @@ function aiGeneral(rows){if(!rows.length)return'';
  o+=bo.length>ay.length?' Genel tablo POZİTİF; küçük geri çekilmeler alım fırsatı izlenebilir.':ay.length>bo.length?' Genel tablo NEGATİF; yeni alımlarda temkinli ol, stop seviyelerini kontrol et.':' Genel tablo KARIŞIK; net yön için kırılım bekleniyor.';
  const _td=aiTodayTxt();return o+(_td?' '+_td:'')}
 function aiPeriod(){const d=new Date(),h=d.getHours()+d.getMinutes()/60;return today()+'#'+(h>=19?'e':h>=10.5?'s':'a')}
-function aiCached(s,t){const k='portfoy_ai_'+s.sym,per=aiPeriod();let ac=null;
- try{ac=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
- if(ac&&ac.p===per&&ac.t)return ac.t;
- const txt=aiText(s,t);try{localStorage.setItem(k,JSON.stringify({p:per,t:txt}))}catch(e){}
- return txt}
+function aiCached(s,t){return aiText(s,t)}
+try{Object.keys(localStorage).filter(k=>k.indexOf('portfoy_ai_')===0).forEach(k=>localStorage.removeItem(k))}catch(e){}
 function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=null?s.p:t.last;
  const updn=v=>v?'<span class="up">üstünde ✓</span>':'<span class="dn">altında</span>';
  const zone=t.rsi.v==null?'—':t.rsi.v>=TA_CONF.rsiHi?'<span class="dn">aşırı alım 🔴</span>':t.rsi.v<=TA_CONF.rsiLo?'<span class="up">aşırı satım 🟢</span>':'nötr';
