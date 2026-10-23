@@ -1275,7 +1275,7 @@ function scanSignals(openAll){
  SIGS.sort((a,b)=>(RANK[a.k]??3)-(RANK[b.k]??3))}
 function sparkSVG(cs2){if(!cs2||cs2.length<2)return'';const w=320,hh=54,lo=Math.min(...cs2),hi=Math.max(...cs2),X=i=>6+i*(w-12)/(cs2.length-1),Y=v=>hh-6-((v-lo)/((hi-lo)||1))*(hh-12);
  return`<svg viewBox="0 0 ${w} ${hh}" style="width:100%;height:auto;display:block"><polyline fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" points="${cs2.map((v,i2)=>X(i2).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}"/><circle cx="${X(cs2.length-1).toFixed(1)}" cy="${Y(cs2[cs2.length-1]).toFixed(1)}" r="3" style="fill:var(--ac)"/></svg>`}
-const TRM={'Oynaklık (volatilite)':'Fiyatların ne kadar hızlı ve geniş oynadığının ölçüsü. Yüksek oynaklık = değer büyük dalgalanır; kötü günler de iyi günler de sert olur.','Zirveden daluş (drawdown)':'En yüksek noktadan sonraki en derin düşüşün büyüklüğü. Ne kadar derinse geri dönmesi o kadar uzun sürer.','Teknik skor':'Tüm göstergelerin tek sayıda özeti (0-100). 65 üstü "boğa" (yukarı eğilim), 40 altı "ayı" (aşağı eğilim) sayılır.','SMA 20':'Son 20 günün ortalama fiyatı. Fiyat ortalamanın üstündeyse kısa vadeli yön yukarı kabul edilir.','SMA 50':'Son 50 günün (yaklaşık 2,5 ay) ortalama fiyatı — orta vadeli trend ölçüsü.','SMA 200':'Son 200 günün (yaklaşık 1 yıl) ortalama fiyatı. Fiyat bunun üstündeyse uzun vadeli görünüm pozitif sayılır.','SMA50 eğimi (10g)':'50 günlük ortalama, son 10 günde yüzde kaç değişti? Artıysa trend yukarı dönüyor, eksiyse zayıflıyor demektir.','ADX (14)':'Trendin GÜCÜ (0-100), yön söylemez. 25 üstü "güçlü trend" demektir; yanında DI+ yüksekse yukarı, DI− yüksekse aşağı yönlü.','Ichimoku bulutu':'Geçmiş ortalamalardan hesaplanan "bulut". Fiyat bulutun üstündeyse boğa ortamı, altındaysa ayı ortamı sayılır.','Donchian (20)':'Son 20 günün en yüksek/en düşük seviyeleri. Üst seviyenin üzerine çıkmak "kırılım" (güçlü alım ilgisi), altına inmek "çöküş" sayılır.','RSI (14)':'0-100 arası hız ölçeri. 70 üstü AŞIRI ALIM: fiyat çok hızlı yükselmiş, geri çekilme gelebilir. 30 altı AŞIRI SATIM: yoğun satış olmuş, toparlanma gelebilir.','Stokastik (14,3)':'Fiyatın son 14 günün aralığındaki konumu. %80 üstü aşırı alım, %20 altı aşırı satım. K çizgisi D çizgisini kesince sinyal doğar.','MACD (12,26,9)':'Kısa ve uzun vadeli ortalamaların farkı. Sıfır üstü = yukarı momentum. Sinyal çizgisini yukarı keserse "AL", aşağı keserse "SAT" uyarısıdır.','CCI (20)':'Fiyatın istatistiksel sapması. +100 üstü abartılı yükseliş, −100 altı abartılı satış bölgesidir; bu seviyelerden dönüşler sinyal sayılır.','Williams %R':'Stokastik benzeri: 0′a yakın = aşırı alım, −100′e yakın = aşırı satım.','ROC (10 gün)':'Son 10 günde fiyat yüzde kaç değişti? Ani sıçrama ve düşüşler burada görünür.','Bollinger (20,2)':'Ortalamanın ±2 "normal sapma" bandı. Fiyat bandın dışına çıkarsa hareket abartılı demektir; bantlar daralmışsa büyük hareket yaklaşabilir. %B: bandın neresinde olunduğu (100=üst bant, 0=alt bant).','52 hafta':'Son 1 yılın en yüksek ve en düşük fiyatı. Zirveye yakınsa rekor bölgesinde, dibe yakınsa dip bölgesinde demektir.','Yıllık volatilite':'Fiyatın bir yılda ortalama yüzde ne kadar oynadığı. Yüksek değer = oynak (riskli) hisse.','ATR (14)':'Hissenin bir günde ortalama kaç TL oynadığı (günlük salınım). Yüksek ATR = oynak hisse; stop seviyesi belirlerken kullanılır.','MFI (14)':'Hacmi de hesaba katan RSI benzeri gösterge. 80 üstü "para girişi doyumda", 20 altı "satış tükeniyor" yorumu yapılır.','Hacim (son / 20g ort.)':'Günün hacminin son 20 günün ortalamasına oranı. 2 katı üstü "patlama": ilgi aniden artmış demektir.','OBV uyumu':'Hacmi fiyat yönüne göre toplayan gösterge. Fiyat düşerken OBV yükseliyorsa "görünmeyen alım" var demektir; tersi durumda "görünmeyen satış".','Destek / Direnç (60g)':'Son 60 günün en düşüğü (destek) ve en yüküğü (direnç). Fiyatın sık sekildiği sınır bölgelerdir; kırılırlarsa yeni hareket başlayabilir.'};
+const TRM={'Oynaklık (volatilite)':'Fiyatların ne kadar hızlı ve geniş oynadığının ölçüsü. Yüksek oynaklık = değer büyük dalgalanır; kötü günler de iyi günler de sert olur.','Zirveden daluş (drawdown)':'En yüksek noktadan sonraki en derin düşüşün büyüklüğü. Ne kadar derinse geri dönmesi o kadar uzun sürer.','Teknik skor':'Tüm göstergelerin tek sayıda özeti (0-100). 65 üstü "boğa" (yukarı eğilim), 40 altı "ayı" (aşağı eğilim) sayılır.','SMA 20':'Son 20 günün ortalama fiyatı. Fiyat ortalamanın üstündeyse kısa vadeli yön yukarı kabul edilir.','SMA 50':'Son 50 günün (yaklaşık 2,5 ay) ortalama fiyatı — orta vadeli trend ölçüsü.','SMA 200':'Son 200 günün (yaklaşık 1 yıl) ortalama fiyatı. Fiyat bunun üstündeyse uzun vadeli görünüm pozitif sayılır.','SMA50 eğimi (10g)':'50 günlük ortalama, son 10 günde yüzde kaç değişti? Artıysa trend yukarı dönüyor, eksiyse zayıflıyor demektir.','ADX (14)':'Trendin GÜCÜ (0-100), yön söylemez. 25 üstü "güçlü trend" demektir; yanında DI+ yüksekse yukarı, DI− yüksekse aşağı yönlü.','Ichimoku bulutu':'Geçmiş ortalamalardan hesaplanan "bulut". Fiyat bulutun üstündeyse boğa ortamı, altındaysa ayı ortamı sayılır.','Donchian (20)':'Son 20 günün en yüksek/en düşük seviyeleri. Üst seviyenin üzerine çıkmak "kırılım" (güçlü alım ilgisi), altına inmek "çöküş" sayılır.','RSI (14)':'0-100 arası hız ölçeri. 70 üstü AŞIRI ALIM: fiyat çok hızlı yükselmiş, geri çekilme gelebilir. 30 altı AŞIRI SATIM: yoğun satış olmuş, toparlanma gelebilir.','Stokastik (14,3)':'Fiyatın son 14 günün aralığındaki konumu. %80 üstü aşırı alım, %20 altı aşırı satım. K çizgisi D çizgisini kesince sinyal doğar.','MACD (12,26,9)':'Kısa ve uzun vadeli ortalamaların farkı. Sıfır üstü = yukarı momentum. Sinyal çizgisini yukarı keserse "AL", aşağı keserse "SAT" uyarısıdır.','CCI (20)':'Fiyatın istatistiksel sapması. +100 üstü abartılı yükseliş, −100 altı abartılı satış bölgesidir; bu seviyelerden dönüşler sinyal sayılır.','Williams %R':'Stokastik benzeri: 0′a yakın = aşırı alım, −100′e yakın = aşırı satım.','ROC (10 gün)':'Son 10 günde fiyat yüzde kaç değişti? Ani sıçrama ve düşüşler burada görünür.','Bollinger (20,2)':'Ortalamanın ±2 "normal sapma" bandı. Fiyat bandın dışına çıkarsa hareket abartılı demektir; bantlar daralmışsa büyük hareket yaklaşabilir. %B: bandın neresinde olunduğu (100=üst bant, 0=alt bant).','52 hafta':'Son 1 yılın en yüksek ve en düşük fiyatı. Zirveye yakınsa rekor bölgesinde, dibe yakınsa dip bölgesinde demektir.','Yıllık volatilite':'Fiyatın bir yılda ortalama yüzde ne kadar oynadığı. Yüksek değer = oynak (riskli) hisse.','ATR (14)':'Hissenin bir günde ortalama kaç TL oynadığı (günlük salınım). Yüksek ATR = oynak hisse; stop seviyesi belirlerken kullanılır.','MFI (14)':'Hacmi de hesaba katan RSI benzeri gösterge. 80 üstü "para girişi doyumda", 20 altı "satış tükeniyor" yorumu yapılır.','Hacim (son / 20g ort.)':'Günün hacminin son 20 günün ortalamasına oranı. 2 katı üstü "patlama": ilgi aniden artmış demektir.','OBV uyumu':'Hacmi fiyat yönüne göre toplayan gösterge. Fiyat düşerken OBV yükseliyorsa "görünmeyen alım" var demektir; tersi durumda "görünmeyen satış".','Destek / Direnç (60g)':'Son 60 günün en düşüğü (destek) ve en yüküğü (direnç). Fiyatın sık sekildiği sınır bölgelerdir; kırılırlarsa yeni hareket başlayabilir.','Piyasa Değeri':'Şirketin tüm hisselerinin toplam değeri: hisse sayısı × güncel fiyat. Şirketin büyüklüğü budur; büyük şirketlerde fiyat genelde daha sakin oynar. (Hisse sayısı çeyreklik, fiyat günceldir.)','F/K':'Fiyatın şirketin son 12 aylık kârına oranı. 20 ise sabit kârla yatırım 20 yılda kendini öder; düşük "ucuz", yüksek "pahalı ya da hızlı büyüyen" olabilir. Sektör içinde karşılaştırılmalı.','PD/DD':'Fiyatın şirket defterindeki öz kaynağa oranı (çeyreklik). 1 altı: defter değerinin altında işlem görüyor; 2-3 üstü: güçlü beklenti ya da pahalılık işareti sayılır.','Temettü Verimi':'Son 4 çeyrekte ödenen temettünün fiyata oranı. %5 ise 100 bin ₺ değerindeki hisseden yılda yaklaşık 5 bin ₺ nakit gelir; yüksek verim hoş ama kesintisiz olduğunu göstermez.','Net Kâr Marjı':'Şirketin son çeyrekte her 100 liralık satışından ne kadar net kâr kaldığı. Yüksek ve istikrarlı marj güçlü iş modeli işaretidir.'};
 function aiText(s,t){
  const c=cs(s.cur),p=s.p!=null?s.p:t.last,S1=[];
  const H=HIST[s.sym];let ch30=null;
@@ -1317,7 +1317,50 @@ function aiGeneral(rows){if(!rows.length)return'';
 function aiPeriod(){const d=new Date(),h=d.getHours()+d.getMinutes()/60;return today()+'#'+(h>=19?'e':h>=10.5?'s':'a')}
 function aiCached(s,t){return aiText(s,t)}
 try{Object.keys(localStorage).filter(k=>k.indexOf('portfoy_ai_')===0).forEach(k=>localStorage.removeItem(k))}catch(e){}
-function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=null?s.p:t.last;
+/* ---------- temel çarpanlar (Yahoo fundamentals-timeseries, crumb'suz) ---------- */
+let FDSYM='',FDBUSY=false;
+const FDK='portfoy_fd';
+function fdGet(){try{return JSON.parse(localStorage.getItem(FDK)||'{}')||{}}catch(e){return{}}}
+function fdBig(v){if(v==null||!isFinite(v))return'—';const a=Math.abs(v);
+ if(a>=1e12)return(v/1e12).toLocaleString('tr-TR',{maximumFractionDigits:2})+' trilyon';
+ if(a>=1e9)return(v/1e9).toLocaleString('tr-TR',{maximumFractionDigits:1})+' milyar';
+ if(a>=1e6)return(v/1e6).toLocaleString('tr-TR',{maximumFractionDigits:1})+' milyon';
+ return Math.round(v).toLocaleString('tr-TR')}
+function fdPct(v){return v==null||!isFinite(v)?'—':'%'+v.toLocaleString('tr-TR',{maximumFractionDigits:1})}
+function fdRender(sym,fd){if(!$('fdMC'))return;const s2=calc(trades)[sym],cur=s2?s2.cur:'TRY',U={TRY:'₺',USD:'$',EUR:'€'}[cur]||cur;
+ const set=(id,v)=>{const el=$(id);if(el)el.innerHTML=v};
+ set('fdMC',fd.mcap!=null?fdBig(fd.mcap)+' '+U:'—');
+ set('fdPE',fd.pe!=null?fd.pe.toLocaleString('tr-TR',{maximumFractionDigits:1}):'—');
+ set('fdPB',fd.pb!=null?fd.pb.toLocaleString('tr-TR',{maximumFractionDigits:1}):'—');
+ set('fdDY',fdPct(fd.dy));
+ set('fdNM',fdPct(fd.nm));
+ const dt=$('fdDT');if(dt)dt.textContent=fd.dt?'· çeyrek: '+fd.dt:''}
+async function fdEnsure(sym){
+ if(!sym||FDBUSY)return;
+ const c=fdGet()[sym];
+ if(c&&Date.now()-c.t<24*3600e3){fdRender(sym,c);return}
+ FDBUSY=true;
+ try{
+  const s2=calc(trades)[sym],cur=s2?s2.cur:'TRY',tick=ySym(sym,cur);
+  const p1=Math.floor(Date.now()/1000)-370*86400,p2=Math.floor(Date.now()/1000);
+  const u='https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/'+encodeURIComponent(tick)+'?symbol='+encodeURIComponent(tick)+'&type=quarterlyShareIssued,trailingPeRatio,quarterlyPbRatio,quarterlyDividendsPerShare,quarterlyNetIncome,quarterlyTotalRevenue&period1='+p1+'&period2='+p2+'&merge=false';
+  const txt=await kGet(u,12000);
+  const j=JSON.parse(txt.slice(txt.indexOf('{'),txt.lastIndexOf('}')+1));
+  const pick=ty=>{const rs=(j.timeseries&&j.timeseries.result)||[];const r=rs.find(x=>x.meta&&x.meta.type&&x.meta.type[0]===ty);const v=r?(r[ty]||[]).filter(x=>x&&x.reportedValue&&x.reportedValue.raw!=null):[];return v};
+  const lastVal=v=>v.length?v[v.length-1].reportedValue.raw:null;
+  const sh=lastVal(pick('quarterlyShareIssued')),pe=lastVal(pick('trailingPeRatio')),pb=lastVal(pick('quarterlyPbRatio'));
+  const dv=pick('quarterlyDividendsPerShare');let dsum=0,cnt=0;
+  for(let i=dv.length-1;i>=0&&cnt<4;i--){dsum+=dv[i].reportedValue.raw;cnt++}
+  const ni=pick('quarterlyNetIncome'),rv=pick('quarterlyTotalRevenue');
+  const nm=(ni.length&&rv.length&&lastVal(rv))?lastVal(ni)/lastVal(rv)*100:null;
+  const h=HIST[sym],close=h&&h.c&&h.c.length?h.c[h.c.length-1]:null;
+  const fd={t:Date.now(),mcap:sh!=null&&close?sh*close:null,pe,pb,dy:cnt&&close?dsum/close*100:null,nm,dt:ni.length?ni[ni.length-1].asOfDate:null};
+  const o=fdGet();o[sym]=fd;try{localStorage.setItem(FDK,JSON.stringify(o))}catch(e){}
+  fdRender(sym,fd)
+ }catch(e){if($('fdPE'))$('fdPE').innerHTML='—'}
+ FDBUSY=false}
+try{document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.querySelector('#fdMC')){const sp=d.querySelector('#fdMC');if(sp&&sp.textContent==='—')fdEnsure(FDSYM)}},true)}catch(e){}
+function taDetailsHTML(s){const t=s.ta;if(!t)return'';FDSYM=s.sym;const c=cs(s.cur),p=s.p!=null?s.p:t.last;
  const updn=v=>v?'<span class="up">üstünde ✓</span>':'<span class="dn">altında</span>';
  const zone=t.rsi.v==null?'—':t.rsi.v>=TA_CONF.rsiHi?'<span class="dn">aşırı alım 🔴</span>':t.rsi.v<=TA_CONF.rsiLo?'<span class="up">aşırı satım 🟢</span>':'nötr';
  const md=t.macd,mds=!md||md.h==null?'—':(md.ph!=null&&md.ph<=0&&md.h>0?'<span class="up">⚡ AL sinyali</span>':md.ph!=null&&md.ph>=0&&md.h<0?'<span class="dn">⚡ SAT sinyali</span>':md.h>0?'pozitif':'negatif');
@@ -1336,6 +1379,12 @@ function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=n
   <div class="spark">${sparkSVG(HIST[s.sym]&&HIST[s.sym].c?HIST[s.sym].c.slice(-90):null)}<div class="mut sm" style="text-align:right;margin-top:2px">son 90 gün · <a href="https://tr.tradingview.com/chart/?symbol=${tv}" target="_blank" rel="noopener" style="color:var(--ac)">TradingView’de aç ↗</a></div></div>
   <table class="tat">
   ${kv('Teknik skor',`<b class="${cls(t.score-50)} sk" style="background:var(--bg)">${t.score}</b> · ${scLab}`)}
+  ${g('Temel çarpanlar')}
+  ${kv('Piyasa Değeri','<span id="fdMC">—</span>')}
+  ${kv('F/K','<span id="fdPE">—</span>')}
+  ${kv('PD/DD','<span id="fdPB">—</span>')}
+  ${kv('Temettü Verimi','<span id="fdDY">—</span>')}
+  ${kv('Net Kâr Marjı','<span id="fdNM">—</span> <span class="mut sm" id="fdDT"></span>')}
   ${g('Trend')}
   ${kv('SMA 20',sl(t.s20)+' · '+(t.s20==null?'—':updn(p>=t.s20)))}
   ${kv('SMA 50',sl(t.s50)+' · '+(t.s50==null?'—':updn(p>=t.s50)))}
