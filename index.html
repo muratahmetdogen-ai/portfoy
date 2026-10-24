@@ -479,7 +479,7 @@ async function saveTrade(){
  if(calc(next)[sym]?.over)return msg('Elindeki adetten fazla satış girilemez.',1);
  try{await S.set(id,t);if(mkv!==marketOf(sym,cur))await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:mkv});msg('Kaydedildi ✓');resetForm();go('pf')}catch(e){msg('Kaydedilemedi: '+(e.message||e.code),1)}
 }
-function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t))}
+function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80)}
 
 /* ---------- yedek ---------- */
 const csvCell=c=>'"'+String(c??'').replace(/"/g,'""')+'"';
@@ -1777,7 +1777,7 @@ async function hashPin(p,salt){const d=salt+':'+p;try{if(window.crypto&&crypto.s
 const pinCfg=()=>{try{return JSON.parse(localStorage.getItem(PK)||'null')}catch(e){return null}};
 const isLocked=()=>document.documentElement.classList.contains('locked');
 const lockNow=()=>{if(pinCfg()){try{sessionStorage.removeItem('portfoy_sess')}catch(e){}document.documentElement.classList.add('locked');$('lpin').value='';$('lmsg').textContent='';setTimeout(()=>$('lpin').focus(),60)}};
-function afterUnlock(){refresh();syncNow()}
+function afterUnlock(){try{const st=sessionStorage.getItem('portfoy_tab');if(st&&$('t-'+st))go(st)}catch(e){}refresh();syncNow()}
 async function tryUnlock(){const c=pinCfg();if(!c){document.documentElement.classList.remove('locked');return}
  if(await hashPin($('lpin').value,c.salt)===c.hash){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}document.documentElement.classList.remove('locked');$('lpin').value='';afterUnlock()}else{$('lmsg').textContent='Yanlış PIN';$('lpin').value=''}}
 function updatePinUI(){const c=pinCfg();$('pinState').textContent=c?'Açık':'Kapalı';$('pinState').className=c?'up':'mut';$('lockAfter').value=String(c&&c.after!=null?c.after:60)}
@@ -1893,6 +1893,7 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  try{$('sheet').value=localStorage.getItem(SK)||''}catch(e){}
  taSettingsUI();kapAlUI();
  mktUI();
+ try{const st=sessionStorage.getItem('portfoy_tab');if(st&&!isLocked()&&$('t-'+st))go(st)}catch(e){}
  if(!isLocked()&&trades.length)setTimeout(refresh,600);
  setInterval(()=>{if(!document.hidden&&!isLocked()&&navigator.onLine&&trades.length)refresh()},300000);
 })();
