@@ -479,7 +479,7 @@ async function saveTrade(){
  if(calc(next)[sym]?.over)return msg('Elindeki adetten fazla satış girilemez.',1);
  try{await S.set(id,t);if(mkv!==marketOf(sym,cur))await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:mkv});msg('Kaydedildi ✓');resetForm();go('pf')}catch(e){msg('Kaydedilemedi: '+(e.message||e.code),1)}
 }
-function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80)}
+function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80);else if(t==='analiz')setTimeout(()=>{try{render()}catch(e){}},0)}
 
 /* ---------- yedek ---------- */
 const csvCell=c=>'"'+String(c??'').replace(/"/g,'""')+'"';
@@ -1769,7 +1769,7 @@ async function saveYt(inp){const card=inp.closest('.card[data-card]');if(!card)r
   else if(meta[sym]){const nm={...meta[sym]};delete nm.ytick;await S.set('m_'+sym,{...nm,upd:Date.now()})}
   delete HIST[sym];try{localStorage.setItem('portfoy_hist',JSON.stringify(HIST))}catch(e){}
   msg('Kod kaydedildi ✓ geçmiş yenileniyor');setTimeout(()=>refresh(),400)}catch(e){msg('Kaydedilemedi',1)}}
-async function saveSector(box){const sym=box.dataset.box,v=box.querySelector('.sec').value.trim();try{if(v)await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,sec:v});else{const nm={...(meta[sym]||{})};delete nm.sec;const hasOther=Object.keys(nm).some(k=>k!=='kind'&&k!=='sym'&&k!=='upd');if(hasOther)await S.set('m_'+sym,{...nm,upd:Date.now()});else await S.del('m_'+sym)}msg('Sektör kaydedildi ✓')}catch(e){msg('Kaydedilemedi',1)}}
+async function saveSector(box){const sym=box.dataset.box,v=box.querySelector('.sec').value.trim();try{if(v)await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,sec:v});else{const nm={...(meta[sym]||{})};delete nm.sec;const hasOther=Object.keys(nm).some(k=>k!=='kind'&&k!=='sym'&&k!=='upd');if(hasOther)await S.set('m_'+sym,{...nm,upd:Date.now()});else await S.del('m_'+sym)}msg('Sektör kaydedildi ✓');render()}catch(e){msg('Kaydedilemedi',1)}}
 function quick(side,sym){const s=calc(trades)[sym];if(!s)return;resetForm();$('side').value=side;$('mkt2').value=mk(s);$('cur').value=s.cur;sideUI();mktUI();if(mk(s)!=='Nakit')$('sym').value=sym;const p=priceOf(s);if(mk(s)!=='Nakit')$('prc').value=p??'';upTot();go('add')}
 /* ---------- PIN ve tema ---------- */
 const PK='portfoy_pin';
