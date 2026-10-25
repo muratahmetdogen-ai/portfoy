@@ -1,0 +1,8 @@
+{
+  "appId": "com.murat.portfoy",
+  "appName": "Portföyüm",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
