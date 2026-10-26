@@ -21,18 +21,54 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Bağımlılıkları kur
+      # İmza anahtarını önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
+      - name: Imza anahtarini koru
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: portfoy-debug-anahtari
+
+      - name: Bagimliliklari kur
         run: npm install
 
-      - name: Web dosyalarını hazırla
+      - name: Web dosyalarini hazirla
         run: |
           mkdir -p www
-          cp index.html manifest.webmanifest sw.js icon-*.png www/
+          cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png www/
 
-      - name: Android projesini oluştur
+      - name: Android projesini hazirla
         run: |
-          npx cap add android
+          if [ ! -f android/gradlew ]; then npx cap add android; fi
           npx cap sync android
+
+      - name: Cuzdan ikonunu Android boyutlarina uygula
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q imagemagick
+          R=android/app/src/main/res
+          mkdir -p $R/mipmap-mdpi $R/mipmap-hdpi $R/mipmap-xhdpi $R/mipmap-xxhdpi $R/mipmap-xxxhdpi
+          mkdir -p $R/drawable-mdpi $R/drawable-hdpi $R/drawable-xhdpi $R/drawable-xxhdpi $R/drawable-xxxhdpi
+          # Ana ekran ikonu (eski yöntem)
+          convert icon-maskable-512.png -resize 192x192 $R/mipmap-xxxhdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 144x144 $R/mipmap-xxhdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 96x96  $R/mipmap-xhdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 72x72  $R/mipmap-hdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 48x48  $R/mipmap-mdpi/ic_launcher.png
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do cp $R/mipmap-$d/ic_launcher.png $R/mipmap-$d/ic_launcher_round.png; done
+          # Ikonu guvenli daire icinde tutmak icin koyu zemin uzerine kucultup ortala
+          convert icon-maskable-512.png -resize 250x250 _fg.png
+          convert -size 432x432 xc:'rgb(12,17,28)' _fg.png -geometry +91+91 -composite _fg432.png
+          # Adaptif ikon on-planı (Android 8+) - hem drawable hem mipmap konumlarina
+          convert _fg432.png -resize 432x432 $R/drawable-xxxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 324x324 $R/drawable-xxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 216x216 $R/drawable-xhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 162x162 $R/drawable-hdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 108x108 $R/drawable-mdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 432x432 $R/mipmap-xxxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 324x324 $R/mipmap-xxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 216x216 $R/mipmap-xhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 162x162 $R/mipmap-hdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 108x108 $R/mipmap-mdpi/ic_launcher_foreground.png
 
       - name: APK derle
         run: |
@@ -40,10 +76,10 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: APK dosyasını hazırla
+      - name: APK dosyasini hazirla
         run: cp android/app/build/outputs/apk/debug/app-debug.apk portfoy.apk
 
-      - name: Release olarak yayınla
+      - name: Release olarak yayinla
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
