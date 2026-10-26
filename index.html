@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr"><head><meta charset="utf-8"><title>Portföyüm</title>
+<html lang="tr"><head><meta charset="utf-8"><title>PORTFÖY</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#131a33"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Portföyüm">
 <style>
@@ -120,7 +120,7 @@ body.print-rp h3{color:#555}}
 .anlz{margin-top:9px;background:linear-gradient(135deg,rgba(28,37,71,.10),rgba(49,66,126,.05));border:1px solid rgba(28,37,71,.30);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}.mt .tile{min-width:0}.mhd{display:flex;align-items:center;white-space:nowrap;overflow:hidden}.mnm{overflow:hidden;text-overflow:ellipsis}.mhd .mcc,.mhd .mop,.mhd .mpre,.mhd .mcl{flex:none}.nev{display:flex;gap:8px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px}.nev:last-child{border-bottom:none}.ndt{flex:none;width:42px;color:var(--mut);font-size:11.5px;font-weight:700;padding-top:2px}.ndh,.ndm,.ndl{flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px}.ndh{background:#ef4444}.ndm{background:#f59e0b}.ndl{background:#94a3b8}.nfl{flex:none;font-size:13px;padding-top:1px}.ntt{flex:1;min-width:0}.ntt small{color:var(--mut);font-size:11px;display:block;margin-top:1px}.nws{display:block;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px;color:var(--tx);text-decoration:none}.nws:last-child{border-bottom:none}.nws small{color:var(--mut);font-size:11px;display:block;margin-top:2px}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin')&&!sessionStorage.getItem('portfoy_sess'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
-<h1><span style="display:inline-flex;align-items:center;gap:7px"><img src="icon-192.png" width="23" height="23" alt="" style="flex:none;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.18)"> Portföyüm</span><span class="badge" id="mode">…</span></h1>
+<h1><span style="display:inline-flex;align-items:center;gap:7px"><img src="icon-192.png" width="23" height="23" alt="" style="flex:none;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.18)">PORTFÖY</span><span class="badge" id="mode">…</span></h1>
 <div id="msg"></div>
 <div id="offbar">✈️ Çevrimdışısınız ✈️</div>
 
@@ -128,30 +128,30 @@ body.print-rp h3{color:#555}}
  <div class="hero" id="hero"></div>
  <div id="alerts"></div>
  <div class="card" id="pxBox">
-  <div class="row"><b>Güncel Fiyatlar</b><span class="mut sm" id="rfst">Henüz çekilmedi...</span></div>
-  <div class="btns"><button id="rf">🔄 Güncel Fiyatları Çek 🔄</button></div>
-  <div class="mut sm" style="margin-top:8px">Fiyatlar 15-20 dakika gecikmelidir.</div>
+  <div class="row"><b>Güncel Fiyatlar</b><span class="mut sm" id="rfst">Veriler çekilemedi...</span></div>
+  <div class="btns"><button id="rf">🔄 Güncel Verileri Çek 🔄</button></div>
+  <div class="mut sm" style="margin-top:8px">NOT: Fiyatlar 15 dakika gecikmeli gelmektedir.</div>
   <details id="dbgBox" style="display:none;margin-top:10px"><summary>Hata Ayrıntısı</summary><pre id="dbg" style="white-space:pre-wrap;font-size:12px;color:var(--mut);margin:6px 0 0"></pre></details>
  </div>
  <div class="card" id="mkt"></div>
  <div class="card" id="allocBox"></div>
  <div class="srow" style="margin:14px 2px 0"><input id="pfq" placeholder="🔍 Ara: Hisse"><div class="chp" id="pff" style="margin:0"><button data-f="" class="on">Tümü</button><button data-f="win">Kârda</button><button data-f="lose">Zararda</button></div></div>
  <div class="row" style="margin:14px 2px 6px"><h3 style="margin:0">Pozisyonlar</h3>
-  <select id="sort" style="width:auto;padding:6px 10px"><option value="val">Toplam Tutara göre</option><option value="day">Günlük % değişime göre</option><option value="plp">K/Z % göre</option><option value="age">Elde tutma süresine göre</option><option value="az">Alfabetik (A-Z)</option></select></div>
+  <select id="sort" style="width:auto;padding:6px 10px"><option value="val">Toplam Tutara Göre</option><option value="day">Günlük % Değişime Göre</option><option value="plp">K/Z % Göre</option><option value="age">Elde Tutma Süresine Göre</option><option value="az">Alfabetik (A-Z)</option></select></div>
  <div class="seg" id="kmode"><button class="on" data-m="day">Günlük K/Z</button><button data-m="tot">Toplam K/Z</button></div>
  <div id="pos"></div>
  <button class="s" id="closedBtn" style="margin-top:6px">Kapanan Pozisyonlar</button>
 </section>
 
 <section class="tab" id="t-kz">
- <div class="seg" id="seg"><button class="on" data-v="kzv">Durum</button><button data-v="chv">Grafikler</button><button data-v="dsv">Dağılım Grafikleri</button><button data-v="tav">Teknik Veriler</button><button data-v="mpv">Harita</button><button data-v="rkv">Risk</button><button data-v="rpv">Rapor</button></div>
- <div class="sv on" id="kzv"><div class="hero" id="kzhero"></div><h3>Bugüne Kadar</h3><div id="kzlist"></div></div>
+ <div class="seg" id="seg"><button class="on" data-v="kzv">Güncel Durum</button><button data-v="chv">Durum Grafiği</button><button data-v="dsv">Dağılım Grafikleri</button><button data-v="tav">Teknik Veriler</button><button data-v="mpv">Analiz Haritaları</button><button data-v="rkv">Risk Analizleri</button><button data-v="rpv">İstatiksel Raporlar</button></div>
+ <div class="sv on" id="kzv"><div class="hero" id="kzhero"></div><h3>Toplam K/Z</h3><div id="kzlist"></div></div>
  <div class="sv" id="chv"><div class="card"><div class="row"><b id="cht">Portföy Değeri (₺)</b><div class="rng" id="rng"><button data-r="30">1A</button><button data-r="90">3A</button><button data-r="180">6A</button><button data-r="365">1Y</button><button data-r="0">Tümü</button></div></div>
   <div class="seg" id="cmode" style="margin:10px 0 0"><button class="on" data-c="try">Değer (₺)</button><button data-c="pct">Getiri (%)</button></div>
   <div class="chp" id="ixsel" style="display:none"></div><div id="chart" style="margin-top:10px"></div><div class="leg" id="chleg"></div><div class="mut sm" id="chnote" style="margin-top:8px"></div></div></div>
  <div class="sv" id="dsv"><div class="card" id="dsT"></div><div class="card" id="dsB"></div><div class="card" id="dsC"></div></div>
- <div class="sv" id="tav"></div><div class="sv" id="mpv"></div><div class="sv" id="rkv"></div><div class="sv" id="rpv"><div id="prnHead"></div><div id="rpA"></div><h3>Yıllık satış raporu</h3><div class="chips" id="rpY"></div><div class="card" id="rpS"></div><div id="rpL"></div><div class="g2" style="margin-top:8px"><button class="s" id="rpX">Raporu CSV indir</button><button class="s" id="rpP">📄 PDF olarak indir</button></div>
- <div class="mut sm prn-hide" style="margin-top:6px">PDF: açılan yazdırma penceresinde hedef olarak “PDF olarak kaydet”i seç.</div></div>
+ <div class="sv" id="tav"></div><div class="sv" id="mpv"></div><div class="sv" id="rkv"></div><div class="sv" id="rpv"><div id="prnHead"></div><div id="rpA"></div><h3>Yıllık satış raporu</h3><div class="chips" id="rpY"></div><div class="card" id="rpS"></div><div id="rpL"></div><div class="g2" style="margin-top:8px"><button class="s" id="rpX">CSV olarak indir</button><button class="s" id="rpP">📄 PDF olarak indir</button></div>
+ <div class="mut sm prn-hide" style="margin-top:6px">PDF: açılan yazdırma penceresinde hedef olarak “PDF olarak kaydet”i seçin.</div></div>
 </section>
 
 <section class="tab" id="t-kap">
@@ -166,11 +166,11 @@ body.print-rp h3{color:#555}}
 
 <section class="tab" id="t-news">
  <div class="row"><h3 style="margin:0;display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V9h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8Z"/></svg> Haberler</h3><button class="s" id="newsRf" style="width:auto;padding:6px 12px">🔄</button></div>
- <div class="mut sm" id="newsSt" style="margin:6px 2px 10px">Yüklenmedi</div>
+ <div class="mut sm" id="newsSt" style="margin:6px 2px 10px">Yüklenemedi</div>
  <div class="seg" id="nseg"><button class="on" data-v="nsp">Geçmiş Gündem</button><button data-v="nst">Bugünün Gündemi</button><button data-v="nsf">Gelecek Gündem</button></div>
- <div class="sv on" id="nsp"><div class="card empty">Sekmeye girince yüklenir.</div></div>
- <div class="sv" id="nst"><div class="card empty">Sekmeye girince yüklenir.</div></div>
- <div class="sv" id="nsf"><div class="card empty">Sekmeye girince yüklenir.</div></div>
+ <div class="sv on" id="nsp"><div class="card empty">Lütfen bekleyiniz haberler yükleniyor.</div></div>
+ <div class="sv" id="nst"><div class="card empty">Lütfen bekleyiniz haberler yükleniyor.</div></div>
+ <div class="sv" id="nsf"><div class="card empty">Lütfen bekleyiniz haberler yükleniyor.</div></div>
 </section>
 
 <section class="tab" id="t-add">
@@ -192,7 +192,7 @@ body.print-rp h3{color:#555}}
 </section>
 
 <section class="tab" id="t-his">
- <input id="hq" placeholder="Ara: Hisse, kurum, not…" style="margin-bottom:8px"><div class="g2"><select id="hs"></select><select id="hside"><option value="">Alış + Satış</option><option value="buy">Sadece alış</option><option value="sell">Sadece satış</option><option value="div">Sadece temettü</option></select></div>
+ <input id="hq" placeholder="Ara: Hisse, kurum, not…" style="margin-bottom:8px"><div class="g2"><select id="hs"></select><select id="hside"><option value="">Alışlar + Satışlar</option><option value="buy">Alışlar</option><option value="sell">Satışlar</option><option value="div">Temettüler</option></select></div>
  <h3 id="hcount">İşlemler</h3><div id="hist"></div>
 </section>
 
@@ -206,29 +206,29 @@ body.print-rp h3{color:#555}}
   <div class="sl"><span>Ekran kilitlenme süresi</span><select id="lockAfter" style="width:auto"><option value="0">Hemen</option><option value="60">1 dk sonra</option><option value="300">5 dk sonra</option><option value="-1">Sorma</option></select></div>
   <div class="mut sm">PIN her açılışta sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
  </div>
- <h3>Uygulama güncellemesi</h3>
+ <h3>Uygulama Versiyon</h3>
  <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v9</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayınmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
  <div class="card">
   <ol class="sm mut" style="padding-left:18px;margin:0 0 10px">
-   <li>Şablonu kopyalaya bas. Elindeki hisseler, kurlar ve piyasa satırları (BIST100, ons, gram altın, BTC, S&P 500) hazır gelir.</li>
-   <li>Google tablonda A1 hücresine yapıştır (eski satırların yerine). Fon satırlarını kendi formülünle yeniden ekle.</li>
-   <li>A: kod, B: güncel fiyat, C: dünkü kapanış. C sütunu günlük K/Z içindir.</li>
+   <li>Şablonu kopyalaya bas. Elindeki hisseler, kurlar ve piyasa satırları hazır gelir.</li>
+   <li>Google tablonda A1 hücresine yapıştır (eski satırların yerine).</li>
+   <li>A: Kod, B: Güncel Fiyat, C: Dünkü Kapanış. C sütunu günlük K/Z içindir.</li>
    <li>Tabloyu “Bağlantıya sahip herkes görüntüleyebilir” yap, bağlantıyı aşağı yapıştır.</li></ol>
   <button class="s" id="tplBtn">Şablonu Kopyala</button>
   <textarea id="tpl" rows="5" readonly style="display:none;margin-top:8px"></textarea>
   <input id="sheet" placeholder="https://docs.google.com/spreadsheets/d/…" style="margin-top:8px">
   <button class="s" id="sheetBtn" style="margin-top:8px">Bağlantıyı Kaydet</button>
-  <div class="mut sm" style="margin-top:12px"><b>Elle kur giriş alanı</b> :</div><div id="fxBox" class="g2" style="margin-top:6px"></div>
+  <div class="mut sm" style="margin-top:12px"><b>Elle Kur Giriş Alanı</b> :</div><div id="fxBox" class="g2" style="margin-top:6px"></div>
  </div>
  <h3>Teknik analiz &amp; sinyaller</h3>
  <div class="card"><div class="mut sm">Açık pozisyonların 1 yıllık fiyat geçmişi (açılış/kapanış/en yüksek/en düşük/hacim) Yahoo’dan indirilir (sembol başına günde en fazla bir tazeleme, yalnızca bu cihazda tutulur) ve RSI, MACD, SMA, Stokastik, ADX, MFI, CCI, Williams %R, ATR, Bollinger, Ichimoku, Donchian ve OBV hesaplanır. Kaynaklar: Yahoo (r.jina.ai / allorigins / codetabs / cors.lol yedekleriyle), CoinGecko–Coinbase (BTC), Frankfurter (USD/EUR). Bir kaynak engellenirse sıradaki denenir; başarılı kaynak hatırlanır. Her fiyat çekiminde aşırı alım/satım ve teknik sinyaller otomatik kontrol edilir; sonuçlar Portföy sekmesinin üstünde ve Analiz → Teknik’te görünür.</div>
-  <div class="sl" style="margin-top:10px"><span>Teknik göstergeler ve sinyaller</span><button class="s" id="taTgl" style="width:auto">Açık</button></div>
+  <div class="sl" style="margin-top:10px"><span>Teknik Göstergeler ve Sinyaller</span><button class="s" id="taTgl" style="width:auto">Açık</button></div>
   <div class="g2" style="margin-top:10px"><div><label>RSI aşırı alım eşiği</label><input id="taHi" type="number" inputmode="decimal" step="1"></div><div><label>RSI aşırı satım eşiği</label><input id="taLo" type="number" inputmode="decimal" step="1"></div></div>
   <div style="margin-top:8px"><label>Hacim patlaması oranı (× 20 gün ort.)</label><input id="taVol" type="number" inputmode="decimal" step="0.5"></div>
-  <div class="btns"><button class="s" id="taRef">📊 Geçmiş Verilerini Şimdi Yenile</button></div></div>
+  <div class="btns"><button class="s" id="taRef">📊 Analiz Verilerini Güncelle</button></div></div>
  <h3>Sağlık karnesi eşikleri</h3>
  <div class="card"><div class="mut sm">Portföy Sağlık Karnesi puanlamasında kullanılan standart sınırlar.</div>
   <div class="g2" style="margin-top:10px"><div><label>Tek hisse sınırı (%)</label><input id="hsMaxw" type="number" inputmode="decimal" step="1"></div><div><label>Oynaklık iyi sınır (%)</label><input id="hsVollo" type="number" inputmode="decimal" step="1"></div></div>
@@ -240,7 +240,7 @@ body.print-rp h3{color:#555}}
   <ol class="sm mut" style="padding-left:18px;margin:8px 0"><li>“KAP Şablonunu Kopyala”ya bas.</li><li>Google tablonda <b>E1</b> hücresine yapıştır (fiyat sütunlarının sağına).</li><li>Yeni hisse alırsan şablonu tekrar kopyalayıp E1’e yapıştır.</li></ol>
   <button class="s" id="kapTplBtn">KAP Şablonunu Kopyala</button>
   <textarea id="kapTpl" rows="4" readonly style="display:none;margin-top:8px"></textarea></div>
- <div class="card"><div class="mut sm">Midas haberlerinde şirketler kısa adlarıyla geçer (ör. “Kardemir”). Eşleşme hisse koduna ve bu adlara göre yapılır. Haber çıkmayan bir hisse için kısa adı buraya ekle. Her satıra <b>KOD=Ad</b> yaz (birden fazla ad için | kullan).</div><textarea id="kapAl" rows="4" placeholder="KRDMD=Kardemir&#10;TRALT=TR Anadolu Metal|Anadolu Metal" style="margin-top:8px" autocapitalize="off" spellcheck="false"></textarea><div class="btns"><button class="s" id="kapAlSave">Adları Kaydet</button></div></div>
+ <div class="card"><div class="mut sm">Midas haberlerinde şirketler kısa adlarıyla geçer (ör. “Kardemir”). Eşleşme hisse koduna ve bu adlara göre yapılır. Haber çıkmayan bir hisse için kısa adı buraya ekle. Her satıra <b>KOD=Ad</b> yaz (birden fazla ad için | kullan).</div><textarea id="kapAl" rows="4" placeholder="KRDMD=Kardemir" style="margin-top:8px" autocapitalize="off" spellcheck="false"></textarea><div class="btns"><button class="s" id="kapAlSave">Adları Kaydet</button></div></div>
  <h3>GitHub ile otomatik yedek</h3>
  <div class="card"><div class="mut sm">Veriler özel (private) bir GitHub deposuna otomatik kaydedilir.</div>
  <div style="margin-top:10px"><label>Depo (kullanıcıadı/depo-adı)</label><input id="ghRepo" placeholder="kullaniciadin/portfoy-veri" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
@@ -428,7 +428,7 @@ function renderKz(all){
  const win=rows.filter(r=>r.total*r.f>0.005),lose=rows.filter(r=>r.total*r.f<-0.005),nf2=[...new Set(rows.filter(r=>!r.f).map(r=>r.cur))];
  $('kzhero').innerHTML=`<div class="l">Bugüne kadar toplam K/Z</div>
  <div class="v" style="cursor:default">${SD(sum,'TRY')}</div><span class="pl">${inv?pct(sum/inv*100):'0,00%'}</span>
- <div class="stats"><div class="tile" data-act="vol">İşlem hacmi ›<b>${D(vol,'TRY')}</b></div><div class="tile" data-act="win">Bugüne Kadar Kazandıran Hisseler ›<b>${win.length} hisse</b></div><div class="tile" data-act="lose">Bugüne Kadar Kaybettiren Hisseler ›<b>${lose.length} hisse</b></div></div>
+ <div class="stats"><div class="tile" data-act="vol">İşlem hacmi ›<b>${D(vol,'TRY')}</b></div><div class="tile" data-act="win">Kazandıran Hisseler ›<b>${win.length} hisse</b></div><div class="tile" data-act="lose">Kaybettiren Hisseler ›<b>${lose.length} hisse</b></div></div>
  ${nf2.length?`<div style="font-size:12px;opacity:.85;margin-top:10px">⚠ ${nf2.map(c=>c==='USD'?'Dolar':'Euro').join(' ve ')} kuru yok, o hisseler toplama katılmadı.</div>`:''}`;
  $('kzlist').innerHTML=rows.map(r=>rowCard(r)).join('')||'<div class="card empty">Henüz işlem yok.</div>';
 }
@@ -439,9 +439,9 @@ function rowCard(r,compact){const S_=r.f?SD(r.total,r.cur):sg(r.total)+' '+cs(r.
 function openWin(title,html){$('wt').textContent=title;$('wb').innerHTML=html;$('win').style.display='block';$('win').scrollTop=0}
 function closeWin(){$('win').style.display='none'}
 function showList(kind){const all=Object.values(calc(trades)),rows=perSym(all);let list,title;
- if(kind==='win'){list=rows.filter(r=>r.total*r.f>0.005).sort((a,b)=>b.total*b.f-a.total*a.f);title='Bugüne Kadar Kazandıran Hisseler'}
- else if(kind==='lose'){list=rows.filter(r=>r.total*r.f<-0.005).sort((a,b)=>a.total*a.f-b.total*b.f);title='Bugüne Kadar Kaybettiren Hisseler'}
- else{list=rows.filter(r=>!r.openQ).sort((a,b)=>String(b.last).localeCompare(String(a.last)));title='Kapanmış pozisyonlar'}
+ if(kind==='win'){list=rows.filter(r=>r.total*r.f>0.005).sort((a,b)=>b.total*b.f-a.total*a.f);title='Kazandıran Hisseler'}
+ else if(kind==='lose'){list=rows.filter(r=>r.total*r.f<-0.005).sort((a,b)=>a.total*a.f-b.total*b.f);title='Kaybettiren Hisseler'}
+ else{list=rows.filter(r=>!r.openQ).sort((a,b)=>String(b.last).localeCompare(String(a.last)));title='Kapanan Pozisyonlar'}
  const tot=list.reduce((a,r)=>a+r.total*r.f,0);
  openWin(title,`<div class="card"><div class="row"><b>${list.length} hisse</b><b class="${cls(tot)}">${SD(tot,'TRY')}</b></div><div class="mut sm">Bir hisseye dokununca işlemleri açılır.</div></div>`+(list.map(r=>rowCard(r,kind==='closed')).join('')||'<div class="card empty">Kayıt yok.</div>'))}
 function renderHist(){
@@ -469,15 +469,15 @@ async function saveTrade(){
  const mkv=$('mkt2').value,isDiv=$('side').value==='div';
  let sym=$('sym').value.trim().toLocaleUpperCase('en').replace(/\s/g,''),qty=isDiv?1:parseFloat($('qty').value),price=parseFloat($('prc').value),comm=parseFloat($('comm').value)||0;const date=$('dt').value,cur=mkv==='ABD'||mkv==='Avrupa'?$('cur').value:'TRY';
  if(mkv==='Nakit'){sym='NAKIT';price=1;comm=0}
- if(mkv==='Döviz'&&!/^(USD|EUR)$/.test(sym))return msg('Döviz için kod USD ya da EUR olmalı.',1);
- if(!/^[A-Z0-9._-]{1,12}$/.test(sym)||!(qty>0)||!(price>=0)||!date||comm<0||(isDiv&&!(price>0)))return msg('Hisse kodu, adet, fiyat ve tarih doğru girilmeli.',1);
+ if(mkv==='Döviz'&&!/^(USD|EUR)$/.test(sym))return msg('Döviz için kod USD ya da EUR seçmelisiniz',1);
+ if(!/^[A-Z0-9._-]{1,12}$/.test(sym)||!(qty>0)||!(price>=0)||!date||comm<0||(isDiv&&!(price>0)))return msg('Bilgileri doğru giriniz',1);
  const old=editing&&trades.find(t=>t.id===editing);
  const t={kind:'trade',sym,cur,side:$('side').value,qty,price,comm,date,brk:$('brk').value.trim(),note:$('note').value.trim(),ts:old?old.ts:Date.now()};
  const id=old?old.id:'t'+Date.now()+Math.random().toString(36).slice(2,6);
  const prev=trades.find(x=>x.sym===sym&&x.id!==id);
  if(prev&&(prev.cur||'TRY')!==cur)return msg(sym+' daha önce '+cs(prev.cur||'TRY')+' ile girilmiş; aynı hisse iki farklı para biriminde girilemez.',1);
  const next=trades.filter(x=>x.id!==id).concat({...t,id});
- if(calc(next)[sym]?.over)return msg('Elindeki adetten fazla satış girilemez.',1);
+ if(calc(next)[sym]?.over)return msg('Elinizdeki adetten fazla satış girdiniz',1);
  try{await S.set(id,t);if(mkv!==marketOf(sym,cur))await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:mkv});msg('Kaydedildi ✓');resetForm();go('pf')}catch(e){msg('Kaydedilemedi: '+(e.message||e.code),1)}
 }
 function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80);else if(t==='analiz')setTimeout(()=>{try{render()}catch(e){}},0)}
@@ -489,7 +489,7 @@ function toJSON(){return JSON.stringify({app:'portfoy',version:2,exported:new Da
 async function exportFile(name,data){
  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}catch(e){}
  $('out').style.display='block';$('out').value=data;
- msg('Dosya indirildi (İndirilenler klasörüne bak). İndirilmediyse aşağıdaki metni kopyalayıp bir dosyaya yapıştır.')
+ msg('Dosya indirildi. İndirilmediyse aşağıdaki metni kopyalayıp bir dosyaya yapıştırınız.')
 }
 function csvRows(t){
  t=t.replace(/^\ufeff/,'');const f=t.split('\n')[0],d=(f.match(/;/g)||[]).length>(f.match(/,/g)||[]).length?';':',';
@@ -518,10 +518,10 @@ function norm(r){
 }
 const key=t=>[t.date,t.side,t.sym,t.cur||'TRY',t.qty,t.price,t.comm||0].join('|');
 async function importText(txt){
- txt=String(txt||'').trim();if(!txt)return msg('Önce dosya seç ya da metin yapıştır.',1);
+ txt=String(txt||'').trim();if(!txt)return msg('Önce dosyayı seç ya da metin yapıştır.',1);
  let rows=[],pr=[],ex={};
  try{if(/^[\[{]/.test(txt)){const j=JSON.parse(txt);rows=Array.isArray(j)?j:j.trades||[];pr=Array.isArray(j.prices)?j.prices:[];if(!Array.isArray(j))ex=j}else rows=parseCSV(txt)}
- catch(e){return msg('Dosya okunamadı: biçim geçersiz.',1)}
+ catch(e){return msg('Dosya okunamadı: Biçim geçersiz.',1)}
  const items=rows.map(norm),bad=items.filter(x=>!x).length,good=items.filter(Boolean);
  const have={};trades.forEach(t=>have[key(t)]=(have[key(t)]||0)+1);
  const add=[];good.forEach(t=>{const k=key(t);if(have[k]>0)have[k]--;else add.push(t)});
@@ -653,10 +653,10 @@ function renderMap(){
  const rows=posRows(),tot=rows.reduce((a,b)=>a+b.val,0);
  if(!rows.length){$('mpv').innerHTML='<div class="card empty">Açık konum yok.</div>';return}
  const rects=tmSplit(rows,0,0,100,100);
- let h=`<div class="card"><div class="row"><b style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M9 3 3.6 5.1a1 1 0 0 0-.6.9v13.6a1 1 0 0 0 1.4.9L9 18.5l6 2.5 5.4-2.1a1 1 0 0 0 .6-.9V4.4a1 1 0 0 0-1.4-.9L15 6Z"/><path d="M9 3v15.5"/><path d="M15 6v15"/></svg> Sıcaklık Haritası</b><span class="mut sm">kare büyüklüğü payı, renk günlük değişimi gösterir</span></div><div class="tmv">${rects.map(rc=>{const[bgi,fgi]=heatBg(rc.r.day);
+ let h=`<div class="card"><div class="row"><b style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M9 3 3.6 5.1a1 1 0 0 0-.6.9v13.6a1 1 0 0 0 1.4.9L9 18.5l6 2.5 5.4-2.1a1 1 0 0 0 .6-.9V4.4a1 1 0 0 0-1.4-.9L15 6Z"/><path d="M9 3v15.5"/><path d="M15 6v15"/></svg> Sıcaklık Haritası</b><span class="mut sm">Kare büyüklüğü payı, renk ise günlük değişimi gösterir</span></div><div class="tmv">${rects.map(rc=>{const[bgi,fgi]=heatBg(rc.r.day);
   return`<div data-ts="${esc(rc.r.sym)}" title="${esc(rc.r.sym)}" style="left:${rc.x}%;top:${rc.y}%;width:${rc.w}%;height:${rc.h}%;background:${bgi};color:${fgi}"><b>${esc(rc.r.sym)}</b><span>${rc.r.day!=null?pct(rc.r.day):'—'} · pay ${(rc.r.val/tot*100).toFixed(1)}%</span></div>`}).join('')}</div>
-  ${anlzB(mapAnalysis(rows,tot))}<div class="mut sm" style="margin-top:6px">Karelerin büyüklüğü hissenin portföydeki payını, rengi o günkü değişimini gösterir. Kareye dokunduğunda ilgili hissenin kartına gidersin.</div></div>`;
- h+=`<div class="card"><div class="row"><b>📅 Takvim Isı Haritası</b><span class="mut sm">aylık getiri</span></div>${calHeatHTML()}</div>`;
+  ${anlzB(mapAnalysis(rows,tot))}<div class="mut sm" style="margin-top:6px">Karelerin büyüklüğü hissenin portföydeki payını, rengi ise o günkü değişimini gösterir. Kareye dokunduğunda ilgili hissenin kartına gidebilirsin.</div></div>`;
+ h+=`<div class="card"><div class="row"><b>📅 Aylık Takvim Isı Haritası</b><span class="mut sm">Aylık % Kazanç</span></div>${calHeatHTML()}</div>`;
  h+=`<div class="card"><div class="row"><b>🔗 Birliktelik Haritası</b><span class="mut sm">son ~3 ay, günlük</span></div>${corrHTML()}</div>`;
  $('mpv').innerHTML=h}
 function calHeatHTML(){
@@ -749,16 +749,16 @@ function renderRisk(){
  else{
   const ring=`<div class="hsk" style="background:conic-gradient(${h.sc>=70?'#10b981':h.sc>=45?'#f59e0b':'#ef4444'} 0 ${h.sc*3.6}deg,rgba(128,132,180,.25) ${h.sc*3.6}deg 360deg)"><div><b>${h.sc}</b><small>/100</small></div></div>`;
   const hA=healthAnalysis(h);
-  out+=`<div class="card"><div class="row"><b>🩺 Portföy Sağlık Karnesi</b><span class="mut sm">sınırlar Ayarlar'dan ayarlanır</span></div>
+  out+=`<div class="card"><div class="row"><b>🩺 Portföy Sağlık Karnesi</b><span class="mut sm">Sınırları ayarlar'dan değiştirebilirsiniz</span></div>
    <div class="hs">${ring}<div style="flex:1;min-width:0">${hsBar('Çeşitlendirme',h.p1,'etkin sayı ≈ '+h.effN.toFixed(1))}${hsBar('Tek hisse yoğunluğu',h.p2,'en büyük: '+esc(h.los)+' %'+Math.round(h.wmax)+' · sınır %'+HS_CONF.maxw)}${hsBar('Oynaklık dengesi',h.p3,h.vol!=null?'yıllık ≈ ±%'+Math.round(h.vol):'geçmiş gerekli')}${hsBar('Nakit tamponu',h.p4,'nakit payı ≈ %'+Math.round(h.cw))}</div></div>
    ${anlzB(hA)}</div>`}
  const k=riskCalc();
- out+=`<div class="card"><div class="row"><b>🌧️ Risk Kartı</b><span class="mut sm">geçmiş verilere dayanır</span></div>`;
+ out+=`<div class="card"><div class="row"><b>🌧️ Risk Kartı</b><span class="mut sm">geçmiş verilere dayanmaktadır</span></div>`;
  if(!k)out+='<div class="mut sm" style="margin-top:6px">Risk ölçümü için en az 40 günlük fiyat geçmişi gerekiyor. Ayarlar → Geçmiş Verilerini Şimdi Yenile ile indirebilirsin.</div>';
  else out+=`<div class="chips-row">
    <span class="kchip">📏 Günlük <span class="trm" data-trm="Oynaklık (volatilite)">oynaklık</span> ±%${k.sd.toLocaleString('tr-TR',{maximumFractionDigits:1})} ≈ ±${shortTL(k.dayTL)}</span>
    <span class="kchip r">🌧️ Kötü bir günde −${shortTL(k.badTL)}'ye kadar düşebilmek normaldir (2σ)</span>
-   <span class="kchip">📉 En kötü dönemde <span class="trm" data-trm="Zirveden daluş (drawdown)">zirveden daluş</span> −%${k.mdd.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span>
+   <span class="kchip">📉 En kötü dönemde <span class="trm" data-trm="Zirveden daluş (drawdown)">zirveden dalış</span> −%${k.mdd.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span>
    <span class="kchip ${k.cur<5?'g':''}">Şu an zirveden −%${k.cur.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span></div>
    ${anlzB(riskAnalysis(k))}<div class="mut sm" style="margin-top:6px">Ölçümler geçmiş günlük hareketlerden hesaplanır; gelecek performansı garanti etmez.</div>`;
  out+='</div>';
@@ -941,7 +941,7 @@ function newsRender(){if(!newsData)return;
   +`<div class="card"><b>🗞️ Bugünün gündemi</b><div style="margin-top:4px">${(n1.slice(0,10).map(newsRow).join(''))||'<div class="mut sm">Haber akışı alınamadı.</div>'}</div></div>`
   +anlzB(newsAnalysis(n1));
  const up=cal.filter(x=>x.t>Date.now()).sort((a,b)=>a.t-b.t).slice(0,16);
- $('nsf').innerHTML=`<div class="card"><b>🗓️ Beklenen veriler (haftanın kalanı)</b><div style="margin-top:4px">${up.length?up.map(x=>evRow(x,true)).join(''):'<div class="mut sm">Kalan günlerde kayıtlı veri yok; yeni haftanın takvimi hafta başında yayımlanır.</div>'}</div></div>`
+ $('nsf').innerHTML=`<div class="card"><b>🗓️ Beklenen veriler</b><div style="margin-top:4px">${up.length?up.map(x=>evRow(x,true)).join(''):'<div class="mut sm">Kalan günlerde kayıtlı veri yok; yeni haftanın takvimi hafta başında yayımlanır.</div>'}</div></div>`
   +anlzB(dataAnalysis(cal,'future'))}
 async function newsLoad(){if(newsBusy)return;newsBusy=true;
  const st=$('newsSt');if(st)st.textContent='⏳ Gündem yükleniyor…';
@@ -1035,7 +1035,7 @@ async function copyTpl(){const t=template();$('tpl').style.display='block';$('tp
 function saveSheet(){const u=$('sheet').value.trim();if(u&&!/^https:\/\/docs\.google\.com\//.test(u))return msg('Bu bir Google Sheets yayın bağlantısına benzemiyor (docs.google.com ile başlamalı).',1);try{localStorage.setItem(SK,u)}catch(e){}msg(u?'Bağlantı kaydedildi ✓ Şimdi “Güncel fiyatları çek”e bas.':'Bağlantı silindi.');}
 let busy=false;
 async function refresh(){
- if(busy)return;if(!navigator.onLine){msg('Çevrimdışısın — fiyatlar şimdi çekilemedi.',1);return}busy=true;const b=$('rf');b.disabled=true;b.textContent='Çekiliyor…';
+ if(busy)return;if(!navigator.onLine){msg('Çevrimdışısınız — fiyatlar güncellenemedi.',1);return}busy=true;const b=$('rf');b.disabled=true;b.textContent='Çekiliyor…';
  const{open}=needList(),ok=[],fail=[],got=new Set();dbg=[];
  try{
   const url=sheetUrl();
@@ -1053,7 +1053,7 @@ async function refresh(){
  try{if(!prices.MK_GRAM&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const g2=prices.MK_ONS.price/31.1035*prices.FX_USD.price,g2p=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(g2>0){prices.MK_GRAM={kind:'price',sym:'MK_GRAM',price:g2,prev:g2p,at:Date.now()};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
  try{if(ok.length)await snap()}catch(e){}
  try{if(taOn&&navigator.onLine){const hr=await histEnsure();if(hr&&hr.fail.length)dbg.push("Teknik geçmiş indirilemedi: "+hr.fail.join(", "))}}catch(e){}
- busy=false;b.disabled=false;b.textContent='🔄 Güncel Fiyatları Çek 🔄';
+ busy=false;b.disabled=false;b.textContent='🔄 Güncel Verileri Çek 🔄';
  _ss('portfoy_last',JSON.stringify({t:Date.now(),n:ok.length,f:fail.length}));showLast();render();
  $('dbgBox').style.display=dbg.length?'block':'none';$('dbg').textContent=[...new Set(dbg)].slice(0,10).join('\n');
  if(fail.length)msg('Alınamadı: '+fail.join(', ')+'. Sebep için “Hata ayrıntısı”na bak; Ayarlar’dan Google tablo kaynağını kontrol et.',1);
@@ -1470,8 +1470,8 @@ function initSync(){
  $('ghSave').addEventListener('click',()=>{let repo=$('ghRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$|\/$/g,'');const old=ghCfg(),token=$('ghTok').value.trim()||(old&&old.token)||'';
   if(!/^[\w.-]+\/[\w.-]+$/.test(repo))return msg('Depo adı “kullaniciadi/depo-adi” biçiminde olmalı.',1);if(!token)return msg('Erişim anahtarını (token) yapıştır.',1);
   ghSetCfg({repo,token});$('ghTok').value='';$('ghTok').placeholder='Kayıtlı (değiştirmek için yaz)';syncNow()});
- $('ghNow').addEventListener('click',()=>ghCfg()?syncNow():msg('Önce depo ve anahtarı girip bağlan.',1));
- $('ghOff').addEventListener('click',()=>{ghSetCfg(null);$('ghTok').placeholder='github_pat_…';setSt('Bağlı değil');msg('Bağlantı kaldırıldı. Veriler telefonda duruyor.')});
+ $('ghNow').addEventListener('click',()=>ghCfg()?syncNow():msg('Önce depo ve anahtarı girip bağlanınız.',1));
+ $('ghOff').addEventListener('click',()=>{ghSetCfg(null);$('ghTok').placeholder='github_pat_…';setSt('Bağlı değil');msg('Bağlantı kaldırıldı. Veriler şu an sadece telefonda saklanmaktadır.')});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ghCfg())syncNow()});
 }
 /* ---------- geçmiş değer kaydı, grafik, dağılım, rapor ---------- */
@@ -1631,12 +1631,12 @@ function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]
  $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
   ||`<div class="card empty">${kap.t?(kap.hasCols?'Son 14 günde elindeki hisseler için KAP haberi bulunamadı.':'Tabloda KAP bölümü bulunamadı. Ayarlar → KAP haberleri kaynağı adımlarını uygula.'):'Henüz veri yok — üstteki “Yenile” ile doğrudan çekebilirsin.'}</div>`}
 function kapMarkAll(){kapVisible().forEach(x=>kap.read[x.id]=Date.now());kapSave();renderKap()}
-function kapDelAll(){kap.items=[];kap.read={};kap.del={};kap.t=0;kapSave();renderKap();msg('Tüm KAP kayıtları temizlendi — 🔄 ile yeniden çekin')}
+function kapDelAll(){kap.items=[];kap.read={};kap.del={};kap.t=0;kapSave();renderKap();msg('Tüm KAP kayıtları temizlendi — 🔄 ile yeniden çekiniz.')}
 function kapOpen(){renderKap();if(!kap.t||Date.now()-kap.t>10*60e3)kapDirect()}
 function kapTemplate(){const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!['Döviz','Nakit'].includes(mk(s))&&s.cur==='TRY').map(s=>s.sym))],rows=[];
  syms.forEach(sym=>{const u=`https://news.google.com/rss/search?q=${sym}+%22KAMUYU+AYDINLATMA+PLATFORMU%22+when:7d&hl=tr&gl=TR&ceid=TR:tr`;rows.push(['=IMPORTFEED("'+u+'";"items";FALSE;8)','','','','',sym]);for(let i=1;i<10;i++)rows.push(['','','','','',sym])});
  return rows.map(r=>r.join('\t')).join('\n')}
-async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('Önce en az bir hisse ekle.',1);$('kapTpl').style.display='block';$('kapTpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('kapTpl').select();ok=document.execCommand('copy')}catch(x){}}
+async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('En az bir hisse ekleyiniz.',1);$('kapTpl').style.display='block';$('kapTpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('kapTpl').select();ok=document.execCommand('copy')}catch(x){}}
  msg(ok?'Kopyalandı ✓ Google tablonda E1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda E1 hücresine yapıştır.',!ok)}
 /* ---------- KAP doğrudan çekme (tablosuz) ---------- */
 const KTR=[u=>'https://r.jina.ai/'+u,u=>'https://api.cors.lol/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
@@ -1683,7 +1683,7 @@ async function kapDirect(){
  if(kapBusy)return;kapBusy=true;
  try{
   const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.cur==='TRY'&&mk(s)==='BIST').map(s=>s.sym))].sort();
-  if(!syms.length){msg('KAP taraması için elinde en az bir BIST hissesi olmalı.',1);kapBusy=false;return}
+  if(!syms.length){msg('KAP taraması için elinizde en az bir BIST hissesi olmalı.',1);kapBusy=false;return}
   if(!kap.v2){kap.items=kap.items.filter(x=>x.src!=='Midas KAP');kap.v2=1}
   const stEl=$('kapSt'),now=Date.now(),PG=10,BASE='https://www.getmidas.com/kap-haberleri/';
   const pages=[];let firstTi='';
@@ -1708,9 +1708,9 @@ async function kapDirect(){
    if(stEl)stEl.textContent='Midas’a ulaşılamadı, yedek kaynaklar deneniyor…';
    const a2=await kapFallback(syms,have,now);
    if(a2){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();msg(a2+' haber eklendi (yedek kaynak) ✓')}
-   else msg('KAP kaynaklarına ulaşılamadı — birkaç dakika sonra tekrar dene.',1);
+   else msg('KAP kaynaklarına ulaşılamadı — Tekrar deneyiniz.',1);
    renderKap()}
- }catch(e){msg('KAP çekilemedi: '+(e.message||e),1);try{renderKap()}catch(x){}}
+ }catch(e){msg('KAP verileri çekilemedi: '+(e.message||e),1);try{renderKap()}catch(x){}}
  kapBusy=false}
 function kapAlUI(){const a=kapAliasGet();const el=$('kapAl');if(el)el.value=Object.keys(a).map(k=>k+'='+a[k].join('|')).join('\n')}
 $('kapAlSave').addEventListener('click',()=>{const o={};$('kapAl').value.split('\n').forEach(l=>{const m=/^\s*([A-Za-z0-9]{2,8})\s*=\s*(.+)$/.exec(l);if(m){const n=m[2].split('|').map(s=>s.trim()).filter(Boolean);if(n.length)o[m[1].toUpperCase()]=n}});
@@ -1784,7 +1784,7 @@ async function tryUnlock(){const c=pinCfg();if(!c){document.documentElement.clas
 function updatePinUI(){const c=pinCfg();$('pinState').textContent=c?'Açık':'Kapalı';$('pinState').className=c?'up':'mut';$('lockAfter').value=String(c&&c.after!=null?c.after:60)}
 async function setPin(){const v=$('pinNew').value.trim();if(!/^\d{4,8}$/.test(v))return msg('PIN 4-8 rakamdan oluşmalı.',1);const salt=Math.random().toString(36).slice(2),old=pinCfg();
  try{localStorage.setItem(PK,JSON.stringify({salt,hash:await hashPin(v,salt),len:v.length,after:old&&old.after!=null?old.after:60}))}catch(e){return msg('Kaydedilemedi',1)}try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaydedildi ✓. Uygulama yeni açılışta sorulur; sayfa yenilenince sorulmaz.')}
-async function offPin(){const c=pinCfg();if(!c)return msg('PIN zaten kapalı.');if(await hashPin($('pinNew').value.trim(),c.salt)!==c.hash)return msg('Kaldırmak için kutuya mevcut PIN’i yaz.',1);try{localStorage.removeItem(PK)}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaldırıldı.')}
+async function offPin(){const c=pinCfg();if(!c)return msg('PIN zaten kapalı.');if(await hashPin($('pinNew').value.trim(),c.salt)!==c.hash)return msg('Kaldırmak için kutuya mevcut PIN’i yazınız.',1);try{localStorage.removeItem(PK)}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaldırıldı.')}
 function setTheme(v){_ss('portfoy_theme',v||null);v?document.documentElement.setAttribute('data-theme',v):document.documentElement.removeAttribute('data-theme');document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',(b.dataset.t||'')===(v||'')))}
 /* ---------- olaylar ---------- */
 $('nav').addEventListener('click',e=>{const b=e.target.closest?e.target.closest('button'):e.target;if(b&&b.dataset.tab){closeWin();go(b.dataset.tab);if(b.dataset.tab==='kap')kapOpen()}});
@@ -1850,19 +1850,19 @@ $('exC').addEventListener('click',()=>exportFile('portfoy-islemler.csv',toCSV())
 $('imp').addEventListener('click',()=>importText($('paste').value));
 $('file').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>importText(r.result);r.onerror=()=>msg('Dosya okunamadı.',1);r.readAsText(f)});
 $('pinSet').addEventListener('click',setPin);$('pinOff').addEventListener('click',offPin);
-$('lockAfter').addEventListener('change',()=>{const c=pinCfg();if(!c)return msg('Önce bir PIN belirle.',1);c.after=+$('lockAfter').value;try{localStorage.setItem(PK,JSON.stringify(c))}catch(e){}msg('Kaydedildi ✓')});
+$('lockAfter').addEventListener('change',()=>{const c=pinCfg();if(!c)return msg('Lütfen PIN belirleyiniz.',1);c.after=+$('lockAfter').value;try{localStorage.setItem(PK,JSON.stringify(c))}catch(e){}msg('Kaydedildi ✓')});
 $('lgo').addEventListener('click',tryUnlock);$('lpin').addEventListener('input',()=>{const c=pinCfg();if(c&&$('lpin').value.length===c.len)tryUnlock()});
 $('lforgot').addEventListener('click',()=>{if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
 $('themeSeg').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.t!=null)setTheme(e.target.dataset.t)});
 $('updBtn').addEventListener('click',async()=>{const r=window.__swReg;
- if(!r)return msg('Güncelleme kontrolü bu açılış modunda yok (dosyadan açtıysan yeni dosyayı kopyala yeter).',1);
+ if(!r)return msg('Güncelleme kontrolü bu açılış modunda yok.',1);
  msg('Kontrol ediliyor…');window.__updFound=false;
  try{await r.update()}catch(e){}
- setTimeout(()=>{if(window.__updFound||window.__reloaded)msg('Yeni sürüm indirildi — sayfa kendiliğinden yenilenecek…');
+ setTimeout(()=>{if(window.__updFound||window.__reloaded)msg('Yeni sürüm indirildi — sayfa yenileniyor...');
   else msg('Uygulama güncel ✓ (GitHub tarafı 1-10 dk gecikebilir; birkaç dakika sonra tekrar dene)')},2500)});
 $('taTgl').addEventListener('click',()=>{taOn=!taOn;_ss('portfoy_ta',taOn?'1':'0');taSettingsUI();SIGS=[];render();msg(taOn?'Teknik analiz açık ✓':'Teknik analiz kapatıldı')});
 ['taHi','taLo','taVol'].forEach(id=>$(id).addEventListener('change',()=>{const v=parseFloat($(id).value);if(!(v>0))return;TA_CONF[id==='taHi'?'rsiHi':id==='taLo'?'rsiLo':'vol']=v;_ss('portfoy_tac',JSON.stringify(TA_CONF));render()}));
-$('taRef').addEventListener('click',async()=>{const b=$('taRef');if(b.disabled)return;if(!navigator.onLine)return msg('Çevrimdışısın — geçmiş yenilenemedi.',1);
+$('taRef').addEventListener('click',async()=>{const b=$('taRef');if(b.disabled)return;if(!navigator.onLine)return msg('Çevrimdışısınız — geçmiş yenilenemedi.',1);
  b.disabled=true;const ob=b.textContent;b.textContent='İndiriliyor…';msg('Geçmiş verileri indiriliyor…');
  try{const r=await histEnsure(true);render();
   if(r.ok.length)msg('Geçmiş güncellendi ✓ ('+r.ok.length+' hisse)'+(r.fail.length?' · alınamadı: '+r.fail.join(', '):''),0);
@@ -1872,7 +1872,7 @@ $('taRef').addEventListener('click',async()=>{const b=$('taRef');if(b.disabled)r
 $('tav').addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-hs]');if(c)openHist(c.dataset.hs)});
 const offUp=()=>{const o=!navigator.onLine;$('offbar').style.display=o?'block':'none';return o};
 window.addEventListener('online',()=>{if(!offUp()&&trades.length)refresh()});
-window.addEventListener('offline',()=>{offUp();msg('Çevrimdışısın — fiyat güncellemesi duraklatıldı.',1)});
+window.addEventListener('offline',()=>{offUp();msg('Çevrimdışısınız — fiyat güncellemesi duraklatıldı.',1)});
 offUp();
 let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hidAt=Date.now();return}const gap=hidAt?Date.now()-hidAt:0,c=pinCfg();
  if(c&&c.after>=0&&hidAt&&gap>=c.after*1000)lockNow();else if(hidAt&&gap>120000&&!isLocked())refresh()});
