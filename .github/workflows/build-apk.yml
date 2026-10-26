@@ -29,7 +29,7 @@ jobs:
           key: portfoy-debug-anahtari
 
       - name: Bagimliliklari kur
-        run: npm install && npm i @capgo/capacitor-native-biometric
+        run: npm install && npm i @capgo/capacitor-native-biometric&6
 
       - name: Web dosyalarini hazirla
         run: |
