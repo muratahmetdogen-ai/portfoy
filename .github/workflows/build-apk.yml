@@ -21,7 +21,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # İmza anahtarını önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
+      # Imza anahtarini önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
       - name: Imza anahtarini koru
         uses: actions/cache@v4
         with:
@@ -29,7 +29,7 @@ jobs:
           key: portfoy-debug-anahtari
 
       - name: Bagimliliklari kur
-        run: npm install && npm i @capgo/capacitor-native-biometric&6
+        run: npm install && npm i @capgo/capacitor-native-biometric@6
 
       - name: Web dosyalarini hazirla
         run: |
@@ -48,7 +48,7 @@ jobs:
           R=android/app/src/main/res
           mkdir -p $R/mipmap-mdpi $R/mipmap-hdpi $R/mipmap-xhdpi $R/mipmap-xxhdpi $R/mipmap-xxxhdpi
           mkdir -p $R/drawable-mdpi $R/drawable-hdpi $R/drawable-xhdpi $R/drawable-xxhdpi $R/drawable-xxxhdpi
-          # Ana ekran ikonu (eski yöntem)
+          # Ana ekran ikonu
           convert icon-maskable-512.png -resize 192x192 $R/mipmap-xxxhdpi/ic_launcher.png
           convert icon-maskable-512.png -resize 144x144 $R/mipmap-xxhdpi/ic_launcher.png
           convert icon-maskable-512.png -resize 96x96  $R/mipmap-xhdpi/ic_launcher.png
@@ -58,7 +58,7 @@ jobs:
           # Ikonu guvenli daire icinde tutmak icin koyu zemin uzerine kucultup ortala
           convert icon-maskable-512.png -resize 250x250 _fg.png
           convert -size 432x432 xc:'rgb(12,17,28)' _fg.png -geometry +91+91 -composite _fg432.png
-          # Adaptif ikon on-planı (Android 8+) - hem drawable hem mipmap konumlarina
+          # Adaptif ikon on-plani (Android 8+)
           convert _fg432.png -resize 432x432 $R/drawable-xxxhdpi/ic_launcher_foreground.png
           convert _fg432.png -resize 324x324 $R/drawable-xxhdpi/ic_launcher_foreground.png
           convert _fg432.png -resize 216x216 $R/drawable-xhdpi/ic_launcher_foreground.png
