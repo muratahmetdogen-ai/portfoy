@@ -29,12 +29,12 @@ jobs:
           key: portfoy-debug-anahtari
 
       - name: Bagimliliklari kur
-        run: npm install
+        run: npm install && npm i @capgo/capacitor-native-biometric
 
       - name: Web dosyalarini hazirla
         run: |
           mkdir -p www
-          cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png www/
+          cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png 70-kilit-kasa.png www/
 
       - name: Android projesini hazirla
         run: |
