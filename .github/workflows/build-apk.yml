@@ -26,7 +26,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
-          key: portfoy-debug-anahtari
+          key: portfoy-anahtar-${{ github.run_number }}
+          restore-keys: |
+            portfoy-anahtar-
+            portfoy-debug-anahtari
 
       - name: Bagimliliklari kur
         run: npm install && npm i @capgo/capacitor-native-biometric@6
