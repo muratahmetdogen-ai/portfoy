@@ -118,6 +118,7 @@ body.print-rp h3{color:#555}}
 .kchip{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:5px 11px;font-size:12.5px;font-weight:600}
 .kchip.g{background:#d9f5ea;color:#065f46;border-color:#b9ead4}
 .kchip.r{background:#fde5e5;color:#991b1b;border-color:#f7c9c9}
+.ktag{display:inline-block;font-size:10px;font-weight:800;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}.ktag.g{background:rgba(7,148,85,.13);color:#079455}.ktag.r{background:rgba(229,56,45,.11);color:#e5382d}
 .anlz{margin-top:9px;background:linear-gradient(135deg,rgba(28,37,71,.10),rgba(49,66,126,.05));border:1px solid rgba(28,37,71,.30);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}.mt .tile{min-width:0}.mhd{display:flex;align-items:center;white-space:nowrap;overflow:hidden}.mnm{overflow:hidden;text-overflow:ellipsis}.mhd .mcc,.mhd .mop,.mhd .mpre,.mhd .mcl{flex:none}.nev{display:flex;gap:8px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px}.nev:last-child{border-bottom:none}.ndt{flex:none;width:42px;color:var(--mut);font-size:11.5px;font-weight:700;padding-top:2px}.ndh,.ndm,.ndl{flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px}.ndh{background:#ef4444}.ndm{background:#f59e0b}.ndl{background:#94a3b8}.nfl{flex:none;font-size:13px;padding-top:1px}.ntt{flex:1;min-width:0}.ntt small{color:var(--mut);font-size:11px;display:block;margin-top:1px}.nws{display:block;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px;color:var(--tx);text-decoration:none}.nws:last-child{border-bottom:none}.nws small{color:var(--mut);font-size:11px;display:block;margin-top:2px}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin')&&!sessionStorage.getItem('portfoy_sess'))document.documentElement.classList.add('locked')}catch(e){}</script>
 </head><body>
@@ -791,26 +792,43 @@ function renderRisk(){
   out+='<div class="chips-row">'+ch+'</div>'+anlzB(tqAnalysis(q))+'<div class="mut sm" style="margin-top:6px">Değerlendirme, geçmiş fiyatı bulunan hisselerde işlem tarihinden yaklaşık 30 gün sonraki kapanış fiyatıyla yapılır.</div>'}
  out+='</div>';
  $('rkv').innerHTML=out}
-const KPOS=['temettü','kâr artışı','kar artışı','kazanç','artırım','bedelsiz','rekor','büyüme','sipariş','ihale','net kâr','faaliyet kârı','yükseliş','ortaklık','satın alma'];
-const KNEG=['zarar','dava','iptal','düşüş','gerileme','tasfiye','ceza','usulsüzlük','soruşturma','görevden','temerrüt','erken tahsil','sis','destek alınması','geçici'];
+/* v45: ağırlıklı duyarlılık motoru — KAP ve Haberler ortak kullanır */
+const KRULES=[
+ [3,/bedelsiz|pay geri al|geri aldı|rekor|ihale kazandı|yeni sipariş|zirve/],
+ [2,/temettü|kâr payı|kar payı|net kâr|faaliyet kârı|kâr artışı|kar artışı|kazanç|büyüme|ortaklık|satın al|sözleşme imzala|sözleşme al|ihale|ihraç|yeni yatırım|kapasite artır|anlaşma|alım/],
+ [1,/yüksel|arttı|artırdı|artış|sipariş|ihale/],
+ [-1,/geçici|erteleme|durdurma|karşı talep|tavan/],
+ [-2,/dava|ceza|iptal|düşüş|gerileme|geriledi|kayıp|endişe|baskı|temkinli|satış|çıkarma|yapı satış/],
+ [-3,/zarar|tasfiye|temerrüt|usulsüzlük|soruşturma|görevden|iflas|erken tahsil|destek alınması|kapatıldı/]];
+const KBOZ=/iptal|ertelendi|erteleme|durdur|yapılmayacak|olmayacak|gerçekleşmeyen|yapılmayan|kaldırıldı|azalt|düşen|düşürdü/;
+function textScore(t){t=String(t||'').toLocaleLowerCase('tr');let s=0,hits=0;
+ for(const[w,re]of KRULES)if(re.test(t)){s+=w;hits++}
+ if(hits&&KBOZ.test(t))s-=3;
+ return s}
+function kapTagOf(x){const sc=textScore(x.title);
+ return sc>=2?'<i class="ktag g">▲ Olumlu</i>':sc<=-2?'<i class="ktag r">▼ Olumsuz</i>':''}
 function kapSentCalc(items){
  const t30=Date.now()-30*864e5,by={};
  for(const x of items){if(!x.t||x.t<t30)continue;
-  const t=(x.title||'').toLocaleLowerCase('tr');
-  const p=KPOS.some(w=>t.includes(w)),n=KNEG.some(w=>t.includes(w));
-  if(!p&&!n)continue;
-  const b=by[x.sym]??={p:0,n:0};if(p)b.p++;if(n)b.n++}
- return Object.entries(by).sort((a,b)=>(b[1].p+b[1].n)-(a[1].p+a[1].n))}
+  const sc=textScore(x.title);if(!sc)continue;
+  const b=by[x.sym]??={p:0,n:0,s:0};
+  if(sc>0)b.p++;else b.n++;b.s+=sc}
+ return Object.entries(by).sort((a,b)=>b[1].s-a[1].s||((b[1].p+b[1].n)-(a[1].p+a[1].n)))}
 function kapSentRender(all){
  const se=$('kapSent');if(!se)return;
  const sent=kapSentCalc(all);
  if(!sent.length){se.style.display='none';return}
  se.style.display='block';
- const tp=sent.reduce((a,x)=>a+x[1].p,0),tn=sent.reduce((a,x)=>a+x[1].n,0);
+ const tp=sent.reduce((a,x)=>a+x[1].p,0),tn=sent.reduce((a,x)=>a+x[1].n,0),ts=sent.reduce((a,x)=>a+x[1].s,0);
  let ko='';
- if(sent.length)ko=`Son 30 günde ${tp} olumlu, ${tn} olumsuz başlık sayıldı; en çok gündemde olan ${sent[0][0]} (${sent[0][1].p+sent[0][1].n} haber). Genel ton ${tp>tn?'olumlu':tn>tp?'olumsuz':'dengede'}. Bu sonuç basit kelime sayımına dayanır, yatırım tavsiyesi değildir.`;
- se.innerHTML='<b>📰 Haber Duyarlılığı</b> <span class="mut sm">· son 30 gün · kelime analizi</span><div class="chips-row">'
-  +sent.slice(0,10).map(([sy,v])=>v.p&&!v.n?`<span class="kchip g">${esc(sy)}: ${v.p} olumlu</span>`:v.n&&!v.p?`<span class="kchip r">${esc(sy)}: ${v.n} olumsuz</span>`:`<span class="kchip">${esc(sy)}: ${v.p} olumlu / ${v.n} olumsuz</span>`).join('')+'</div>'+anlzB(ko)}
+ if(sent.length){
+  const guclu=sent.filter(([sy,v])=>v.s>=3).map(([sy])=>sy),kotu=sent.filter(([sy,v])=>v.s<=-3).map(([sy])=>sy);
+  ko=`Son 30 günde ${tp} olumlu, ${tn} olumsuz başlık; ağırlıklı skor ${ts>0?'+':''}${ts} → genel ton ${ts>2?'BELİRGİN OLUMLU':ts>0?'hafif olumlu':ts<-2?'BELİRGİN OLUMSUZ':ts<0?'hafif olumsuz':'dengede'}.`;
+  if(guclu.length)ko+=` Güçlü olumlu: ${guclu.slice(0,4).join(', ')}.`;
+  if(kotu.length)ko+=` Güçlü olumsuz: ${kotu.slice(0,4).join(', ')}.`;
+  const lider=sent[0];if(lider)ko+=` En çok gündemde ${lider[0]} (${lider[1].p} olumlu / ${lider[1].n} olumsuz). İptal/erteleme gibi bozucu ifadeler skoru düşürür. Yatırım tavsiyesi değildir.`}
+ se.innerHTML='<b>📰 Haber Duyarlılığı</b> <span class="mut sm">· son 30 gün · ağırlıklı kelime analizi</span><div class="chips-row">'
+  +sent.slice(0,10).map(([sy,v])=>v.s>=3?`<span class="kchip g">${esc(sy)}: ▲ güçlü olumlu (+${v.s})</span>`:v.s<=-3?`<span class="kchip r">${esc(sy)}: ▼ güçlü olumsuz (${v.s})</span>`:v.s>0?`<span class="kchip g">${esc(sy)}: olumlu (+${v.s})</span>`:v.s<0?`<span class="kchip r">${esc(sy)}: olumsuz (${v.s})</span>`:`<span class="kchip">${esc(sy)}: karışık</span>`).join('')+'</div>'+anlzB(ko)}
 function aiTodayTxt(){try{
  const T=summary();if(!T||!(T.dayBase>0)||!T.dayN)return'';
  const dp=T.day/T.dayBase*100;
@@ -836,7 +854,7 @@ async function newsFetch(url,ms){return kGet(url,ms||9000)}
 async function ffCal(){
  const t=await newsFetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
  const d=JSON.parse(t.slice(t.indexOf('['),t.lastIndexOf(']')+1));
- return(Array.isArray(d)?d:[]).map(x=>({t:x.date?+new Date(x.date):0,ti:x.title||'',c:x.country||'',im:x.impact||'Low',f:x.forecast||'',p:x.previous||''})).filter(x=>x.t>0)}
+ return(Array.isArray(d)?d:[]).map(x=>({t:x.date?+new Date(x.date):0,ti:x.title||'',c:x.country||'',im:x.impact||'Low',f:x.forecast||'',p:x.previous||'',a:x.actual||''})).filter(x=>x.t>0)}
 function rssItems(t){t=String(t||'');
  const i1=t.indexOf('<item'),i2=t.lastIndexOf('</item>');
  const x=i1>-1&&i2>i1?t.slice(i1,i2+7):t;
@@ -874,10 +892,20 @@ function evImpact(ti){const t=(ti||'').toLowerCase();
  return'Beklenti ile önceki değer arasındaki fark, kısa vadeli hareketi belirler.'}
 function trDate(d){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'}).format(d)}catch(e){return new Date(d).toISOString().slice(0,10)}}
 function imDot(im){return im==='High'?'<span class="ndh" title="Yüksek etkili"></span>':im==='Medium'?'<span class="ndm" title="Orta etkili"></span>':'<span class="ndl" title="Düşük etkili"></span>'}
+function fnum(v){const m=String(v??'').replace(',','.').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
+function evVerdict(x){const a=fnum(x.a),f=fnum(x.f);
+ if(a==null||f==null)return{v:'nötr',why:''};
+ if(Math.abs(a-f)<1e-9)return{v:'nötr',why:'açıklanan beklentiyle aynı — fiyata etkisi sınırlı'};
+ const hi=a>f,t=(x.ti||'').toLocaleLowerCase('tr');
+ const ters=/enflasyon|tüfe|üfe|cpi|cpı|ppi|ppı|işsizlik|unemployment|bütçe|açığı|deficit/.test(t);
+ const olumlu=hi!==ters;
+ return{v:olumlu?'olumlu':'olumsuz',why:ters?(hi?'açıklanan beklentinin ÜSTÜNDE — bu veride yüksek değer baskı demek':'açıklanan beklentinin ALTINDA — rahatlama sinyali'):(hi?'açıklanan beklentinin ÜSTÜNDE — güçlenme sinyali':'açıklanan beklentinin ALTINDA — zayıflama sinyali')}}
 function evRow(x,saatli){const d=new Date(x.t);
  const hh=saatli?new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}).format(d):new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'short'}).format(d);
- const fpx=(x.f||x.p)?`<small>${x.f?'beklenti '+x.f:''}${x.f&&x.p?' · ':''}${x.p?'önceki '+x.p:''}</small>`:'';
- return`<div class="nev"><span class="ndt">${hh}</span>${imDot(x.im)}<span class="nfl">${NFL[x.c]||'🌍'}</span><div class="ntt">${esc(x.ti)}${fpx}</div></div>`}
+ const vd=x.a?evVerdict(x):null;
+ const fpx=(x.a||x.f||x.p)?`<small>${x.a?'<b>açıklanan '+esc(x.a)+'</b>':''}${x.a&&(x.f||x.p)?' · ':''}${x.f?'beklenti '+esc(x.f):''}${(x.a||x.f)&&x.p?' · ':''}${x.p?'önceki '+esc(x.p):''}</small>`:'';
+ const not=vd&&x.a?`<div class="sm" style="margin:2px 0 4px 50px"><b style="color:${vd.v==='olumlu'?'var(--up)':vd.v==='olumsuz'?'var(--dn)':'var(--mut)'}">${vd.v==='olumlu'?'▲ Olumlu':vd.v==='olumsuz'?'▼ Olumsuz':'● Nötr'}</b> <span class="mut">${vd.why}.</span></div>`:'';
+ return`<div class="nev"><span class="ndt">${hh}</span>${imDot(x.im)}<span class="nfl">${NFL[x.c]||'🌍'}</span><div class="ntt">${esc(x.ti)}${fpx}</div></div>`+not}
 function newsRow(x){const dtsm=x.t?new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(x.t)):'';
  return`<a class="nws" href="${esc(x.li||('https://www.google.com/search?hl=tr&q='+encodeURIComponent(x.ti.slice(0,70))))}" target="_blank" rel="noopener">${esc(x.ti)}<small>${esc(x.src)} · ${dtsm}</small></a>`}
 function themeChip(t,n){return`<span class="kchip">${esc(t)} · ${n} haber</span>`}
@@ -906,9 +934,8 @@ function dataAnalysis(cal,mode){
  const done=cal.filter(x=>x.t<Date.now()&&x.im!=='Holiday'),hi=done.filter(x=>x.im==='High');
  if(mode==='past'){
   if(!done.length)return'Açıklanmış veri görünmüyor; takvim güncellendikçe burada listelenir.';
-  const f=hi.filter(x=>x.f).slice(-2).map(x=>{const fa=parseFloat(String(x.f).replace(',','.')),pr=parseFloat(String(x.p).replace(',','.'));
-   const y=isFinite(fa)&&isFinite(pr)?(fa>pr?'piyasa beklentisi öncekinin üstündeydi':fa<pr?'beklenti öncekinin altındaydı':'beklenti öncekiyle aynıydı'):'';
-   return x.ti+(y?' ('+y+')':'')}).join('; ');
+  const f=hi.filter(x=>x.a||x.f).slice(-2).map(x=>{const vd=x.a?evVerdict(x):null;
+   return x.ti+(vd&&vd.why?' ('+vd.why+')':'')}).join('; ');
   return`${done.length} veri açıklandı, ${hi.length} tanesi yüksek etkili${hi.length?' ('+hi.slice(-3).map(x=>x.ti).join(', ')+')':''}. ${f?'Beklenti yönü: '+f+'. ':''}Yüksek etkili verilerin açıklanma anındaki sert hareketler normaldir; yönü genelde beklentiyle karşılaştırma belirler.`}
  if(mode==='today'){
   const td=trDate(new Date()),tod=cal.filter(x=>trDate(new Date(x.t))===td&&x.im!=='Holiday').sort((a,b)=>a.t-b.t),hi2=tod.filter(x=>x.im==='High');
@@ -926,12 +953,18 @@ function dataAnalysis(cal,mode){
 function newsAnalysis(list){
  if(!list||!list.length)return'Haber akışı alınamadı; 🔄 ile yenilemeyi deneyebilirsin.';
  const th=newsThemes(list),top=th.slice(0,3);
- const POS=/yükseldi|arttı|artırdı|rekor|kazanç|toparlan|güçlen|zirve|pozitif/i,NEG=/düştü|geriledi|kaybetti|endişe|düşüş|zarar|baskı|temkinli/i;
- let p=0,n=0;for(const x of list){if(POS.test(x.ti||''))p++;if(NEG.test(x.ti||''))n++}
- const ton=p>n?'başlıkların genel tonu olumlu görünüyor':n>p?'genel ton temkinli/olumsuz görünüyor':'ton karışık; net bir yön baskın değil';
- let o=`${list.length} haber tarandı; gündem en çok ${top.map(x=>x[0]+' ('+x[1]+')').join(', ')} üzerinde — ${ton}.`;
+ let p=0,n=0,bp=null,bn=null;
+ for(const x of list){const sc=textScore(x.ti||'');
+  if(sc>0){p++;if(!bp||sc>bp.s)bp={s:sc,ti:x.ti||''}}
+  else if(sc<0){n++;if(!bn||sc<bn.s)bn={s:sc,ti:x.ti||''}}}
+ const ton=p>n?'başlıkların genel tonu olumlu':n>p?'genel ton temkinli/olumsuz':'ton karışık; net yön zayıf';
+ let o=`${list.length} haber tarandı; gündem en çok ${top.map(x=>x[0]+' ('+x[1]+')').join(', ')} üzerinde — ${ton} (${p} olumlu / ${n} olumsuz başlık, ağırlıklı skor ${p-n>0?'+':''}${p-n}).`;
  if(top.length){const t2=THEMES.find(x=>x[1]===top[0][0]);if(t2)o+=` ${t2[2]}`}
- o+=` Öne çıkan başlık: "${(list[0].ti||'').slice(0,90)}".`;
+ if(bp)o+=` Öne çıkan olumlu: "${bp.ti.slice(0,80)}".`;
+ if(bn)o+=` Öne çıkan olumsuz: "${bn.ti.slice(0,80)}".`;
+ try{const b=prices.MK_BIST100;if(b&&b.prev>0){const ch=(b.price/b.prev-1)*100;
+  o+=` Piyasa bağlamı: BIST100 bugün ${sg(ch)}% — ${Math.abs(ch)<0.3?'yatay seyrediyor':ch>0?'alıcılar güçlü':'satış baskısı var'}`;
+  o+=((p>n&&ch>0)||(n>p&&ch<0))?'; haber akışı piyasa yönüyle uyumlu.':(Math.abs(ch)>=0.5&&((p>n&&ch<0)||(n>p&&ch>0)))?'; haber akışı ile fiyat ters düşüyor — dikkat.':'.'}}catch(e){}
  return o}
 function newsRender(){if(!newsData)return;
  $('newsSt').textContent='Son güncelleme '+dts(newsData.t);
@@ -1636,7 +1669,7 @@ function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]
  const syms=[...new Set(items.map(x=>x.sym))].sort();if(kapSym&&!syms.includes(kapSym))kapSym='';
  $('kapChips').innerHTML=items.length?`<button class="${kapSym?'':'on'}" data-ks="">Hepsi (${items.length})</button>`+syms.map(x=>`<button class="${kapSym===x?'on':''}" data-ks="${esc(x)}">${esc(x)} (${items.filter(i=>i.sym===x).length})</button>`).join(''):'';
  const list=items.filter(x=>!kapSym||x.sym===kapSym).sort((a,b)=>((kap.read[a.id]?1:0)-(kap.read[b.id]?1:0))||((b.t||b.seen)-(a.t||a.seen)));
- $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
+ $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)} ${kapTagOf(x)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
   ||`<div class="card empty">${kap.t?(kap.hasCols?'Son 14 günde elindeki hisseler için KAP haberi bulunamadı.':'Tabloda KAP bölümü bulunamadı. Ayarlar → KAP haberleri kaynağı adımlarını uygula.'):'Henüz veri yok — üstteki “Yenile” ile doğrudan çekebilirsin.'}</div>`}
 function kapMarkAll(){kapVisible().forEach(x=>kap.read[x.id]=Date.now());kapSave();renderKap()}
 function kapDelAll(){kap.items=[];kap.read={};kap.del={};kap.t=0;kapSave();renderKap();msg('Tüm KAP kayıtları temizlendi — 🔄 ile yeniden çekiniz.')}
