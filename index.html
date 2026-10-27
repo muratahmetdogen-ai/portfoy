@@ -1633,7 +1633,7 @@ function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]
  kapSentRender(all);$('kapCats').innerHTML=[['','Tümü'],['ser','Sermaye Artırımı'],['tem','Temettü'],['bil','Bilanço & Finansal'],['oth','Diğer']].map(([k,nm])=>`<button class="${kapCat===k?'on':''}" data-kc="${k}">${nm}</button>`).join('');
  const syms=[...new Set(items.map(x=>x.sym))].sort();if(kapSym&&!syms.includes(kapSym))kapSym='';
  $('kapChips').innerHTML=items.length?`<button class="${kapSym?'':'on'}" data-ks="">Hepsi (${items.length})</button>`+syms.map(x=>`<button class="${kapSym===x?'on':''}" data-ks="${esc(x)}">${esc(x)} (${items.filter(i=>i.sym===x).length})</button>`).join(''):'';
- const list=items.filter(x=>!kapSym||x.sym===kapSym);
+ const list=items.filter(x=>!kapSym||x.sym===kapSym).sort((a,b)=>((kap.read[a.id]?1:0)-(kap.read[b.id]?1:0))||((b.t||b.seen)-(a.t||a.seen)));
  $('kapList').innerHTML=list.map(x=>{const rd=!!kap.read[x.id];return`<div class="card kc ${rd?'rd':''}" data-kid="${x.id}">${rd?'':'<i class="dot"></i>'}<div class="row" style="padding-right:22px"><b>${esc(x.sym)}</b><span class="mut sm">${x.t?dshort(x.t):''}</span></div><div style="margin-top:4px">${esc(x.title)}</div>${x.src?`<div class="mut sm" style="margin-top:2px">${esc(x.src)}${x.url?' ↗':''}</div>`:''}</div>`}).join('')
   ||`<div class="card empty">${kap.t?(kap.hasCols?'Son 14 günde elindeki hisseler için KAP haberi bulunamadı.':'Tabloda KAP bölümü bulunamadı. Ayarlar → KAP haberleri kaynağı adımlarını uygula.'):'Henüz veri yok — üstteki “Yenile” ile doğrudan çekebilirsin.'}</div>`}
 function kapMarkAll(){kapVisible().forEach(x=>kap.read[x.id]=Date.now());kapSave();renderKap()}
@@ -1703,7 +1703,7 @@ async function kapDirect(){
   if(pages.length){
    const mt=syms.map(s=>({s,tk:new RegExp('(^|[^A-Za-z0-9ÇĞİıÖŞÜçğöşü])'+s+'(?![A-Za-z0-9ÇĞİıÖŞÜçğöşü])'),ns:symNames(s).map(kn).filter(x=>x.length>=3)}));
    for(const pg of pages)for(const it of pg.a){scanned++;const tn=' '+kn(it.ti)+' ';
-    for(const q of mt){if(!(q.tk.test(it.ti)||q.ns.some(x=>tn.includes(' '+x+' '))))continue;
+    for(const q of mt){if(!eslesmeVar(it.ti,tn,q))continue;
      hit.add(q.s);const kid=hid(q.s+'|'+it.ti);if(kap.del[kid]||have.has(kid))continue;have.add(kid);
      kap.items.push({id:kid,sym:q.s,title:it.ti,src:'Midas KAP',url:BASE+(pg.n>1?'?sayfa='+pg.n:''),t:it.ts,seen:now});added++}}
    kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();renderKap();
@@ -1718,6 +1718,14 @@ async function kapDirect(){
    renderKap()}
  }catch(e){msg('KAP verileri çekilemedi: '+(e.message||e),1);try{renderKap()}catch(x){}}
  kapBusy=false}
+/* v42: EKIM gibi ay adıyla çakışan kodlar için tarih-bağlam guardı — '27 Ekim 2026' ifadeleri hisse sanılmaz */
+const AYLAR=/^(ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik)$/;
+const ayTarihMi=(tn,k)=>new RegExp('\\b\\d{1,2}\\s+'+k+'\\b|\\b'+k+'\\s*(?:'+String.fromCharCode(39)+'|\u2019)?(de|da|te|ta|den|dan|la|le|nin|nın|nun|nün|in|ın|ün|un|e|a)\\b|\\b'+k+'\\s+(19|20)\\d{2}\\b').test(tn);
+function eslesmeVar(ti,tn,q){const kq=kn(q.s);
+ if(AYLAR.test(kq)){if(q.tk.test(ti)&&!ayTarihMi(tn,kq))return true}
+ else if(q.tk.test(ti))return true;
+ for(const x of q.ns){if(AYLAR.test(x)){if(!ayTarihMi(tn,x)&&tn.includes(' '+x+' '))return true}else if(tn.includes(' '+x+' '))return true}
+ return false}
 function kapAlUI(){const a=kapAliasGet();const el=$('kapAl');if(el)el.value=Object.keys(a).map(k=>k+'='+a[k].join('|')).join('\n')}
 $('kapAlSave').addEventListener('click',()=>{const o={};$('kapAl').value.split('\n').forEach(l=>{const m=/^\s*([A-Za-z0-9]{2,8})\s*=\s*(.+)$/.exec(l);if(m){const n=m[2].split('|').map(s=>s.trim()).filter(Boolean);if(n.length)o[m[1].toUpperCase()]=n}});
  try{localStorage.setItem('portfoy_kapalias',JSON.stringify(o))}catch(e){}kapAlUI();msg('Adlar kaydedildi ✓ — KAP sekmesinde 🔄’e bas')});
