@@ -238,7 +238,8 @@ body.print-rp h3{color:#555}}
   <div style="margin-top:8px"><label>Oynaklık kötü sınır (%)</label><input id="hsVolhi" type="number" inputmode="decimal" step="1"></div>
   <div class="btns"><button class="s" id="hsSave">Kaydet</button></div></div>
  <h3>KAP haberleri kaynağı</h3>
- <div class="card"><div class="mut sm">KAP sekmesindeki “Yenile”, getmidas.com/kap-haberleri sayfalarını (ilk 10 sayfa) tarar ve yalnızca elindeki BIST hisselerine ait haberleri gösterir. Midas’a ulaşılamazsa Google/Bing yedek olarak denenir. Tablo kuruluysa o da çalışır.</div>
+ <div class="card"><div class="sl"><span>KAP Kaynakları</span></div><div class="chp" id="kapSrcSeg" style="margin:2px 0 8px"></div><div class="mut sm">Tıkladığın kaynak kullanılır, kapalı olan hiç taranmaz. Midas: resmî KAP akışı (önerilen). Yedek Arama: Google/Bing haber araması. Google Tablo: tablondaki KAP bölümü.</div>
+  <div class="mut sm" style="margin-top:6px">KAP sekmesindeki “Yenile”, getmidas.com/kap-haberleri sayfalarını (ilk 10 sayfa) tarar ve yalnızca elindeki BIST hisselerine ait haberleri gösterir. Midas’a ulaşılamazsa Google/Bing yedek olarak denenir. Tablo kuruluysa o da çalışır.</div>
   <div class="mut sm" style="margin-top:6px"></div>
   <ol class="sm mut" style="padding-left:18px;margin:8px 0"><li>“KAP Şablonunu Kopyala”ya bas.</li><li>Google tablonda <b>E1</b> hücresine yapıştır (fiyat sütunlarının sağına).</li><li>Yeni hisse alırsan şablonu tekrar kopyalayıp E1’e yapıştır.</li></ol>
   <button class="s" id="kapTplBtn">KAP Şablonunu Kopyala</button>
@@ -1047,7 +1048,7 @@ async function refresh(){
   if(url){try{const table=await getSheetTable(url),rows=table.map(r=>({k:r[0],v:r[1],p:r[2]})),need=new Set([...open.map(s=>s.sym),'FX_USD','FX_EUR',...MKK.map(k=>'MK_'+k)]);
    for(const r of rows){let k=String(r.k||'').trim().toLocaleUpperCase('en');if(k==='USD'||k==='EUR')k='FX_'+k;else if(MKK.includes(k))k='MK_'+k;const v=pnum(r.v),pv=pnum(r.p);
     if(need.has(k)&&v>0&&!got.has(k)){await S.set('p_'+k,{kind:'price',sym:k,price:v,prev:pv>0?pv:null,at:Date.now()});got.add(k);ok.push(k)}}
-   if(!got.size)dbg.push('Google Sheet → tablo okundu ama eşleşen fiyat yok (A sütunu kodlar, B sütunu fiyat olmalı)');try{ingestKap(table)}catch(e){dbg.push('KAP → '+e.message)}}catch(e){}}
+   if(!got.size)dbg.push('Google Sheet → tablo okundu ama eşleşen fiyat yok (A sütunu kodlar, B sütunu fiyat olmalı)');try{if(kapSrc().tablo)ingestKap(table)}catch(e){dbg.push('KAP → '+e.message)}}catch(e){}}
   for(const c of['USD','EUR'])if(!got.has('FX_'+c)){const v=await fxRate(c);if(v&&v.rate){await S.set('p_FX_'+c,{kind:'price',sym:'FX_'+c,price:v.rate,prev:v.prev||null,at:Date.now()});ok.push('FX_'+c)}else if(Object.values(calc(trades)).some(s=>s.qty>1e-9&&(s.cur===c||(mk(s)==='Döviz'&&s.sym===c))))fail.push(c)}
   const pend=open.filter(s=>!got.has(s.sym)),res=[];for(let i=0;i<pend.length;i+=4)res.push(...await Promise.all(pend.slice(i,i+4).map(async s=>({s,r:await stockPrice(s.sym,s.cur)}))));
   for(const {s,r} of res){if(r&&r.price){await S.set('p_'+s.sym,{kind:'price',sym:s.sym,price:r.price,prev:r.prev||null,at:Date.now()});ok.push(s.sym)}else fail.push(s.sym+(r&&r.bad?' (para birimi '+r.bad+')':''))}
@@ -1615,7 +1616,8 @@ let kap=kapLoad(),kapSym='';
 const kapSave=()=>{try{localStorage.setItem(KK,JSON.stringify(kap))}catch(e){}};
 const hid=x=>{let h=5381;for(const c of String(x))h=((h<<5)+h+c.charCodeAt(0))|0;return'k'+(h>>>0).toString(36)};
 function pdate(v){if(!v)return 0;const m=String(v).match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);if(m)return+new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));const t=Date.parse(v);return isNaN(t)?0:t}
-function kapPrune(){const now=Date.now(),lim=now-14*864e5;kap.items=kap.items.filter(x=>(x.t||x.seen)>=lim);for(const k of Object.keys(kap.read))if(kap.read[k]<now-8*864e5)delete kap.read[k];for(const k of Object.keys(kap.del))if(kap.del[k]<now-8*864e5)delete kap.del[k]}
+function kapJunk(x){if(x.sym!=='EKIM')return false;const tn=' '+kn(x.title||'')+' ';if(tn.includes(' ekim turizm '))return false;return ayTarihMi(tn,'ekim')}
+function kapPrune(){const now=Date.now(),lim=now-14*864e5;kap.items=kap.items.filter(x=>(x.t||x.seen)>=lim&&!kapJunk(x));for(const k of Object.keys(kap.read))if(kap.read[k]<now-8*864e5)delete kap.read[k];for(const k of Object.keys(kap.del))if(kap.del[k]<now-8*864e5)delete kap.del[k]}
 function ingestKap(table){let seen=0;const now=Date.now(),have=new Set(kap.items.map(x=>x.id));
  table.forEach(r=>{const sym=String(r[9]||'').trim().toLocaleUpperCase('en');if(!sym)return;seen++;
   const cells=r.slice(4,9),url=cells.find(c=>/^https?:\/\//.test(String(c||''))),dt=cells.map(c=>pdate(c)).find(x=>x>0)||0;
@@ -1691,9 +1693,10 @@ async function kapDirect(){
   const syms=[...new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9&&s.cur==='TRY'&&mk(s)==='BIST').map(s=>s.sym))].sort();
   if(!syms.length){msg('KAP taraması için elinizde en az bir BIST hissesi olmalı.',1);kapBusy=false;return}
   if(!kap.v2){kap.items=kap.items.filter(x=>x.src!=='Midas KAP');kap.v2=1}
+  const src=kapSrc();if(!src.midas&&!src.yedek){msg('KAP için seçili kaynak kalmadı — Ayarlar’dan kaynak seçiniz.',1);kapBusy=false;return}
   const stEl=$('kapSt'),now=Date.now(),PG=10,BASE='https://www.getmidas.com/kap-haberleri/';
   const pages=[];let firstTi='';
-  for(let p=1;p<=PG;p+=2){
+  if(src.midas)for(let p=1;p<=PG;p+=2){
    if(stEl)stEl.textContent='Midas KAP taranıyor… sayfa '+p+'/'+PG+' · '+syms.length+' hisse';
    const grp=[p,p+1].filter(n=>n<=PG);
    const rs=await Promise.all(grp.map(async n=>{try{const a=midasItems(await kGet(BASE+(n>1?'?sayfa='+n:''),14000));return a.length?{n,a}:null}catch(e){return null}}));
@@ -1711,10 +1714,11 @@ async function kapDirect(){
    if(added)msg(added+' yeni KAP haberi eklendi ✓ ('+scanned+' haber tarandı, '+hit.size+'/'+syms.length+' hissede eşleşme)');
    else msg('Taranan '+scanned+' haber arasında yeni eşleşme yok'+(nn.length?' · Adı tanımsız: '+nn.join(', ')+' (Ayarlar → KAP’tan kısa ad ekle)':''))}
   else{
-   if(stEl)stEl.textContent='Midas’a ulaşılamadı, yedek kaynaklar deneniyor…';
-   const a2=await kapFallback(syms,have,now);
-   if(a2){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();msg(a2+' haber eklendi (yedek kaynak) ✓')}
-   else msg('KAP kaynaklarına ulaşılamadı — Tekrar deneyiniz.',1);
+   if(stEl)stEl.textContent=src.midas?'Midas’a ulaşılamadı, yedek kaynaklar deneniyor…':'Yedek Arama taranıyor…';
+   if(src.yedek){const a2=await kapFallback(syms,have,now);
+    if(a2){kap.t=Date.now();kap.hasCols=true;kapPrune();kapSave();msg(a2+' haber eklendi (yedek kaynak) ✓')}
+    else msg('KAP kaynaklarına ulaşılamadı — Tekrar deneyiniz.',1)}
+   else msg('Midas’a ulaşılamadı — Tekrar deneyiniz.',1);
    renderKap()}
  }catch(e){msg('KAP verileri çekilemedi: '+(e.message||e),1);try{renderKap()}catch(x){}}
  kapBusy=false}
@@ -1727,6 +1731,12 @@ function eslesmeVar(ti,tn,q){const kq=kn(q.s);
  for(const x of q.ns){if(AYLAR.test(x)){if(!ayTarihMi(tn,x)&&tn.includes(' '+x+' '))return true}else if(tn.includes(' '+x+' '))return true}
  return false}
 function kapAlUI(){const a=kapAliasGet();const el=$('kapAl');if(el)el.value=Object.keys(a).map(k=>k+'='+a[k].join('|')).join('\n')}
+const KSK='portfoy_kapsrc';
+function kapSrc(){try{return Object.assign({midas:1,yedek:0,tablo:1},JSON.parse(localStorage.getItem(KSK)||'{}'))}catch(e){return{midas:1,yedek:0,tablo:1}}}
+function kapSrcSet(k,v){const o=kapSrc();o[k]=v?1:0;try{localStorage.setItem(KSK,JSON.stringify(o))}catch(e){}}
+function kapSrcUI(){const o=kapSrc(),el=$('kapSrcSeg');if(!el)return;el.innerHTML=[['midas','Midas'],['yedek','Yedek Arama'],['tablo','Google Tablo']].map(([k,nm])=>`<button class="${o[k]?'on':''}" data-ksk="${k}">${nm}</button>`).join('')}
+$('kapSrcSeg').addEventListener('click',e=>{const b=e.target.closest('[data-ksk]');if(!b)return;kapSrcSet(b.dataset.ksk,!kapSrc()[b.dataset.ksk]);kapSrcUI();msg('KAP kaynağı güncellendi ✓')});
+kapSrcUI();
 $('kapAlSave').addEventListener('click',()=>{const o={};$('kapAl').value.split('\n').forEach(l=>{const m=/^\s*([A-Za-z0-9]{2,8})\s*=\s*(.+)$/.exec(l);if(m){const n=m[2].split('|').map(s=>s.trim()).filter(Boolean);if(n.length)o[m[1].toUpperCase()]=n}});
  try{localStorage.setItem('portfoy_kapalias',JSON.stringify(o))}catch(e){}kapAlUI();msg('Adlar kaydedildi ✓ — KAP sekmesinde 🔄’e bas')});
 /* ---------- grafik pencereleri ---------- */
