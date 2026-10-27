@@ -903,9 +903,9 @@ function evVerdict(x){const a=fnum(x.a),f=fnum(x.f);
 function evRow(x,saatli){const d=new Date(x.t);
  const hh=saatli?new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}).format(d):new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'short'}).format(d);
  const vd=x.a?evVerdict(x):null;
- const fpx=(x.a||x.f||x.p)?`<small>${x.a?'<b>açıklanan '+esc(x.a)+'</b>':''}${x.a&&(x.f||x.p)?' · ':''}${x.f?'beklenti '+esc(x.f):''}${(x.a||x.f)&&x.p?' · ':''}${x.p?'önceki '+esc(x.p):''}</small>`:'';
- const not=vd&&x.a?`<div class="sm" style="margin:2px 0 4px 50px"><b style="color:${vd.v==='olumlu'?'var(--up)':vd.v==='olumsuz'?'var(--dn)':'var(--mut)'}">${vd.v==='olumlu'?'▲ Olumlu':vd.v==='olumsuz'?'▼ Olumsuz':'● Nötr'}</b> <span class="mut">${vd.why}.</span></div>`:'';
- return`<div class="nev"><span class="ndt">${hh}</span>${imDot(x.im)}<span class="nfl">${NFL[x.c]||'🌍'}</span><div class="ntt">${esc(x.ti)}${fpx}</div></div>`+not}
+ const kw=vd?(vd.v==='olumlu'?'<b style="color:var(--up)">▲ Olumlu</b>':vd.v==='olumsuz'?'<b style="color:var(--dn)">▼ Olumsuz</b>':'<b style="color:var(--mut)">● Nötr</b>'):'';
+ const fpx=(x.a||x.f||x.p)?`<small>${x.p?'önceki '+esc(x.p):''}${x.p&&x.f?' · ':''}${x.f?'beklenti '+esc(x.f):''}${(x.p||x.f)&&x.a?' · ':''}${x.a?'<b>açıklanan '+esc(x.a)+'</b>':''}${kw?' — '+kw:''}</small>`:'';
+ return`<div class="nev"><span class="ndt">${hh}</span>${imDot(x.im)}<span class="nfl">${NFL[x.c]||'🌍'}</span><div class="ntt">${esc(x.ti)}${fpx}</div></div>`}
 function newsRow(x){const dtsm=x.t?new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(x.t)):'';
  return`<a class="nws" href="${esc(x.li||('https://www.google.com/search?hl=tr&q='+encodeURIComponent(x.ti.slice(0,70))))}" target="_blank" rel="noopener">${esc(x.ti)}<small>${esc(x.src)} · ${dtsm}</small></a>`}
 function themeChip(t,n){return`<span class="kchip">${esc(t)} · ${n} haber</span>`}
@@ -935,7 +935,7 @@ function dataAnalysis(cal,mode){
  if(mode==='past'){
   if(!done.length)return'Açıklanmış veri görünmüyor; takvim güncellendikçe burada listelenir.';
   const f=hi.filter(x=>x.a||x.f).slice(-2).map(x=>{const vd=x.a?evVerdict(x):null;
-   return x.ti+(vd&&vd.why?' ('+vd.why+')':'')}).join('; ');
+   return x.ti+(vd?' ('+(vd.v==='olumlu'?'▲ Olumlu':vd.v==='olumsuz'?'▼ Olumsuz':'● Nötr')+')':'')}).join('; ');
   return`${done.length} veri açıklandı, ${hi.length} tanesi yüksek etkili${hi.length?' ('+hi.slice(-3).map(x=>x.ti).join(', ')+')':''}. ${f?'Beklenti yönü: '+f+'. ':''}Yüksek etkili verilerin açıklanma anındaki sert hareketler normaldir; yönü genelde beklentiyle karşılaştırma belirler.`}
  if(mode==='today'){
   const td=trDate(new Date()),tod=cal.filter(x=>trDate(new Date(x.t))===td&&x.im!=='Holiday').sort((a,b)=>a.t-b.t),hi2=tod.filter(x=>x.im==='High');
