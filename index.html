@@ -160,6 +160,7 @@ body.print-rp h3{color:#555}}
  <div class="mut sm" id="kapSt" style="margin:6px 2px 10px"></div>
  <input id="kapq" placeholder="🔍 Haber başlığında ara…" style="margin:8px 0 10px"><div class="chp" id="kapCats" style="margin:0 0 10px"></div>
  <div class="card" id="kapSent" style="margin:0 0 10px;display:none"></div>
+ <div class="card" style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="mut sm" style="flex:none">Kaynak:</span><div class="chp" id="kapSrcSeg" style="margin:0"></div></div>
  <div class="g2" style="margin-bottom:10px"><button class="s" id="kapRead">Tümünü Oku ✓</button><button class="s" id="kapDel">Tümünü Sil 🗑</button></div>
  <div class="chp" id="kapChips" style="margin-bottom:10px"></div>
  <div id="kapList"></div>
@@ -238,8 +239,7 @@ body.print-rp h3{color:#555}}
   <div style="margin-top:8px"><label>Oynaklık kötü sınır (%)</label><input id="hsVolhi" type="number" inputmode="decimal" step="1"></div>
   <div class="btns"><button class="s" id="hsSave">Kaydet</button></div></div>
  <h3>KAP haberleri kaynağı</h3>
- <div class="card"><div class="sl"><span>KAP Kaynakları</span></div><div class="chp" id="kapSrcSeg" style="margin:2px 0 8px"></div><div class="mut sm">Tıkladığın kaynak kullanılır, kapalı olan hiç taranmaz. Midas: resmî KAP akışı (önerilen). Yedek Arama: Google/Bing haber araması. Google Tablo: tablondaki KAP bölümü.</div>
-  <div class="mut sm" style="margin-top:6px">KAP sekmesindeki “Yenile”, getmidas.com/kap-haberleri sayfalarını (ilk 10 sayfa) tarar ve yalnızca elindeki BIST hisselerine ait haberleri gösterir. Midas’a ulaşılamazsa Google/Bing yedek olarak denenir. Tablo kuruluysa o da çalışır.</div>
+ <div class="card"><div class="mut sm" style="margin-top:6px">KAP sekmesindeki “Yenile”, getmidas.com/kap-haberleri sayfalarını (ilk 10 sayfa) tarar ve yalnızca elindeki BIST hisselerine ait haberleri gösterir. Midas’a ulaşılamazsa Google/Bing yedek olarak denenir. Tablo kuruluysa o da çalışır.</div>
   <div class="mut sm" style="margin-top:6px"></div>
   <ol class="sm mut" style="padding-left:18px;margin:8px 0"><li>“KAP Şablonunu Kopyala”ya bas.</li><li>Google tablonda <b>E1</b> hücresine yapıştır (fiyat sütunlarının sağına).</li><li>Yeni hisse alırsan şablonu tekrar kopyalayıp E1’e yapıştır.</li></ol>
   <button class="s" id="kapTplBtn">KAP Şablonunu Kopyala</button>
@@ -1626,7 +1626,7 @@ function ingestKap(table){let seen=0;const now=Date.now(),have=new Set(kap.items
   if(dt&&dt<now-14*864e5)return;const id=hid(sym+'|'+(url||title));if(have.has(id)||kap.del[id])return;have.add(id);
   kap.items.push({id,sym,title:title.trim(),src,url:url||'',t:dt,seen:now})});
  kap.t=now;kap.hasCols=seen>0;kapPrune();kapSave();renderKap()}
-function kapVisible(){const held=new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9).map(s=>s.sym));return kap.items.filter(x=>held.has(x.sym)).sort((a,b)=>(b.t||b.seen)-(a.t||a.seen))}
+function kapVisible(){try{const o=kapSrc();const map={midas:'Midas KAP',yedek:'Yedek Arama',tablo:'Google Tablo'};kap.items=kap.items.filter(x=>o[Object.keys(map).find(k=>map[k]===x.src)]!==0)}catch(e){}const held=new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9).map(s=>s.sym));return kap.items.filter(x=>held.has(x.sym)).sort((a,b)=>(b.t||b.seen)-(a.t||a.seen))}
 function kapCatOf(x){const t=(x.title||'').toLocaleLowerCase('tr');if(/sermaye|bedelsiz|bedelli/.test(t))return'ser';if(/temett|kâr pay|kar pay/.test(t))return'tem';if(/bilan|finansal|mali tablo|çeyrek|faaliyet|12 aylık|3 aylık|6 aylık|9 aylık|yıllık/.test(t))return'bil';return'oth'}
 function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]),n=unread.length;
  const nb=$('kapN');nb.textContent=n>99?'99+':n;nb.style.display=n?'block':'none';
@@ -1735,7 +1735,11 @@ const KSK='portfoy_kapsrc';
 function kapSrc(){try{return Object.assign({midas:1,yedek:0,tablo:1},JSON.parse(localStorage.getItem(KSK)||'{}'))}catch(e){return{midas:1,yedek:0,tablo:1}}}
 function kapSrcSet(k,v){const o=kapSrc();o[k]=v?1:0;try{localStorage.setItem(KSK,JSON.stringify(o))}catch(e){}}
 function kapSrcUI(){const o=kapSrc(),el=$('kapSrcSeg');if(!el)return;el.innerHTML=[['midas','Midas'],['yedek','Yedek Arama'],['tablo','Google Tablo']].map(([k,nm])=>`<button class="${o[k]?'on':''}" data-ksk="${k}">${nm}</button>`).join('')}
-$('kapSrcSeg').addEventListener('click',e=>{const b=e.target.closest('[data-ksk]');if(!b)return;kapSrcSet(b.dataset.ksk,!kapSrc()[b.dataset.ksk]);kapSrcUI();msg('KAP kaynağı güncellendi ✓')});
+const SRCADI={midas:'Midas KAP',yedek:'Yedek Arama',tablo:'Google Tablo'};
+$('kapSrcSeg').addEventListener('click',e=>{const b=e.target.closest('[data-ksk]');if(!b)return;const k=b.dataset.ksk;const once=kapSrc()[k];kapSrcSet(k,!once);kapSrcUI();
+ const SRCADI={midas:'Midas KAP',yedek:'Yedek Arama',tablo:'Google Tablo'};const ad=SRCADI[k];
+ if(once){const del=kap.items.filter(x=>x.src===ad).length;kap.items=kap.items.filter(x=>x.src!==ad);kapPrune();kapSave();msg(ad+' kapatıldı — '+del+' eski haberi listeden kaldırıldı ✓');renderKap()}
+ else{msg(ad+' açıldı ✓ — KAP sekmesinde 🔄 ile çekin')}});
 kapSrcUI();
 $('kapAlSave').addEventListener('click',()=>{const o={};$('kapAl').value.split('\n').forEach(l=>{const m=/^\s*([A-Za-z0-9]{2,8})\s*=\s*(.+)$/.exec(l);if(m){const n=m[2].split('|').map(s=>s.trim()).filter(Boolean);if(n.length)o[m[1].toUpperCase()]=n}});
  try{localStorage.setItem('portfoy_kapalias',JSON.stringify(o))}catch(e){}kapAlUI();msg('Adlar kaydedildi ✓ — KAP sekmesinde 🔄’e bas')});
