@@ -335,7 +335,8 @@ const MKTS=['BIST','ABD','Avrupa','Fon','Döviz','Nakit'],MKCUR={BIST:'TRY',Fon:
 const marketOf=(sym,cur)=>{const m=meta[sym];if(m&&m.market)return m.market;if(m&&m.type==='Fon')return'Fon';return cur==='USD'?'ABD':cur==='EUR'?'Avrupa':'BIST'};
 const mk=s=>marketOf(s.sym,s.cur);
 function priceOf(s){const m=mk(s);if(m==='Nakit')return 1;if(m==='Döviz')return fx(s.sym)||null;const p=prices[s.sym];return p&&p.price>0?p.price:null}
-function prevOf(s){const m=mk(s);if(m==='Nakit'||m==='Döviz')return null;const p=prices[s.sym];return p&&p.prev>0?p.prev:null}
+function prevOf(s){const m=mk(s);if(m==='Nakit'||m==='Döviz')return null;const p=prices[s.sym];if(p&&p.prev>0)return p.prev;if(!SNAPPREV.includes(s.sym))return null;const td=today();for(let i=snaps.length-1;i>=0;i--){const sn=snaps[i];if(!sn||sn.date>=td)continue;const v=sn.syms&&sn.syms[s.sym];if(v>0)return v}return null}
+const SNAPPREV=['KZL','KGM'];/* tabloda dünkü kapanışı olmayan kodlar: dünkü fiyatı uygulamanın kendi gün-a-gün kaydından okunur */
 const dcur=()=>disp==='TRY'||fx(disp)>0?disp:'TRY';
 const toD=(v,cur)=>v*(fx(cur||'TRY')||0)/(fx(dcur())||1);
 const D=(v,cur)=>fmt(toD(v,cur))+' '+cs(dcur()),SD=(v,cur)=>sg(toD(v,cur))+' '+cs(dcur());
@@ -1481,8 +1482,9 @@ function initSync(){
 /* ---------- geçmiş değer kaydı, grafik, dağılım, rapor ---------- */
 async function snap(){const t=summary();if(!t.nOpen)return;const d=today(),old=snaps.find(x=>x.date===d);
  const ix={};[['BI','MK_BIST100'],['GR','MK_GRAM'],['US','FX_USD'],['SP','MK_SP500']].forEach(([k,s])=>{const p=prices[s];if(p&&p.price>0)ix[k]=+p.price});
- if(old&&Math.abs(old.value-t.val)<0.01&&Math.abs(old.cost-t.cost)<0.01&&JSON.stringify(old.ix||{})===JSON.stringify(ix))return;
- await S.set('s_'+d,{kind:'snap',date:d,value:+t.val.toFixed(2),cost:+t.cost.toFixed(2),pl:+t.open.toFixed(2),real:+t.real.toFixed(2),ix})}
+ const sy={};needList().open.forEach(s2=>{const pp=priceOf(s2);if(pp>0)sy[s2.sym]=+pp.toFixed(6)});
+ if(old&&Math.abs(old.value-t.val)<0.01&&Math.abs(old.cost-t.cost)<0.01&&JSON.stringify(old.ix||{})===JSON.stringify(ix)&&old.syms&&Object.keys(old.syms).length)return;
+ await S.set('s_'+d,{kind:'snap',date:d,value:+t.val.toFixed(2),cost:+t.cost.toFixed(2),pl:+t.open.toFixed(2),real:+t.real.toFixed(2),ix,syms:sy})}
 function costSeries(){const ds=[...new Set(trades.map(t=>t.date))].sort(),pts=[];
  for(const d of ds){const by=calc(trades.filter(t=>t.date<=d));let c=0;Object.values(by).forEach(s=>{c+=s.cost*(fx(s.cur)||0)});pts.push({t:+new Date(d+'T00:00:00'),v:c})}
  if(pts.length)pts.push({t:Date.now(),v:pts[pts.length-1].v});return pts}
