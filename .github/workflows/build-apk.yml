@@ -2,6 +2,11 @@ name: APK derle
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - sw.js
 
 permissions:
   contents: write
