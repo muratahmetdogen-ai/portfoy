@@ -21,18 +21,15 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # Imza anahtarini önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
+      # İmza anahtarını önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
       - name: Imza anahtarini koru
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
-          key: portfoy-anahtar-${{ github.run_number }}
-          restore-keys: |
-            portfoy-anahtar-
-            portfoy-debug-anahtari
+          key: portfoy-debug-anahtari
 
       - name: Bagimliliklari kur
-        run: npm install && npm i @capgo/capacitor-native-biometric@6
+        run: npm install
 
       - name: Web dosyalarini hazirla
         run: |
@@ -44,6 +41,12 @@ jobs:
           if [ ! -f android/gradlew ]; then npx cap add android; fi
           npx cap sync android
 
+      - name: Biyometrik iznini ekle
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q USE_BIOMETRIC $M || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n</manifest>#' $M
+          grep -n BIOMETRIC $M
+
       - name: Cuzdan ikonunu Android boyutlarina uygula
         run: |
           sudo apt-get update -q
@@ -51,7 +54,7 @@ jobs:
           R=android/app/src/main/res
           mkdir -p $R/mipmap-mdpi $R/mipmap-hdpi $R/mipmap-xhdpi $R/mipmap-xxhdpi $R/mipmap-xxxhdpi
           mkdir -p $R/drawable-mdpi $R/drawable-hdpi $R/drawable-xhdpi $R/drawable-xxhdpi $R/drawable-xxxhdpi
-          # Ana ekran ikonu
+          # Ana ekran ikonu (eski yöntem)
           convert icon-maskable-512.png -resize 192x192 $R/mipmap-xxxhdpi/ic_launcher.png
           convert icon-maskable-512.png -resize 144x144 $R/mipmap-xxhdpi/ic_launcher.png
           convert icon-maskable-512.png -resize 96x96  $R/mipmap-xhdpi/ic_launcher.png
@@ -61,7 +64,7 @@ jobs:
           # Ikonu guvenli daire icinde tutmak icin koyu zemin uzerine kucultup ortala
           convert icon-maskable-512.png -resize 250x250 _fg.png
           convert -size 432x432 xc:'rgb(12,17,28)' _fg.png -geometry +91+91 -composite _fg432.png
-          # Adaptif ikon on-plani (Android 8+)
+          # Adaptif ikon on-planı (Android 8+) - hem drawable hem mipmap konumlarina
           convert _fg432.png -resize 432x432 $R/drawable-xxxhdpi/ic_launcher_foreground.png
           convert _fg432.png -resize 324x324 $R/drawable-xxhdpi/ic_launcher_foreground.png
           convert _fg432.png -resize 216x216 $R/drawable-xhdpi/ic_launcher_foreground.png
