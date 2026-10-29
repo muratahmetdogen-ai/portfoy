@@ -275,7 +275,7 @@ body.print-rp h3{color:#555}}
  <div class="mut sm">PIN her açılışta sorulur. PIN ve kurtarma şifresi telefondaki verileri şifreler (portföy kayıtları, GitHub anahtarı, geçmiş). PIN’i unutursan kurtarma şifresiyle girer, yeni PIN koyarsın. İkisini de unutursan telefondaki veri okunamaz; GitHub yedeğinden geri yüklersin. 4 haneli PIN tek başına zayıf bir şifredir; mümkünse 6-8 hane kullan.</div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v49</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v51</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -857,26 +857,55 @@ function renderRisk(){
  out+='</div>';
  $('rkv').innerHTML=out}
 /* v45: ağırlıklı duyarlılık motoru — KAP ve Haberler ortak kullanır */
-const KRULES=[
- [3,/bedelsiz|pay geri al|geri aldı|rekor|ihale kazandı|yeni sipariş|zirve/],
- [2,/temettü|kâr payı|kar payı|net kâr|faaliyet kârı|kâr artışı|kar artışı|kazanç|büyüme|ortaklık|satın al|sözleşme imzala|sözleşme al|ihale|ihraç|yeni yatırım|kapasite artır|anlaşma|alım/],
- [1,/yüksel|arttı|artırdı|artış|sipariş/],
- [-1,/geçici|erteleme|durdurma|karşı talep/],
- [-2,/dava|ceza|iptal|düşüş|gerileme|geriledi|kayıp|endişe|baskı|temkinli|satış|çıkarma|yapı satış/],
- [-3,/zarar|tasfiye|temerrüt|usulsüzlük|soruşturma|görevden|iflas|erken tahsil|destek alınması|kapatıldı/]];
-const KBOZ=/iptal|ertelendi|erteleme|durdur|yapılmayacak|olmayacak|gerçekleşmeyen|yapılmayan|kaldırıldı|azalt|düşen|düşürdü/;
-function textScore(t){t=String(t||'').toLocaleLowerCase('tr');let s=0,hits=0;
- for(const[w,re]of KRULES)if(re.test(t)){s+=w;hits++}
- if(hits&&KBOZ.test(t))s-=3;
- return s}
+/* v50: bağlam duyarlı duyarlılık motoru (olay kalıpları + olumsuzlama + yön/nesne) — KAP ve Haberler ortak kullanır */
+const sfold=s=>String(s||'').toLocaleLowerCase('tr').replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ş/g,'s').replace(/ü/g,'u').replace(/â/g,'a').replace(/î/g,'i').replace(/û/g,'u');
+const SN_EV=[
+ [3,/bedelsiz|geri alim|ihale(?:yi|si)? kazan|rekor (?:kar|ciro|satis|ihracat|siparis|gelir)|kar_donusu|temettu (?:dagit|oden|karari)|kar payi (?:dagit|oden)|sozlesme imzala|siparis al|yeni is iliskisi|kredi notu\w* (?:art|yuksel)/g],
+ [-3,/iflas|temerrut|tasfiye|konkordato|sorusturma|usulsuzluk|haciz|faaliyet\w* durdur|islem yasagi|kapatil|erken itfa|net donem zarar|donem zarari|zarar (?:etti|acikla|yazdi)|zarar_donusu|kredi notu\w* (?:dus|indir)/g],
+ [2,/yatirim yap|yatirim karari|kapasite art|yeni tesis|ortaklik kur|satin alma tamam|anlasma imzala|lisans al|ihracat sozlesme|kar payi|temettu|alim tavsiye/g],
+ [-2,/\bdava|\bceza|uyari|iptal|gorevden|sermaye kayb|karsilik ayr|deger dusuklugu|bedelli|\bzarar\w*/g],
+ [1,/siparis|ihale|anlasma|ortaklik|\bonay|\bizin\b|olumlu|tavan/g],
+ [-1,/\btaban|ertele|gecik|istifa|baski|temkinli|endise|belirsiz|riskli|sermaye artir\w*/g]];
+const SN_NEUTRAL=/pay alim satim bildirim|sorumluluk beyan|genel kurul|kurumsal yonetim|bagimsiz denetim|esas sozlesme|ilgili sirket|bilgilendirme|toplanti|faaliyet raporu|ozel durum aciklamasi \(genel\)/;
+const SN_NEG=/ilmayacak|ilmeyecek|ilmadi|ilmedi|ilmamis|ilmemis|ilmamasi|ilmemesi|mayacak|meyecek|madi\b|medi\b|degil|reddedil|vazgec|iptal|ertelen|kaldirildi|kalkti|sona erdi|sonlandirildi|feshedil/g;
+const SN_UP=/arti[sz]\w*|artt\w*|artir\w*|yuksel\w*|buyu(?:me|di|yor|k)\w*|ilerle\w*|iyiles\w*|toparlan\w*|zirve\w*/g;
+const SN_DN=/dus(?:us|tu|en|uk|me|ur)\w*|geril\w*|azal\w*|kucul\w*|daral\w*|kotules\w*|gevse\w*|cokus\w*|indirim\w*|indirdi|indiril\w*|artmad\w*|artmay\w*/g;
+const SN_POSOBJ=/\bkar(?:i|in|a|da|dan|lilik)?\b|gelir|hasilat|satis|ciro|ihracat|siparis|buyume|favok|ebitda|temettu|marj|nakit|uretim|talep|pazar pay|ozkaynak|aktif|hisse|borsa|\bbist|endeks/g;
+const SN_NEGOBJ=/zarar|borc|enflasyon|maliyet|risk|issizlik|\bacig\w*|\bacik\b|kayip|\bceza|\bdava|gider|faiz|vergi|temerrut|iflas|tahsilat|stok|iade|belirsizlik/g;
+function textScore(txt){
+ const t0=sfold(txt).replace(/zarardan kara\w*|zarari kara cevir\w*/g,' kar_donusu ').replace(/kardan zarara\w*|kari zarara don\w*/g,' zarar_donusu ');
+ if(!t0.trim())return 0;
+ let tb=t0;const hits=[];
+ for(const[w,re]of SN_EV){for(const m of [...tb.matchAll(re)]){hits.push({w,i:m.index,e:m.index+m[0].length});tb=tb.slice(0,m.index)+' '.repeat(m[0].length)+tb.slice(m.index+m[0].length)}}
+ const strong=hits.reduce((a,h)=>Math.max(a,Math.abs(h.w)),0);
+ if(SN_NEUTRAL.test(t0)&&strong<3)return 0;
+ const consumed=new Set();let ev=0;
+ for(const h of hits.sort((a,b)=>a.i-b.i)){
+  if(consumed.has(h.i))continue;
+  const win=t0.slice(h.e,h.e+32),m=[...win.matchAll(SN_NEG)][0];
+  let v=h.w;
+  if(m&&(h.w>0||/reddedil|kaldirildi|kalkti|sonlandirildi|iptal/.test(m[0]))){v=-Math.sign(h.w)*Math.max(2,Math.abs(h.w));consumed.add(h.e+m.index)}
+  ev+=v}
+ let dir=0;
+ const near=(re,s,e)=>{let best=null;for(const m of [...t0.matchAll(re)]){const d=m.index>=e?m.index-e:(m.index+m[0].length<=s?s-(m.index+m[0].length):0);if(d<=24&&(!best||d<best))best=d}return best};
+ for(const[re,sg0]of[[SN_UP,1],[SN_DN,-1]]){for(const m of [...tb.matchAll(re)]){
+  const s=m.index,e=s+m[0].length,dp=near(SN_POSOBJ,s,e),dn=near(SN_NEGOBJ,s,e);
+  let sign=sg0;if(dn!=null&&(dp==null||dn<dp))sign=-sg0;
+  const w0=t0.slice(Math.max(0,s-24),e+24),pm=/(?:%\s?|yuzde\s?)(\d+)/.exec(w0),mag=pm&&+pm[1]>=20?2:1;
+  dir+=sign*mag}}
+ dir=Math.max(-4,Math.min(4,dir));
+ return Math.max(-6,Math.min(6,Math.round(ev+dir)))}
+
 function kapTagOf(x){const sc=textScore(x.title);
  return sc>=2?'<i class="ktag g">▲ Olumlu</i>':sc<=-2?'<i class="ktag r">▼ Olumsuz</i>':''}
+const f1=n=>n.toLocaleString('tr-TR',{maximumFractionDigits:1});
 function kapSentCalc(items){
  const t30=Date.now()-30*864e5,by={};
  for(const x of items){if(!x.t||x.t<t30)continue;
   const sc=textScore(x.title);if(!sc)continue;
   const b=by[x.sym]??={p:0,n:0,s:0};
-  if(sc>0)b.p++;else b.n++;b.s+=sc}
+  if(sc>0)b.p++;else b.n++;b.s+=sc*Math.pow(0.5,Math.max(0,Date.now()-x.t)/(10*864e5))}
+ Object.values(by).forEach(b=>{b.s=Math.round(b.s*10)/10});
  return Object.entries(by).sort((a,b)=>b[1].s-a[1].s||((b[1].p+b[1].n)-(a[1].p+a[1].n)))}
 function kapSentRender(all){
  const se=$('kapSent');if(!se)return;
@@ -886,13 +915,13 @@ function kapSentRender(all){
  const tp=sent.reduce((a,x)=>a+x[1].p,0),tn=sent.reduce((a,x)=>a+x[1].n,0),ts=sent.reduce((a,x)=>a+x[1].s,0);
  let ko='';
  if(sent.length){
-  const guclu=sent.filter(([sy,v])=>v.s>=3).map(([sy])=>sy),kotu=sent.filter(([sy,v])=>v.s<=-3).map(([sy])=>sy);
-  ko=`Son 30 günde ${tp} olumlu, ${tn} olumsuz başlık; ağırlıklı skor ${ts>0?'+':''}${ts} → genel ton ${ts>2?'BELİRGİN OLUMLU':ts>0?'hafif olumlu':ts<-2?'BELİRGİN OLUMSUZ':ts<0?'hafif olumsuz':'dengede'}.`;
+  const guclu=sent.filter(([sy,v])=>v.s>=2.5).map(([sy])=>sy),kotu=sent.filter(([sy,v])=>v.s<=-2.5).map(([sy])=>sy);
+  ko=`Son 30 günde ${tp} olumlu, ${tn} olumsuz başlık; ağırlıklı skor ${ts>0?'+':''}${f1(ts)} → genel ton ${ts>2?'BELİRGİN OLUMLU':ts>0?'hafif olumlu':ts<-2?'BELİRGİN OLUMSUZ':ts<0?'hafif olumsuz':'dengede'}.`;
   if(guclu.length)ko+=` Güçlü olumlu: ${guclu.slice(0,4).join(', ')}.`;
   if(kotu.length)ko+=` Güçlü olumsuz: ${kotu.slice(0,4).join(', ')}.`;
   const lider=sent[0];if(lider)ko+=` En çok gündemde ${lider[0]} (${lider[1].p} olumlu / ${lider[1].n} olumsuz). İptal/erteleme gibi bozucu ifadeler skoru düşürür. Yatırım tavsiyesi değildir.`}
- se.innerHTML='<b>📰 Haber Duyarlılığı</b> <span class="mut sm">· son 30 gün · ağırlıklı kelime analizi</span><div class="chips-row">'
-  +sent.slice(0,10).map(([sy,v])=>v.s>=3?`<span class="kchip g">${esc(sy)}: ▲ güçlü olumlu (+${v.s})</span>`:v.s<=-3?`<span class="kchip r">${esc(sy)}: ▼ güçlü olumsuz (${v.s})</span>`:v.s>0?`<span class="kchip g">${esc(sy)}: olumlu (+${v.s})</span>`:v.s<0?`<span class="kchip r">${esc(sy)}: olumsuz (${v.s})</span>`:`<span class="kchip">${esc(sy)}: karışık</span>`).join('')+'</div>'+anlzB(ko)}
+ se.innerHTML='<b>📰 Haber Duyarlılığı</b> <span class="mut sm">· son 30 gün · bağlamlı analiz, yeni haberler daha ağır</span><div class="chips-row">'
+  +sent.slice(0,10).map(([sy,v])=>v.s>=2.5?`<span class="kchip g">${esc(sy)}: ▲ güçlü olumlu (+${f1(v.s)})</span>`:v.s<=-2.5?`<span class="kchip r">${esc(sy)}: ▼ güçlü olumsuz (${f1(v.s)})</span>`:v.s>0?`<span class="kchip g">${esc(sy)}: olumlu (+${f1(v.s)})</span>`:v.s<0?`<span class="kchip r">${esc(sy)}: olumsuz (${f1(v.s)})</span>`:`<span class="kchip">${esc(sy)}: karışık</span>`).join('')+'</div>'+anlzB(ko)}
 function aiTodayTxt(){try{
  const T=summary();if(!T||!(T.dayBase>0)||!T.dayN)return'';
  const dp=T.day/T.dayBase*100;
@@ -1369,7 +1398,7 @@ function scanSignals(openAll){
  SIGS.sort((a,b)=>(RANK[a.k]??3)-(RANK[b.k]??3))}
 function sparkSVG(cs2){if(!cs2||cs2.length<2)return'';const w=320,hh=54,lo=Math.min(...cs2),hi=Math.max(...cs2),X=i=>6+i*(w-12)/(cs2.length-1),Y=v=>hh-6-((v-lo)/((hi-lo)||1))*(hh-12);
  return`<svg viewBox="0 0 ${w} ${hh}" style="width:100%;height:auto;display:block"><polyline fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" points="${cs2.map((v,i2)=>X(i2).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}"/><circle cx="${X(cs2.length-1).toFixed(1)}" cy="${Y(cs2[cs2.length-1]).toFixed(1)}" r="3" style="fill:var(--ac)"/></svg>`}
-const TRM={'Oynaklık (volatilite)':'Fiyatların ne kadar hızlı ve geniş oynadığının ölçüsü. Yüksek oynaklık = değer büyük dalgalanır; kötü günler de iyi günler de sert olur.','Zirveden dalış (drawdown)':'En yüksek noktadan sonraki en derin düşüşün büyüklüğü. Ne kadar derinse geri dönmesi o kadar uzun sürer.','Teknik skor':'Tüm göstergelerin tek sayıda özeti (0-100). 65 üstü "boğa" (yukarı eğilim), 40 altı "ayı" (aşağı eğilim) sayılır.','SMA 20':'Son 20 günün ortalama fiyatı. Fiyat ortalamanın üstündeyse kısa vadeli yön yukarı kabul edilir.','SMA 50':'Son 50 günün (yaklaşık 2,5 ay) ortalama fiyatı — orta vadeli trend ölçüsü.','SMA 200':'Son 200 günün (yaklaşık 1 yıl) ortalama fiyatı. Fiyat bunun üstündeyse uzun vadeli görünüm pozitif sayılır.','SMA50 eğimi (10g)':'50 günlük ortalama, son 10 günde yüzde kaç değişti? Artıysa trend yukarı dönüyor, eksiyse zayıflıyor demektir.','ADX (14)':'Trendin GÜCÜ (0-100), yön söylemez. 25 üstü "güçlü trend" demektir; yanında DI+ yüksekse yukarı, DI− yüksekse aşağı yönlü.','Ichimoku bulutu':'Geçmiş ortalamalardan hesaplanan "bulut". Fiyat bulutun üstündeyse boğa ortamı, altındaysa ayı ortamı sayılır.','Donchian (20)':'Son 20 günün en yüksek/en düşük seviyeleri. Üst seviyenin üzerine çıkmak "kırılım" (güçlü alım ilgisi), altına inmek "çöküş" sayılır.','RSI (14)':'0-100 arası hız ölçer. 70 üstü AŞIRI ALIM: fiyat çok hızlı yükselmiş, geri çekilme gelebilir. 30 altı AŞIRI SATIM: yoğun satış olmuş, toparlanma gelebilir.','Stokastik (14,3)':'Fiyatın son 14 günün aralığındaki konumu. %80 üstü aşırı alım, %20 altı aşırı satım. K çizgisi D çizgisini kesince sinyal doğar.','MACD (12,26,9)':'Kısa ve uzun vadeli ortalamaların farkı. Sıfır üstü = yukarı momentum. Sinyal çizgisini yukarı keserse "AL", aşağı keserse "SAT" uyarısıdır.','CCI (20)':'Fiyatın istatistiksel sapması. +100 üstü abartılı yükseliş, −100 altı abartılı satış bölgesidir; bu seviyelerden dönüşler sinyal sayılır.','Williams %R':'Stokastik benzeri: 0′a yakın = aşırı alım, −100′e yakın = aşırı satım.','ROC (10 gün)':'Son 10 günde fiyat yüzde kaç değişti? Ani sıçrama ve düşüşler burada görünür.','Bollinger (20,2)':'Ortalamanın ±2 "normal sapma" bandı. Fiyat bandın dışına çıkarsa hareket abartılı demektir; bantlar daralmışsa büyük hareket yaklaşabilir. %B: bandın neresinde olunduğu (100=üst bant, 0=alt bant).','52 hafta':'Son 1 yılın en yüksek ve en düşük fiyatı. Zirveye yakınsa rekor bölgesinde, dibe yakınsa dip bölgesinde demektir.','Yıllık volatilite':'Fiyatın bir yılda ortalama yüzde ne kadar oynadığı. Yüksek değer = oynak (riskli) hisse.','ATR (14)':'Hissenin bir günde ortalama kaç TL oynadığı (günlük salınım). Yüksek ATR = oynak hisse; stop seviyesi belirlerken kullanılır.','MFI (14)':'Hacmi de hesaba katan RSI benzeri gösterge. 80 üstü "para girişi doyumda", 20 altı "satış tükeniyor" yorumu yapılır.','Hacim (son / 20g ort.)':'Günün hacminin son 20 günün ortalamasına oranı. 2 katı üstü "patlama": ilgi aniden artmış demektir.','OBV uyumu':'Hacmi fiyat yönüne göre toplayan gösterge. Fiyat düşerken OBV yükseliyorsa "görünmeyen alım" var demektir; tersi durumda "görünmeyen satış".','Destek / Direnç (60g)':'Son 60 günün en düşüğü (destek) ve en yükseği (direnç). Fiyatın sık sektiği sınır bölgelerdir; kırılırlarsa yeni hareket başlayabilir.','Piyasa Değeri':'Şirketin tüm hisselerinin toplam değeri: hisse sayısı × güncel fiyat. Şirketin büyüklüğü budur; büyük şirketlerde fiyat genelde daha sakin oynar. (Hisse sayısı çeyreklik, fiyat günceldir.)','F/K':'Fiyatın şirketin son 12 aylık kârına oranı. 20 ise sabit kârla yatırım 20 yılda kendini öder; düşük "ucuz", yüksek "pahalı ya da hızlı büyüyen" olabilir. Sektör içinde karşılaştırılmalı.','PD/DD':'Fiyatın şirket defterindeki öz kaynağa oranı (çeyreklik). 1 altı: defter değerinin altında işlem görüyor; 2-3 üstü: güçlü beklenti ya da pahalılık işareti sayılır.','Temettü Verimi':'Son 4 çeyrekte ödenen temettünün fiyata oranı. %5 ise 100 bin ₺ değerindeki hisseden yılda yaklaşık 5 bin ₺ nakit gelir; yüksek verim hoş ama kesintisiz olduğunu göstermez.','Net Kâr Marjı':'Şirketin son çeyrekte her 100 liralık satışından ne kadar net kâr kaldığı. Yüksek ve istikrarlı marj güçlü iş modeli işaretidir.'};
+const TRM={'Yakın destek':'Fiyatın geçmişte defalarca dönüp yükseldiği, altındaki seviye. Örnek: hisse 100 ₺’ye üç kez inip her seferinde yükseldiyse 100 ₺ destektir. Altına inerse düşüş hızlanabilir.','Yakın direnç':'Fiyatın geçmişte defalarca yaklaşıp geri döndüğü, üstündeki seviye. Örnek: hisse 120 ₺’ye üç kez çıkıp düştüyse 120 ₺ dirençtir. Üstünde kalıcı kapanış yeni bir yükseliş başlatabilir.','Kırılım durumu':'Fiyatın bir destek ya da direnci son günlerde geçip geçmediği. Hacim de artıyorsa kırılım daha güvenilir sayılır. Fiyat seviyeyi geçip hemen geri dönerse buna sahte kırılım denir.','Vade uyumu':'Kısa (SMA20), orta (SMA50) ve uzun (SMA200) vadede fiyatın yönü. Üçü de yukarıysa trend uyumlu, karışıksa yön net değildir. Örnek: kısa ↓ uzun ↑ ise yükseliş trendinde geçici bir geri çekilme olabilir.','Oynaklık (volatilite)':'Fiyatların ne kadar hızlı ve geniş oynadığının ölçüsü. Yüksek oynaklık = değer büyük dalgalanır; kötü günler de iyi günler de sert olur.','Zirveden dalış (drawdown)':'En yüksek noktadan sonraki en derin düşüşün büyüklüğü. Ne kadar derinse geri dönmesi o kadar uzun sürer.','Teknik skor':'Tüm göstergelerin tek sayıda özeti (0-100). 65 üstü "boğa" (yukarı eğilim), 40 altı "ayı" (aşağı eğilim) sayılır.','SMA 20':'Son 20 günün ortalama fiyatı. Fiyat ortalamanın üstündeyse kısa vadeli yön yukarı kabul edilir.','SMA 50':'Son 50 günün (yaklaşık 2,5 ay) ortalama fiyatı — orta vadeli trend ölçüsü.','SMA 200':'Son 200 günün (yaklaşık 1 yıl) ortalama fiyatı. Fiyat bunun üstündeyse uzun vadeli görünüm pozitif sayılır.','SMA50 eğimi (10g)':'50 günlük ortalama, son 10 günde yüzde kaç değişti? Artıysa trend yukarı dönüyor, eksiyse zayıflıyor demektir.','ADX (14)':'Trendin GÜCÜ (0-100), yön söylemez. 25 üstü "güçlü trend" demektir; yanında DI+ yüksekse yukarı, DI− yüksekse aşağı yönlü.','Ichimoku bulutu':'Geçmiş ortalamalardan hesaplanan "bulut". Fiyat bulutun üstündeyse boğa ortamı, altındaysa ayı ortamı sayılır.','Donchian (20)':'Son 20 günün en yüksek/en düşük seviyeleri. Üst seviyenin üzerine çıkmak "kırılım" (güçlü alım ilgisi), altına inmek "çöküş" sayılır.','RSI (14)':'0-100 arası hız ölçer. 70 üstü AŞIRI ALIM: fiyat çok hızlı yükselmiş, geri çekilme gelebilir. 30 altı AŞIRI SATIM: yoğun satış olmuş, toparlanma gelebilir.','Stokastik (14,3)':'Fiyatın son 14 günün aralığındaki konumu. %80 üstü aşırı alım, %20 altı aşırı satım. K çizgisi D çizgisini kesince sinyal doğar.','MACD (12,26,9)':'Kısa ve uzun vadeli ortalamaların farkı. Sıfır üstü = yukarı momentum. Sinyal çizgisini yukarı keserse "AL", aşağı keserse "SAT" uyarısıdır.','CCI (20)':'Fiyatın istatistiksel sapması. +100 üstü abartılı yükseliş, −100 altı abartılı satış bölgesidir; bu seviyelerden dönüşler sinyal sayılır.','Williams %R':'Stokastik benzeri: 0′a yakın = aşırı alım, −100′e yakın = aşırı satım.','ROC (10 gün)':'Son 10 günde fiyat yüzde kaç değişti? Ani sıçrama ve düşüşler burada görünür.','Bollinger (20,2)':'Ortalamanın ±2 "normal sapma" bandı. Fiyat bandın dışına çıkarsa hareket abartılı demektir; bantlar daralmışsa büyük hareket yaklaşabilir. %B: bandın neresinde olunduğu (100=üst bant, 0=alt bant).','52 hafta':'Son 1 yılın en yüksek ve en düşük fiyatı. Zirveye yakınsa rekor bölgesinde, dibe yakınsa dip bölgesinde demektir.','Yıllık volatilite':'Fiyatın bir yılda ortalama yüzde ne kadar oynadığı. Yüksek değer = oynak (riskli) hisse.','ATR (14)':'Hissenin bir günde ortalama kaç TL oynadığı (günlük salınım). Yüksek ATR = oynak hisse; stop seviyesi belirlerken kullanılır.','MFI (14)':'Hacmi de hesaba katan RSI benzeri gösterge. 80 üstü "para girişi doyumda", 20 altı "satış tükeniyor" yorumu yapılır.','Hacim (son / 20g ort.)':'Günün hacminin son 20 günün ortalamasına oranı. 2 katı üstü "patlama": ilgi aniden artmış demektir.','OBV uyumu':'Hacmi fiyat yönüne göre toplayan gösterge. Fiyat düşerken OBV yükseliyorsa "görünmeyen alım" var demektir; tersi durumda "görünmeyen satış".','Destek / Direnç (60g)':'Son 60 günün en düşüğü (destek) ve en yükseği (direnç). Fiyatın sık sektiği sınır bölgelerdir; kırılırlarsa yeni hareket başlayabilir.','Piyasa Değeri':'Şirketin tüm hisselerinin toplam değeri: hisse sayısı × güncel fiyat. Şirketin büyüklüğü budur; büyük şirketlerde fiyat genelde daha sakin oynar. (Hisse sayısı çeyreklik, fiyat günceldir.)','F/K':'Fiyatın şirketin son 12 aylık kârına oranı. 20 ise sabit kârla yatırım 20 yılda kendini öder; düşük "ucuz", yüksek "pahalı ya da hızlı büyüyen" olabilir. Sektör içinde karşılaştırılmalı.','PD/DD':'Fiyatın şirket defterindeki öz kaynağa oranı (çeyreklik). 1 altı: defter değerinin altında işlem görüyor; 2-3 üstü: güçlü beklenti ya da pahalılık işareti sayılır.','Temettü Verimi':'Son 4 çeyrekte ödenen temettünün fiyata oranı. %5 ise 100 bin ₺ değerindeki hisseden yılda yaklaşık 5 bin ₺ nakit gelir; yüksek verim hoş ama kesintisiz olduğunu göstermez.','Net Kâr Marjı':'Şirketin son çeyrekte her 100 liralık satışından ne kadar net kâr kaldığı. Yüksek ve istikrarlı marj güçlü iş modeli işaretidir.'};
 function aiText(s,t){
  const c=cs(s.cur),p=s.p!=null?s.p:t.last,S1=[];
  const H=HIST[s.sym];let ch30=null;
@@ -1454,6 +1483,119 @@ async function fdEnsure(sym){
  }catch(e){const b=fdBox(sym),pe=b&&b.querySelector('.fdPE');if(pe)pe.innerHTML='—'}
  FDBUSY=false}
 try{document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.open){const sp=d.querySelector('.fdMC'),card=d.closest('[data-card]');if(sp&&card&&sp.textContent==='—')fdEnsure(card.dataset.card)}},true)}catch(e){}
+/* v51: destek-direnç, kırılım, vade uyumu ve geçmiş sinyal isabeti */
+const SRC={},BTC={};
+const mean_=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function srCalc(sym){
+ const h=HIST[sym];if(!h||!h.c||h.c.length<60)return null;
+ const key=sym+'|'+(h.at||0)+'|'+h.c.length;if(SRC[key])return SRC[key];
+ const c=h.c,n=c.length,H=h.h&&h.h.length===n?h.h:c,L=h.l&&h.l.length===n?h.l:c,V=h.v&&h.v.length===n?h.v:null,last=c[n-1];
+ const K=4,piv=[];
+ for(let i=K;i<n-K;i++){let hi=true,lo=true;
+  for(let j=1;j<=K;j++){if(H[i]<=H[i-j]||H[i]<=H[i+j])hi=false;if(L[i]>=L[i-j]||L[i]>=L[i+j])lo=false}
+  if(hi)piv.push({p:H[i],i});if(lo)piv.push({p:L[i],i})}
+ piv.sort((a,b)=>a.p-b.p);
+ const cl=[];
+ for(const q of piv){const g=cl[cl.length-1];if(g&&q.p/g.m-1<0.012){g.s+=q.p;g.n++;g.m=g.s/g.n;g.i=Math.max(g.i,q.i)}else cl.push({s:q.p,n:1,m:q.p,i:q.i})}
+ const multi=cl.filter(g=>g.n>=2),lv=(multi.length>=2?multi:cl).map(g=>({p:g.m,n:g.n,i:g.i}));
+ const below=lv.filter(g=>g.p<last*0.995).sort((a,b)=>b.p-a.p)[0]||null,above=lv.filter(g=>g.p>last*1.005).sort((a,b)=>a.p-b.p)[0]||null;
+ /* kırılım */
+ const W=6;let brk=null;
+ const avgV=V&&n>=25?mean_(V.slice(n-23,n-3).filter(x=>x>0)):0,recV=V?mean_(V.slice(n-3)):0,vr=avgV>0&&recV>0?recV/avgV:null;
+ const near=lv.slice().sort((a,b)=>Math.abs(a.p-last)-Math.abs(b.p-last)).slice(0,4);
+ for(const g of near){
+  let kUp=null,kDn=null;
+  for(let k=1;k<=W;k++){if(kUp==null&&c[n-1-k]<g.p*0.997)kUp=k;if(kDn==null&&c[n-1-k]>g.p*1.003)kDn=k}
+  const win=c.slice(n-1-W,n-1),pre=mean_(c.slice(Math.max(0,n-35),n-W-1)),nA=win.filter(x=>x>g.p*1.003).length,nB=win.filter(x=>x<g.p*0.997).length;
+  if(last<g.p*0.997&&nA>=1&&nA<=3&&pre<g.p){brk={t:'fu',p:g.p,days:W,vr};break}
+  if(last>g.p*1.003&&nB>=1&&nB<=3&&pre>g.p){brk={t:'fd',p:g.p,days:W,vr};break}
+  if(last>g.p*1.003&&kUp!=null){brk={t:'up',p:g.p,days:kUp,vr};break}
+  if(last<g.p*0.997&&kDn!=null){brk={t:'dn',p:g.p,days:kDn,vr};break}}
+ /* vade uyumu */
+ const sm=(k,off)=>n-off>=k?mean_(c.slice(n-off-k,n-off)):null;
+ const tr=(k,off)=>{const s=sm(k,0),sp=sm(k,off);if(s==null)return null;return last>s&&(sp==null||s>=sp)?1:last<s&&(sp==null||s<=sp)?-1:0};
+ const mtf=[tr(20,5),tr(50,10),tr(200,20)];
+ const r={last,sup:below&&below.p,supN:below&&below.n,res:above&&above.p,resN:above&&above.n,
+  dS:below?(last/below.p-1)*100:null,dR:above?(above.p/last-1)*100:null,
+  rr:below&&above&&last>below.p?(above.p-last)/(last-below.p):null,brk,mtf,levels:lv.length};
+ SRC[key]=r;return r}
+function srText(r,c){
+ if(!r)return'';
+ const f=v=>fmt(v)+' '+c;let o='';
+ if(r.sup!=null&&r.res!=null)o+=`Fiyat ${f(r.sup)} desteği (${r.supN} temas, %${fmt(r.dS)} aşağıda) ile ${f(r.res)} direnci (${r.resN} temas, %${fmt(r.dR)} yukarıda) arasında.`;
+ else if(r.res!=null)o+=`Yakın destek bulunamadı; üstte ${f(r.res)} direnci var (%${fmt(r.dR)} yukarıda).`;
+ else if(r.sup!=null)o+=`Üstte yakın direnç yok (fiyat yıllık yüksek bölgede); alttaki destek ${f(r.sup)} (%${fmt(r.dS)} aşağıda).`;
+ if(r.rr!=null)o+=` Yukarı/aşağı mesafe oranı ${r.rr.toFixed(1).replace('.',',')}: ${r.rr>=1.5?'yukarı alan daha geniş':r.rr<=0.67?'aşağı alan daha geniş, dikkat':'kabaca dengeli'}.`;
+ if(r.brk){const b=r.brk,vt=b.vr!=null?(b.vr>=1.3?' Hacim ortalamanın '+b.vr.toFixed(1).replace('.',',')+' katı — kırılım teyitli.':' Hacim zayıf ('+b.vr.toFixed(1).replace('.',',')+'×) — kırılım teyitsiz, kalıcılığı izlenmeli.'):'';
+  if(b.t==='up')o+=` ${f(b.p)} direnci ${b.days} gün önce yukarı kırıldı.${vt}`;
+  else if(b.t==='dn')o+=` ${f(b.p)} desteği ${b.days} gün önce aşağı kırıldı.${vt}`;
+  else if(b.t==='fu')o+=` ${f(b.p)} üstüne çıkma denemesi başarısız oldu, fiyat altına döndü (sahte kırılım olabilir).`;
+  else o+=` ${f(b.p)} altına inme denemesi geri alındı, fiyat üstüne döndü (toparlanma işareti).`}
+ const m=r.mtf.filter(x=>x!=null);
+ if(m.length>=2){const up=m.filter(x=>x>0).length,dn=m.filter(x=>x<0).length;
+  o+=up===m.length?' Kısa, orta ve uzun vade birlikte yukarı: trend uyumlu.':dn===m.length?' Tüm vadeler aşağı: trend uyumlu düşüş.':' Vadeler karışık: kısa ve uzun vade aynı yönde değil.'}
+ return o}
+function srHTML(s){const r=srCalc(s.sym);if(!r)return'';const c=cs(s.cur),f=v=>fmt(v)+' '+c;
+ const kv=(k,v)=>`<tr><td><span class="trm" data-trm="${k}">${k}</span></td><td>${v}</td></tr>`;
+ const ar=v=>v>0?'<span class="up">↑</span>':v<0?'<span class="dn">↓</span>':'→';
+ const bt=!r.brk?'yok':r.brk.t==='up'?'<span class="up">↑ yukarı kırılım</span>':r.brk.t==='dn'?'<span class="dn">↓ aşağı kırılım</span>':r.brk.t==='fu'?'<span class="dn">sahte kırılım</span>':'<span class="up">sahte düşüş</span>';
+ const mt=['kısa','orta','uzun'].map((n,i)=>r.mtf[i]==null?'':n+' '+ar(r.mtf[i])).filter(Boolean).join(' · ');
+ return`<table class="tat"><tr class="g"><td colspan="2">Destek · Direnç · Kırılım</td></tr>
+  ${kv('Yakın destek',r.sup!=null?f(r.sup)+` · ${r.supN} temas · %${fmt(r.dS)} aşağıda`:'—')}
+  ${kv('Yakın direnç',r.res!=null?f(r.res)+` · ${r.resN} temas · %${fmt(r.dR)} yukarıda`:'—')}
+  ${kv('Kırılım durumu',bt)}
+  ${kv('Vade uyumu',mt||'—')}
+  </table>${anlzB(srText(r,c))}`}
+/* --- geçmiş sinyal isabeti --- */
+const SIGLAB={rsi_lo:['RSI 30’un altına indi','up'],rsi_hi:['RSI 70’in üstüne çıktı','dn'],macd_up:['MACD yukarı kesti','up'],macd_dn:['MACD aşağı kesti','dn'],sma50_up:['Fiyat SMA50’yi yukarı kesti','up'],sma50_dn:['Fiyat SMA50’yi aşağı kesti','dn'],gold:['Altın kesişim (SMA50/200)','up'],death:['Ölüm kesişimi (SMA50/200)','dn'],don_up:['20 günlük zirve kırılımı','up'],don_dn:['20 günlük dip kırılımı','dn']};
+function histSignals(c){
+ const n=c.length,out=[];if(n<60)return out;
+ const sma=k=>c.map((_,i)=>i>=k-1?mean_(c.slice(i-k+1,i+1)):null),s50=sma(50),s200=sma(200);
+ const ema=(arr,k)=>{const o=Array(arr.length).fill(null);let e=null,sum=0,cnt=0;
+  for(let i=0;i<arr.length;i++){if(arr[i]==null)continue;if(e==null){sum+=arr[i];cnt++;if(cnt===k){e=sum/k;o[i]=e}}else{e=arr[i]*2/(k+1)+e*(1-2/(k+1));o[i]=e}}return o};
+ const rsi=Array(n).fill(null);let g=0,l=0;
+ for(let i=1;i<n;i++){const d=c[i]-c[i-1],u=d>0?d:0,dn=d<0?-d:0;
+  if(i<=14){g+=u;l+=dn;if(i===14){g/=14;l/=14;rsi[i]=100-100/(1+(l>0?g/l:1e9))}}
+  else{g=(g*13+u)/14;l=(l*13+dn)/14;rsi[i]=100-100/(1+(l>0?g/l:1e9))}}
+ const e12=ema(c,12),e26=ema(c,26),mc=c.map((_,i)=>e12[i]!=null&&e26[i]!=null?e12[i]-e26[i]:null),sg=ema(mc,9),hi=mc.map((m,i)=>m!=null&&sg[i]!=null?m-sg[i]:null);
+ const last={};const add=(k,i)=>{if(last[k]!=null&&i-last[k]<5)return;last[k]=i;out.push({k,i})};
+ for(let i=35;i<n;i++){
+  if(rsi[i-1]!=null&&rsi[i]!=null){if(rsi[i-1]>30&&rsi[i]<=30)add('rsi_lo',i);if(rsi[i-1]<70&&rsi[i]>=70)add('rsi_hi',i)}
+  if(hi[i-1]!=null&&hi[i]!=null){if(hi[i-1]<=0&&hi[i]>0)add('macd_up',i);if(hi[i-1]>=0&&hi[i]<0)add('macd_dn',i)}
+  if(s50[i-1]!=null&&s50[i]!=null){if(c[i-1]<=s50[i-1]&&c[i]>s50[i])add('sma50_up',i);if(c[i-1]>=s50[i-1]&&c[i]<s50[i])add('sma50_dn',i)}
+  if(s200[i-1]!=null&&s200[i]!=null&&s50[i-1]!=null){if(s50[i-1]<=s200[i-1]&&s50[i]>s200[i])add('gold',i);if(s50[i-1]>=s200[i-1]&&s50[i]<s200[i])add('death',i)}
+  if(i>=21){const w=c.slice(i-20,i),mx=Math.max(...w),mn=Math.min(...w);if(c[i]>mx&&c[i-1]<=Math.max(...c.slice(i-21,i-1)))add('don_up',i);if(c[i]<mn&&c[i-1]>=Math.min(...c.slice(i-21,i-1)))add('don_dn',i)}}
+ return out}
+function sigBacktest(){
+ const syms=Object.keys(HIST).filter(k=>HIST[k]&&HIST[k].c&&HIST[k].c.length>=60&&calc(trades)[k]&&calc(trades)[k].qty>1e-9);
+ const key=syms.map(k=>k+HIST[k].at+HIST[k].c.length).join('|');if(BTC.key===key)return BTC.res;
+ const R={},base={n10:0,u10:0,s10:0,n20:0,u20:0,s20:0};
+ for(const sym of syms){const c=HIST[sym].c,n=c.length;
+  for(let i=30;i<n;i++){if(i+10<n){base.n10++;const f=c[i+10]/c[i]-1;base.s10+=f;if(f>0)base.u10++}
+   if(i+20<n){base.n20++;const f=c[i+20]/c[i]-1;base.s20+=f;if(f>0)base.u20++}}
+  for(const sg of histSignals(c)){const d=SIGLAB[sg.k][1]==='up'?1:-1,o=R[sg.k]??={n10:0,w10:0,s10:0,n20:0,w20:0,s20:0,syms:new Set()};o.syms.add(sym);
+   if(sg.i+10<n){const f=(c[sg.i+10]/c[sg.i]-1)*d;o.n10++;o.s10+=f;if(f>0)o.w10++}
+   if(sg.i+20<n){const f=(c[sg.i+20]/c[sg.i]-1)*d;o.n20++;o.s20+=f;if(f>0)o.w20++}}}
+ const res={R,base,syms:syms.length};BTC.key=key;BTC.res=res;return res}
+function btVerdict(k,o,base){
+ if(o.n10<5)return'<span class="mut">örnek az</span>';
+ const hit=o.w10/o.n10*100,ref=SIGLAB[k][1]==='up'?base.u10/base.n10*100:100-base.u10/base.n10*100,diff=hit-ref;
+ return diff>=10?'<span class="up">işe yarıyor</span>':diff<=-10?'<span class="dn">ters çalışıyor</span>':'<span class="mut">fark belirsiz</span>'}
+function btHTML(){
+ const b=sigBacktest();if(!b.syms)return'';
+ const ks=Object.keys(b.R).sort((a,c)=>b.R[c].n10-b.R[a].n10);
+ if(!ks.length)return'';
+ const pc=v=>'%'+Math.round(v),pr=v=>(v>=0?'+':'')+(v*100).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%';
+ const rows=ks.map(k=>{const o=b.R[k];return`<tr><td>${SIGLAB[k][0]}</td><td>${o.n10}</td><td>${o.n10?pc(o.w10/o.n10*100):'—'}</td><td class="${o.n10&&o.s10>=0?'up':'dn'}">${o.n10?pr(o.s10/o.n10):'—'}</td><td>${o.n20>=3?pc(o.w20/o.n20*100):'—'}</td><td>${btVerdict(k,o,b.base)}</td></tr>`}).join('');
+ const ok=ks.filter(k=>b.R[k].n10>=5),ranked=ok.map(k=>({k,h:b.R[k].w10/b.R[k].n10*100,a:b.R[k].s10/b.R[k].n10})).sort((x,y)=>y.a-x.a);
+ let t=`Son 1 yılda ${b.syms} hissenin geçmişinde bu sinyaller tarandı. Referans: rastgele bir günden 10 gün sonra fiyat %${Math.round(b.base.u10/b.base.n10*100)} oranında yüksekteydi (ortalama ${pr(b.base.s10/b.base.n10)}); yani bir sinyalin işe yaradığını söylemek için bu orandan belirgin biçimde iyi olması gerekir.`;
+ if(ranked.length>=2){const t1=ranked[0],t2=ranked[ranked.length-1];t+=` En iyi sonuç: ${SIGLAB[t1.k][0]} (isabet %${Math.round(t1.h)}, ort. ${pr(t1.a)}). En zayıf: ${SIGLAB[t2.k][0]} (isabet %${Math.round(t2.h)}, ort. ${pr(t2.a)}).`}
+ else t+=' Henüz yorum için yeterli örnek yok (en az 5 sinyal gerekir).';
+ t+=' Örnek sayısı küçükse sonuç tesadüf olabilir; geçmiş performans gelecek için garanti değildir.';
+ return`<div class="card"><div class="row"><b>🎯 Sinyal İsabeti</b><span class="mut sm">geçmiş 1 yıl · 10 gün sonrası</span></div>
+  <div style="overflow-x:auto"><table style="margin-top:6px"><tr><th>Sinyal</th><th>Adet</th><th>İsabet</th><th>Ort. getiri</th><th>20g</th><th>Karar</th></tr>${rows}</table></div>
+  ${anlzB(t)}<div class="mut sm" style="margin-top:6px">İsabet: yükseliş sinyalinden 10 gün sonra fiyat yukarıdaysa, düşüş sinyalinden sonra aşağıdaysa isabetlidir. Ort. getiri sinyal yönüne göre hesaplanır (düşüş sinyalinde fiyat düştüyse pozitif).</div></div>`}
+
 function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=null?s.p:t.last;
  const updn=v=>v?'<span class="up">üstünde ✓</span>':'<span class="dn">altında</span>';
  const zone=t.rsi.v==null?'—':t.rsi.v>=TA_CONF.rsiHi?'<span class="dn">aşırı alım 🔴</span>':t.rsi.v<=TA_CONF.rsiLo?'<span class="up">aşırı satım 🟢</span>':'nötr';
@@ -1505,6 +1647,7 @@ function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=n
   ${kv('OBV uyumu',obvSt)}
   ${kv('Destek / Direnç (60g)',sl(t.sSup)+' — '+sl(t.sRes))}
   </table>
+  ${srHTML(s)}
   <div class="aib">🤖 <b>AI Analiz</b><div style="margin-top:4px">${aiCached(s,t)}</div></div>
   <div class="mut sm" style="margin-top:6px">${t.n} günlük geçmiş · ${dts(t.at)} indirildi${t.noHL?' · <b>kanal göstergeleri için “Analiz Verilerini Güncelle” önerilir</b>':''} · yatırım tavsiyesi değildir.</div></details>`}
 function renderTa(open){const el=$('tav');if(!el)return;
@@ -1515,7 +1658,7 @@ function renderTa(open){const el=$('tav');if(!el)return;
  const genHtml=rows.length?`<div class="card aib" style="margin-bottom:10px;border-left-width:3px">🤖 <b>Genel değerlendirme</b><div style="margin-top:4px">${aiGeneral(rows)}</div></div>`:'';
  const logHtml=(genHtml? '' : '')+(slog.length?`<div class="card"><b>Sinyal günlüğü</b><span class="mut sm"> · son 7 gün (bugün hariç)</span>
   ${slog.slice().reverse().map(r=>`<div style="margin-top:8px"><b class="mut sm">${r.d}</b>${(r.s||[]).map(x=>`<div class="sm" style="padding:2px 0">· <b>${esc(x.sym)}</b> — ${esc(x.txt)}</div>`).join('')||'<div class="mut sm">sinyal yok</div>'}</div>`).join('')}</div>`:'');
- el.innerHTML=(SIGS.length?`<div style="margin-bottom:10px">${sigCards}</div>`:'')+genHtml+logHtml+
+ el.innerHTML=(SIGS.length?`<div style="margin-bottom:10px">${sigCards}</div>`:'')+genHtml+(()=>{try{return btHTML()}catch(e){return''}})()+logHtml+
   `<div class="card"><div class="row"><b>Teknik özet</b><span class="mut sm">${rows.length} hisse · skora göre</span></div>
   <div class="mut sm" style="border-bottom:1px solid var(--bd);padding-bottom:8px;margin-bottom:6px">${(()=>{let st2=null;try{st2=JSON.parse(localStorage.getItem('portfoy_tast')||'null')}catch(e){}const hn=Object.keys(HIST).length;
    return'Geçmiş: <b>'+hn+'</b> hisse hazır'+(st2?' · son tazeleme '+dts(st2.t)+(st2.fail&&st2.fail.length?' · <span class="dn">alınamadı: '+esc(st2.fail.join(', '))+'</span>':''):'')})()}</div>
