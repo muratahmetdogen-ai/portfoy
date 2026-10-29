@@ -13,8 +13,7 @@ h1{font-size:19px;margin:2px 0 12px;display:flex;justify-content:space-between;a
 h3{margin:18px 2px 8px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
 .badge{font-size:11px;font-weight:600;padding:4px 9px;border-radius:99px;background:var(--card);border:1px solid var(--bd);color:var(--mut)}
 .hero{background:linear-gradient(135deg,#1c2547,#31427e);color:#fff;border-radius:22px;padding:20px;box-shadow:0 10px 30px rgba(13,19,38,.35)}
-.hero .l{color:#ecd28a}
-.hero .l{opacity:.8;font-size:13px}.hero .v{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:2px 0 6px}
+.hero .l{color:#ecd28a;opacity:.9;font-size:13px}.hero .v{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:2px 0 6px}
 .hero .pl{display:inline-block;background:rgba(255,255,255,.2);border-radius:99px;padding:4px 12px;font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
 .stats div{background:rgba(255,255,255,.14);border-radius:14px;padding:9px 10px;font-size:12px}.stats b{display:block;font-size:14px;margin-top:2px}
@@ -212,9 +211,9 @@ body.print-rp h3{color:#555}}
  <div class="mut sm">PIN her açılışta sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v9</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v47</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
- <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayınmamış olabilir.</div></div>
+ <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
  <div class="card">
   <ol class="sm mut" style="padding-left:18px;margin:0 0 10px">
@@ -304,11 +303,7 @@ function calc(list){
  Object.values(by).forEach(s=>{s.qty=s.lots.reduce((a,l)=>a+l.q,0);s.cost=s.lots.reduce((a,l)=>a+l.q*l.p,0);s.avg=s.qty?s.cost/s.qty:0;s.first=s.lots[0]?.d});
  return by;
 }
-function heldMonths(d){return Math.max(0,(Date.now()-new Date(d+'T00:00:00'))/864e5/30.44)}
 const heldDays=d=>Math.max(0,Math.floor((Date.now()-new Date(d+'T00:00:00'))/864e5));
-function held(d){return heldDays(d)+' gün'}
-function _heldOld(d){const days=Math.floor(heldMonths(d)*30.44);return days<30?days+' gün':fmt(heldMonths(d))+' ay'}
-
 /* ---------- saklama ---------- */
 function localStore(){
  const K='portfoy_v2';let m={};
@@ -487,7 +482,7 @@ async function saveTrade(){
  if(calc(next)[sym]?.over)return msg('Elinizdeki adetten fazla satış girdiniz',1);
  try{await S.set(id,t);if(mkv!==marketOf(sym,cur))await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:mkv});msg('Kaydedildi ✓');resetForm();go('pf')}catch(e){msg('Kaydedilemedi: '+(e.message||e.code),1)}
 }
-function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80);else if(t==='analiz')setTimeout(()=>{try{render()}catch(e){}},0)}
+function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80);else if(t==='kz')setTimeout(()=>{try{render()}catch(e){}},0)}
 
 /* ---------- yedek ---------- */
 const csvCell=c=>'"'+String(c??'').replace(/"/g,'""')+'"';
@@ -668,7 +663,7 @@ function renderMap(){
  $('mpv').innerHTML=h}
 function calHeatHTML(){
  const ser=portSeries();
- if(!ser)return'<div class="mut sm">Aylık kutular için fiyat geçmişi gerekiyor. Ayarlar bölümündeki Geçmiş Verilerini Şimdi Yenile düğmesini kullanabilirsin.</div>';
+ if(!ser)return'<div class="mut sm">Aylık kutular için fiyat geçmişi gerekiyor. Ayarlar bölümündeki Analiz Verilerini Güncelle düğmesini kullanabilirsin.</div>';
  const bym={};for(const p of ser){const k=p.d.slice(0,7);(bym[k]??=[]).push(p.v)}
  const ks=Object.keys(bym).sort().slice(-12);
  if(!ks.length)return'<div class="mut sm">Veri yok.</div>';
@@ -681,7 +676,7 @@ function calHeatHTML(){
  +anlzB(calAnalysis(ms))}
 function corrHTML(){
  const rows=posRows().filter(r=>HIST[r.sym]&&HIST[r.sym].c&&HIST[r.sym].c.length>=60).slice(0,8);
- if(rows.length<2)return'<div class="mut sm">Birliktelik tablosu için en az iki hissenin 60 günden uzun fiyat geçmişi gerekiyor. Ayarlar → Geçmiş Verilerini Şimdi Yenile ile indirebilirsin.</div>';
+ if(rows.length<2)return'<div class="mut sm">Birliktelik tablosu için en az iki hissenin 60 günden uzun fiyat geçmişi gerekiyor. Ayarlar → Analiz Verilerini Güncelle ile indirebilirsin.</div>';
  const ret=rows.map(r=>{const c=HIST[r.sym].c.filter(x=>x>0),o=[];for(let i=1;i<c.length;i++)o.push(c[i]/c[i-1]-1);return o.slice(-90)});
  const n=Math.min(...ret.map(r=>r.length));
  if(n<20)return'<div class="mut sm">Ortak gün sayısı yetersiz; geçmişler güncellendikten sonra tekrar dene.</div>';
@@ -761,11 +756,11 @@ function renderRisk(){
    ${anlzB(hA)}</div>`}
  const k=riskCalc();
  out+=`<div class="card"><div class="row"><b>🌧️ Risk Kartı</b><span class="mut sm">geçmiş verilere dayanmaktadır</span></div>`;
- if(!k)out+='<div class="mut sm" style="margin-top:6px">Risk ölçümü için en az 40 günlük fiyat geçmişi gerekiyor. Ayarlar → Geçmiş Verilerini Şimdi Yenile ile indirebilirsin.</div>';
+ if(!k)out+='<div class="mut sm" style="margin-top:6px">Risk ölçümü için en az 40 günlük fiyat geçmişi gerekiyor. Ayarlar → Analiz Verilerini Güncelle ile indirebilirsin.</div>';
  else out+=`<div class="chips-row">
    <span class="kchip">📏 Günlük <span class="trm" data-trm="Oynaklık (volatilite)">oynaklık</span> ±%${k.sd.toLocaleString('tr-TR',{maximumFractionDigits:1})} ≈ ±${shortTL(k.dayTL)}</span>
    <span class="kchip r">🌧️ Kötü bir günde −${shortTL(k.badTL)}'ye kadar düşebilmek normaldir (2σ)</span>
-   <span class="kchip">📉 En kötü dönemde <span class="trm" data-trm="Zirveden daluş (drawdown)">zirveden dalış</span> −%${k.mdd.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span>
+   <span class="kchip">📉 En kötü dönemde <span class="trm" data-trm="Zirveden dalış (drawdown)">zirveden dalış</span> −%${k.mdd.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span>
    <span class="kchip ${k.cur<5?'g':''}">Şu an zirveden −%${k.cur.toLocaleString('tr-TR',{maximumFractionDigits:1})}</span></div>
    ${anlzB(riskAnalysis(k))}<div class="mut sm" style="margin-top:6px">Ölçümler geçmiş günlük hareketlerden hesaplanır; gelecek performansı garanti etmez.</div>`;
  out+='</div>';
@@ -796,8 +791,8 @@ function renderRisk(){
 const KRULES=[
  [3,/bedelsiz|pay geri al|geri aldı|rekor|ihale kazandı|yeni sipariş|zirve/],
  [2,/temettü|kâr payı|kar payı|net kâr|faaliyet kârı|kâr artışı|kar artışı|kazanç|büyüme|ortaklık|satın al|sözleşme imzala|sözleşme al|ihale|ihraç|yeni yatırım|kapasite artır|anlaşma|alım/],
- [1,/yüksel|arttı|artırdı|artış|sipariş|ihale/],
- [-1,/geçici|erteleme|durdurma|karşı talep|tavan/],
+ [1,/yüksel|arttı|artırdı|artış|sipariş/],
+ [-1,/geçici|erteleme|durdurma|karşı talep/],
  [-2,/dava|ceza|iptal|düşüş|gerileme|geriledi|kayıp|endişe|baskı|temkinli|satış|çıkarma|yapı satış/],
  [-3,/zarar|tasfiye|temerrüt|usulsüzlük|soruşturma|görevden|iflas|erken tahsil|destek alınması|kapatıldı/]];
 const KBOZ=/iptal|ertelendi|erteleme|durdur|yapılmayacak|olmayacak|gerçekleşmeyen|yapılmayan|kaldırıldı|azalt|düşen|düşürdü/;
@@ -996,17 +991,7 @@ $('nseg').addEventListener('click',e=>{const v=e.target.dataset&&e.target.datase
  document.querySelectorAll('#t-news .sv').forEach(x=>x.classList.toggle('on',x.id===v))});
 $('newsRf').addEventListener('click',()=>newsLoad());
 try{$('nav').addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-tab="news"]'))setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80)})}catch(e){}
-async function symNameLearn(){try{
- const miss=Object.values(calc(trades)).filter(s2=>s2.qty>1e-9&&mk(s2)==='BIST'&&s2.cur==='TRY'&&!SYMAP[s2.sym]&&!JSON.parse(localStorage.getItem('portfoy_symnames')||'{}')[s2.sym]).map(s2=>s2.sym);
- if(!miss.length)return;
- const sym=miss[0];let mt=null;const mu='https://www.getmidas.com/kap-haberleri/?search='+encodeURIComponent(sym);
- for(const tx of KTR){try{mt=await getText(tx(mu),12000);if(mt)break}catch(e){}}
- if(!mt)return;
- const mi=midasItems(mt);if(!mi.length)return;
- const first=mi[0].ti.split(/[ ,]/)[0].trim();
- if(first&&first.length>=3)addSymName(sym,first.toLocaleLowerCase('tr'))
-}catch(e){}}
-/* eski symNameLearn (Midas ?search desteklemiyor) devre dışı */
+
 
 async function goldExt(){
  try{const j=await getJSON('https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true',12000);
@@ -1315,7 +1300,7 @@ function scanSignals(openAll){
  SIGS.sort((a,b)=>(RANK[a.k]??3)-(RANK[b.k]??3))}
 function sparkSVG(cs2){if(!cs2||cs2.length<2)return'';const w=320,hh=54,lo=Math.min(...cs2),hi=Math.max(...cs2),X=i=>6+i*(w-12)/(cs2.length-1),Y=v=>hh-6-((v-lo)/((hi-lo)||1))*(hh-12);
  return`<svg viewBox="0 0 ${w} ${hh}" style="width:100%;height:auto;display:block"><polyline fill="none" stroke="var(--ac)" stroke-width="2" stroke-linejoin="round" points="${cs2.map((v,i2)=>X(i2).toFixed(1)+','+Y(v).toFixed(1)).join(' ')}"/><circle cx="${X(cs2.length-1).toFixed(1)}" cy="${Y(cs2[cs2.length-1]).toFixed(1)}" r="3" style="fill:var(--ac)"/></svg>`}
-const TRM={'Oynaklık (volatilite)':'Fiyatların ne kadar hızlı ve geniş oynadığının ölçüsü. Yüksek oynaklık = değer büyük dalgalanır; kötü günler de iyi günler de sert olur.','Zirveden daluş (drawdown)':'En yüksek noktadan sonraki en derin düşüşün büyüklüğü. Ne kadar derinse geri dönmesi o kadar uzun sürer.','Teknik skor':'Tüm göstergelerin tek sayıda özeti (0-100). 65 üstü "boğa" (yukarı eğilim), 40 altı "ayı" (aşağı eğilim) sayılır.','SMA 20':'Son 20 günün ortalama fiyatı. Fiyat ortalamanın üstündeyse kısa vadeli yön yukarı kabul edilir.','SMA 50':'Son 50 günün (yaklaşık 2,5 ay) ortalama fiyatı — orta vadeli trend ölçüsü.','SMA 200':'Son 200 günün (yaklaşık 1 yıl) ortalama fiyatı. Fiyat bunun üstündeyse uzun vadeli görünüm pozitif sayılır.','SMA50 eğimi (10g)':'50 günlük ortalama, son 10 günde yüzde kaç değişti? Artıysa trend yukarı dönüyor, eksiyse zayıflıyor demektir.','ADX (14)':'Trendin GÜCÜ (0-100), yön söylemez. 25 üstü "güçlü trend" demektir; yanında DI+ yüksekse yukarı, DI− yüksekse aşağı yönlü.','Ichimoku bulutu':'Geçmiş ortalamalardan hesaplanan "bulut". Fiyat bulutun üstündeyse boğa ortamı, altındaysa ayı ortamı sayılır.','Donchian (20)':'Son 20 günün en yüksek/en düşük seviyeleri. Üst seviyenin üzerine çıkmak "kırılım" (güçlü alım ilgisi), altına inmek "çöküş" sayılır.','RSI (14)':'0-100 arası hız ölçeri. 70 üstü AŞIRI ALIM: fiyat çok hızlı yükselmiş, geri çekilme gelebilir. 30 altı AŞIRI SATIM: yoğun satış olmuş, toparlanma gelebilir.','Stokastik (14,3)':'Fiyatın son 14 günün aralığındaki konumu. %80 üstü aşırı alım, %20 altı aşırı satım. K çizgisi D çizgisini kesince sinyal doğar.','MACD (12,26,9)':'Kısa ve uzun vadeli ortalamaların farkı. Sıfır üstü = yukarı momentum. Sinyal çizgisini yukarı keserse "AL", aşağı keserse "SAT" uyarısıdır.','CCI (20)':'Fiyatın istatistiksel sapması. +100 üstü abartılı yükseliş, −100 altı abartılı satış bölgesidir; bu seviyelerden dönüşler sinyal sayılır.','Williams %R':'Stokastik benzeri: 0′a yakın = aşırı alım, −100′e yakın = aşırı satım.','ROC (10 gün)':'Son 10 günde fiyat yüzde kaç değişti? Ani sıçrama ve düşüşler burada görünür.','Bollinger (20,2)':'Ortalamanın ±2 "normal sapma" bandı. Fiyat bandın dışına çıkarsa hareket abartılı demektir; bantlar daralmışsa büyük hareket yaklaşabilir. %B: bandın neresinde olunduğu (100=üst bant, 0=alt bant).','52 hafta':'Son 1 yılın en yüksek ve en düşük fiyatı. Zirveye yakınsa rekor bölgesinde, dibe yakınsa dip bölgesinde demektir.','Yıllık volatilite':'Fiyatın bir yılda ortalama yüzde ne kadar oynadığı. Yüksek değer = oynak (riskli) hisse.','ATR (14)':'Hissenin bir günde ortalama kaç TL oynadığı (günlük salınım). Yüksek ATR = oynak hisse; stop seviyesi belirlerken kullanılır.','MFI (14)':'Hacmi de hesaba katan RSI benzeri gösterge. 80 üstü "para girişi doyumda", 20 altı "satış tükeniyor" yorumu yapılır.','Hacim (son / 20g ort.)':'Günün hacminin son 20 günün ortalamasına oranı. 2 katı üstü "patlama": ilgi aniden artmış demektir.','OBV uyumu':'Hacmi fiyat yönüne göre toplayan gösterge. Fiyat düşerken OBV yükseliyorsa "görünmeyen alım" var demektir; tersi durumda "görünmeyen satış".','Destek / Direnç (60g)':'Son 60 günün en düşüğü (destek) ve en yüküğü (direnç). Fiyatın sık sekildiği sınır bölgelerdir; kırılırlarsa yeni hareket başlayabilir.','Piyasa Değeri':'Şirketin tüm hisselerinin toplam değeri: hisse sayısı × güncel fiyat. Şirketin büyüklüğü budur; büyük şirketlerde fiyat genelde daha sakin oynar. (Hisse sayısı çeyreklik, fiyat günceldir.)','F/K':'Fiyatın şirketin son 12 aylık kârına oranı. 20 ise sabit kârla yatırım 20 yılda kendini öder; düşük "ucuz", yüksek "pahalı ya da hızlı büyüyen" olabilir. Sektör içinde karşılaştırılmalı.','PD/DD':'Fiyatın şirket defterindeki öz kaynağa oranı (çeyreklik). 1 altı: defter değerinin altında işlem görüyor; 2-3 üstü: güçlü beklenti ya da pahalılık işareti sayılır.','Temettü Verimi':'Son 4 çeyrekte ödenen temettünün fiyata oranı. %5 ise 100 bin ₺ değerindeki hisseden yılda yaklaşık 5 bin ₺ nakit gelir; yüksek verim hoş ama kesintisiz olduğunu göstermez.','Net Kâr Marjı':'Şirketin son çeyrekte her 100 liralık satışından ne kadar net kâr kaldığı. Yüksek ve istikrarlı marj güçlü iş modeli işaretidir.'};
+const TRM={'Oynaklık (volatilite)':'Fiyatların ne kadar hızlı ve geniş oynadığının ölçüsü. Yüksek oynaklık = değer büyük dalgalanır; kötü günler de iyi günler de sert olur.','Zirveden dalış (drawdown)':'En yüksek noktadan sonraki en derin düşüşün büyüklüğü. Ne kadar derinse geri dönmesi o kadar uzun sürer.','Teknik skor':'Tüm göstergelerin tek sayıda özeti (0-100). 65 üstü "boğa" (yukarı eğilim), 40 altı "ayı" (aşağı eğilim) sayılır.','SMA 20':'Son 20 günün ortalama fiyatı. Fiyat ortalamanın üstündeyse kısa vadeli yön yukarı kabul edilir.','SMA 50':'Son 50 günün (yaklaşık 2,5 ay) ortalama fiyatı — orta vadeli trend ölçüsü.','SMA 200':'Son 200 günün (yaklaşık 1 yıl) ortalama fiyatı. Fiyat bunun üstündeyse uzun vadeli görünüm pozitif sayılır.','SMA50 eğimi (10g)':'50 günlük ortalama, son 10 günde yüzde kaç değişti? Artıysa trend yukarı dönüyor, eksiyse zayıflıyor demektir.','ADX (14)':'Trendin GÜCÜ (0-100), yön söylemez. 25 üstü "güçlü trend" demektir; yanında DI+ yüksekse yukarı, DI− yüksekse aşağı yönlü.','Ichimoku bulutu':'Geçmiş ortalamalardan hesaplanan "bulut". Fiyat bulutun üstündeyse boğa ortamı, altındaysa ayı ortamı sayılır.','Donchian (20)':'Son 20 günün en yüksek/en düşük seviyeleri. Üst seviyenin üzerine çıkmak "kırılım" (güçlü alım ilgisi), altına inmek "çöküş" sayılır.','RSI (14)':'0-100 arası hız ölçer. 70 üstü AŞIRI ALIM: fiyat çok hızlı yükselmiş, geri çekilme gelebilir. 30 altı AŞIRI SATIM: yoğun satış olmuş, toparlanma gelebilir.','Stokastik (14,3)':'Fiyatın son 14 günün aralığındaki konumu. %80 üstü aşırı alım, %20 altı aşırı satım. K çizgisi D çizgisini kesince sinyal doğar.','MACD (12,26,9)':'Kısa ve uzun vadeli ortalamaların farkı. Sıfır üstü = yukarı momentum. Sinyal çizgisini yukarı keserse "AL", aşağı keserse "SAT" uyarısıdır.','CCI (20)':'Fiyatın istatistiksel sapması. +100 üstü abartılı yükseliş, −100 altı abartılı satış bölgesidir; bu seviyelerden dönüşler sinyal sayılır.','Williams %R':'Stokastik benzeri: 0′a yakın = aşırı alım, −100′e yakın = aşırı satım.','ROC (10 gün)':'Son 10 günde fiyat yüzde kaç değişti? Ani sıçrama ve düşüşler burada görünür.','Bollinger (20,2)':'Ortalamanın ±2 "normal sapma" bandı. Fiyat bandın dışına çıkarsa hareket abartılı demektir; bantlar daralmışsa büyük hareket yaklaşabilir. %B: bandın neresinde olunduğu (100=üst bant, 0=alt bant).','52 hafta':'Son 1 yılın en yüksek ve en düşük fiyatı. Zirveye yakınsa rekor bölgesinde, dibe yakınsa dip bölgesinde demektir.','Yıllık volatilite':'Fiyatın bir yılda ortalama yüzde ne kadar oynadığı. Yüksek değer = oynak (riskli) hisse.','ATR (14)':'Hissenin bir günde ortalama kaç TL oynadığı (günlük salınım). Yüksek ATR = oynak hisse; stop seviyesi belirlerken kullanılır.','MFI (14)':'Hacmi de hesaba katan RSI benzeri gösterge. 80 üstü "para girişi doyumda", 20 altı "satış tükeniyor" yorumu yapılır.','Hacim (son / 20g ort.)':'Günün hacminin son 20 günün ortalamasına oranı. 2 katı üstü "patlama": ilgi aniden artmış demektir.','OBV uyumu':'Hacmi fiyat yönüne göre toplayan gösterge. Fiyat düşerken OBV yükseliyorsa "görünmeyen alım" var demektir; tersi durumda "görünmeyen satış".','Destek / Direnç (60g)':'Son 60 günün en düşüğü (destek) ve en yükseği (direnç). Fiyatın sık sektiği sınır bölgelerdir; kırılırlarsa yeni hareket başlayabilir.','Piyasa Değeri':'Şirketin tüm hisselerinin toplam değeri: hisse sayısı × güncel fiyat. Şirketin büyüklüğü budur; büyük şirketlerde fiyat genelde daha sakin oynar. (Hisse sayısı çeyreklik, fiyat günceldir.)','F/K':'Fiyatın şirketin son 12 aylık kârına oranı. 20 ise sabit kârla yatırım 20 yılda kendini öder; düşük "ucuz", yüksek "pahalı ya da hızlı büyüyen" olabilir. Sektör içinde karşılaştırılmalı.','PD/DD':'Fiyatın şirket defterindeki öz kaynağa oranı (çeyreklik). 1 altı: defter değerinin altında işlem görüyor; 2-3 üstü: güçlü beklenti ya da pahalılık işareti sayılır.','Temettü Verimi':'Son 4 çeyrekte ödenen temettünün fiyata oranı. %5 ise 100 bin ₺ değerindeki hisseden yılda yaklaşık 5 bin ₺ nakit gelir; yüksek verim hoş ama kesintisiz olduğunu göstermez.','Net Kâr Marjı':'Şirketin son çeyrekte her 100 liralık satışından ne kadar net kâr kaldığı. Yüksek ve istikrarlı marj güçlü iş modeli işaretidir.'};
 function aiText(s,t){
  const c=cs(s.cur),p=s.p!=null?s.p:t.last,S1=[];
  const H=HIST[s.sym];let ch30=null;
@@ -1350,15 +1335,14 @@ function aiGeneral(rows){if(!rows.length)return'';
  let o=`${rows.length} hissenin ${bo.length} tanesi boğa bölgesinde, ${ay.length} tanesi ayı bölgesinde, ${nr} tanesi nötr.`;
  if(best)o+=` En güçlü: ${best.sym} (${best.ta.score}).`;
  if(worst&&rows.length>1)o+=` En zayıf: ${worst.sym} (${worst.ta.score}).`;
- if(over.length)o+=` Aşırı alımda: ${over.join(', ')} — kâr realized seviyeler olabilir.`;
+ if(over.length)o+=` Aşırı alımda: ${over.join(', ')} — kâr realizasyonu seviyeleri olabilir.`;
  if(under.length)o+=` Aşırı satımda: ${under.join(', ')} — toparlanma izlenebilir.`;
  o+=bo.length>ay.length?' Genel tablo POZİTİF; küçük geri çekilmeler alım fırsatı izlenebilir.':ay.length>bo.length?' Genel tablo NEGATİF; yeni alımlarda temkinli ol, stop seviyelerini kontrol et.':' Genel tablo KARIŞIK; net yön için kırılım bekleniyor.';
  const _td=aiTodayTxt();return o+(_td?' '+_td:'')}
-function aiPeriod(){const d=new Date(),h=d.getHours()+d.getMinutes()/60;return today()+'#'+(h>=19?'e':h>=10.5?'s':'a')}
 function aiCached(s,t){return aiText(s,t)}
 try{Object.keys(localStorage).filter(k=>k.indexOf('portfoy_ai_')===0).forEach(k=>localStorage.removeItem(k))}catch(e){}
 /* ---------- temel çarpanlar (Yahoo fundamentals-timeseries, crumb'suz) ---------- */
-let FDSYM='',FDBUSY=false;
+let FDBUSY=false;
 const FDK='portfoy_fd';
 function fdGet(){try{return JSON.parse(localStorage.getItem(FDK)||'{}')||{}}catch(e){return{}}}
 function fdBig(v){if(v==null||!isFinite(v))return'—';const a=Math.abs(v);
@@ -1367,14 +1351,15 @@ function fdBig(v){if(v==null||!isFinite(v))return'—';const a=Math.abs(v);
  if(a>=1e6)return(v/1e6).toLocaleString('tr-TR',{maximumFractionDigits:1})+' milyon';
  return Math.round(v).toLocaleString('tr-TR')}
 function fdPct(v){return v==null||!isFinite(v)?'—':'%'+v.toLocaleString('tr-TR',{maximumFractionDigits:1})}
-function fdRender(sym,fd){if(!$('fdMC'))return;const s2=calc(trades)[sym],cur=s2?s2.cur:'TRY',U={TRY:'₺',USD:'$',EUR:'€'}[cur]||cur;
- const set=(id,v)=>{const el=$(id);if(el)el.innerHTML=v};
+function fdBox(sym){return document.querySelector('[data-card="'+String(sym).replace(/"/g,'')+'"]')}
+function fdRender(sym,fd){const box=fdBox(sym);if(!box||!box.querySelector('.fdMC'))return;const s2=calc(trades)[sym],cur=s2?s2.cur:'TRY',U={TRY:'₺',USD:'$',EUR:'€'}[cur]||cur;
+ const set=(c,v)=>{const el=box.querySelector('.'+c);if(el)el.innerHTML=v};
  set('fdMC',fd.mcap!=null?fdBig(fd.mcap)+' '+U:'—');
  set('fdPE',fd.pe!=null?fd.pe.toLocaleString('tr-TR',{maximumFractionDigits:1}):'—');
  set('fdPB',fd.pb!=null?fd.pb.toLocaleString('tr-TR',{maximumFractionDigits:1}):'—');
  set('fdDY',fdPct(fd.dy));
  set('fdNM',fdPct(fd.nm));
- const dt=$('fdDT');if(dt)dt.textContent=fd.dt?'· çeyrek: '+fd.dt:''}
+ const dt=box.querySelector('.fdDT');if(dt)dt.textContent=fd.dt?'· çeyrek: '+fd.dt:''}
 async function fdEnsure(sym){
  if(!sym||FDBUSY)return;
  const c=fdGet()[sym];
@@ -1397,10 +1382,10 @@ async function fdEnsure(sym){
   const fd={t:Date.now(),mcap:sh!=null&&close?sh*close:null,pe,pb,dy:cnt&&close?dsum/close*100:null,nm,dt:ni.length?ni[ni.length-1].asOfDate:null};
   const o=fdGet();o[sym]=fd;try{localStorage.setItem(FDK,JSON.stringify(o))}catch(e){}
   fdRender(sym,fd)
- }catch(e){if($('fdPE'))$('fdPE').innerHTML='—'}
+ }catch(e){const b=fdBox(sym),pe=b&&b.querySelector('.fdPE');if(pe)pe.innerHTML='—'}
  FDBUSY=false}
-try{document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.querySelector('#fdMC')){const sp=d.querySelector('#fdMC');if(sp&&sp.textContent==='—')fdEnsure(FDSYM)}},true)}catch(e){}
-function taDetailsHTML(s){const t=s.ta;if(!t)return'';FDSYM=s.sym;const c=cs(s.cur),p=s.p!=null?s.p:t.last;
+try{document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.open){const sp=d.querySelector('.fdMC'),card=d.closest('[data-card]');if(sp&&card&&sp.textContent==='—')fdEnsure(card.dataset.card)}},true)}catch(e){}
+function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=null?s.p:t.last;
  const updn=v=>v?'<span class="up">üstünde ✓</span>':'<span class="dn">altında</span>';
  const zone=t.rsi.v==null?'—':t.rsi.v>=TA_CONF.rsiHi?'<span class="dn">aşırı alım 🔴</span>':t.rsi.v<=TA_CONF.rsiLo?'<span class="up">aşırı satım 🟢</span>':'nötr';
  const md=t.macd,mds=!md||md.h==null?'—':(md.ph!=null&&md.ph<=0&&md.h>0?'<span class="up">⚡ AL sinyali</span>':md.ph!=null&&md.ph>=0&&md.h<0?'<span class="dn">⚡ SAT sinyali</span>':md.h>0?'pozitif':'negatif');
@@ -1420,11 +1405,11 @@ function taDetailsHTML(s){const t=s.ta;if(!t)return'';FDSYM=s.sym;const c=cs(s.c
   <table class="tat">
   ${kv('Teknik skor',`<b class="${cls(t.score-50)} sk" style="background:var(--bg)">${t.score}</b> · ${scLab}`)}
   ${g('Temel çarpanlar')}
-  ${kv('Piyasa Değeri','<span id="fdMC">—</span>')}
-  ${kv('F/K','<span id="fdPE">—</span>')}
-  ${kv('PD/DD','<span id="fdPB">—</span>')}
-  ${kv('Temettü Verimi','<span id="fdDY">—</span>')}
-  ${kv('Net Kâr Marjı','<span id="fdNM">—</span> <span class="mut sm" id="fdDT"></span>')}
+  ${kv('Piyasa Değeri','<span class="fdMC">—</span>')}
+  ${kv('F/K','<span class="fdPE">—</span>')}
+  ${kv('PD/DD','<span class="fdPB">—</span>')}
+  ${kv('Temettü Verimi','<span class="fdDY">—</span>')}
+  ${kv('Net Kâr Marjı','<span class="fdNM">—</span> <span class="mut sm" class="fdDT"></span>')}
   ${g('Trend')}
   ${kv('SMA 20',sl(t.s20)+' · '+(t.s20==null?'—':updn(p>=t.s20)))}
   ${kv('SMA 50',sl(t.s50)+' · '+(t.s50==null?'—':updn(p>=t.s50)))}
@@ -1452,7 +1437,7 @@ function taDetailsHTML(s){const t=s.ta;if(!t)return'';FDSYM=s.sym;const c=cs(s.c
   ${kv('Destek / Direnç (60g)',sl(t.sSup)+' — '+sl(t.sRes))}
   </table>
   <div class="aib">🤖 <b>AI Analiz</b><div style="margin-top:4px">${aiCached(s,t)}</div></div>
-  <div class="mut sm" style="margin-top:6px">${t.n} günlük geçmiş · ${dts(t.at)} indirildi${t.noHL?' · <b>kanal göstergeleri için “Geçmiş verilerini şimdi yenile” önerilir</b>':''} · yatırım tavsiyesi değildir.</div></details>`}
+  <div class="mut sm" style="margin-top:6px">${t.n} günlük geçmiş · ${dts(t.at)} indirildi${t.noHL?' · <b>kanal göstergeleri için “Analiz Verilerini Güncelle” önerilir</b>':''} · yatırım tavsiyesi değildir.</div></details>`}
 function renderTa(open){const el=$('tav');if(!el)return;
  if(!taOn){el.innerHTML='<div class="card empty">Teknik analiz kapalı.<br>Ayarlar → “Teknik analiz &amp; sinyaller”den açabilirsin.</div>';return}
  const rows=open.filter(s=>s.ta).sort((a,b)=>b.ta.score-a.ta.score);
@@ -1659,7 +1644,8 @@ function ingestKap(table){let seen=0;const now=Date.now(),have=new Set(kap.items
   if(dt&&dt<now-14*864e5)return;const id=hid(sym+'|'+(url||title));if(have.has(id)||kap.del[id])return;have.add(id);
   kap.items.push({id,sym,title:title.trim(),src,url:url||'',t:dt,seen:now})});
  kap.t=now;kap.hasCols=seen>0;kapPrune();kapSave();renderKap()}
-function kapVisible(){try{const o=kapSrc();const map={midas:'Midas KAP',yedek:'Yedek Arama',tablo:'Google Tablo'};kap.items=kap.items.filter(x=>o[Object.keys(map).find(k=>map[k]===x.src)]!==0)}catch(e){}const held=new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9).map(s=>s.sym));return kap.items.filter(x=>held.has(x.sym)).sort((a,b)=>(b.t||b.seen)-(a.t||a.seen))}
+const kapKey=src=>src==='Midas KAP'?'midas':(src==='Google KAP'||src==='Bing KAP'||src==='Yedek Arama')?'yedek':'tablo';
+function kapVisible(){try{const o=kapSrc();kap.items=kap.items.filter(x=>o[kapKey(x.src)]!==0)}catch(e){}const held=new Set(Object.values(calc(trades)).filter(s=>s.qty>1e-9).map(s=>s.sym));return kap.items.filter(x=>held.has(x.sym)).sort((a,b)=>(b.t||b.seen)-(a.t||a.seen))}
 function kapCatOf(x){const t=(x.title||'').toLocaleLowerCase('tr');if(/sermaye|bedelsiz|bedelli/.test(t))return'ser';if(/temett|kâr pay|kar pay/.test(t))return'tem';if(/bilan|finansal|mali tablo|çeyrek|faaliyet|12 aylık|3 aylık|6 aylık|9 aylık|yıllık/.test(t))return'bil';return'oth'}
 function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]),n=unread.length;
  const nb=$('kapN');nb.textContent=n>99?'99+':n;nb.style.display=n?'block':'none';
@@ -1692,8 +1678,8 @@ function mdLinks(txt){const out=[],re=/\[([^\]]{9,300})\]\((https?:\/\/[^\s)]+)\
   out.push({t:ti,u:li})}
  return out}
 let kapBusy=false;
-const SYMAP={ASELS:'Aselsan',TUPRS:'Tüpraş',THYAO:'Türk Hava Yolları',KCHOL:'Koç Holding',BIMAS:'BİM',SISE:'Şişecam',EREGL:'Ereğli',SASA:'Sasa',AKBNK:'Akbank',GARAN:'Garanti',YKBNK:'Yapı ve Kredi',ISCTR:'İş Bankası',KRDMD:'Kardemir',OTKAR:'Otokar',VESTL:'Vestel',ARCLK:'Arçelik',PETKM:'Petkim',SAHOL:'Sabancı',ENKAI:'Enka',TCELL:'Turkcell',FROTO:'Ford Otosan',TOASO:'Tofaş',CVKMD:'CVK Maden',EKIM:'Ekim Turizm',SSAAT:'SSB',SISE:'Şişecam',ALARK:'Alarko',TKFEN:'Tekfen',TABGD:'Tab Gıda'};
-Object.assign(SYMAP,{KRDMD:'Kardemir',TRALT:'TR Anadolu Metal',TRCAS:'Turcas',AKSA:'Aksa Akrilik',AKSEN:'Aksa Enerji',AKKOK:'Akkök',KLGYO:'Kiler GYO',ISMEN:'İş Yatırım',ISGYO:'İş GYO',DOHOL:'Doğan Holding',HEKTS:'Hektaş',PGSUS:'Pegasus',MGROS:'Migros',SOKM:'Şok Marketler',ASTOR:'Astor',KONTR:'Kontrolmatik',EUPWR:'Europower',GESAN:'Girişim Elektrik',SMRTG:'Smart Güneş',ALFAS:'Alfa Solar',CWENE:'CW Enerji',ODAS:'Odaş',ENJSA:'Enerjisa',ZOREN:'Zorlu Enerji',TTKOM:'Türk Telekom',TAVHL:'TAV Havalimanları',HALKB:'Halkbank',VAKBN:'Vakıfbank',TSKB:'TSKB',ALBRK:'Albaraka',SKBNK:'Şekerbank',ULKER:'Ülker',CCOLA:'Coca-Cola İçecek',AEFES:'Anadolu Efes',MAVI:'Mavi',BRSAN:'Borusan',CIMSA:'Çimsa',OYAKC:'Oyak Çimento',AKCNS:'Akçansa',GUBRF:'Gübre Fabrikaları',KOZAL:'Koza Altın',KOZAA:'Koza Anadolu',NETAS:'Netaş',YEOTK:'Yeo Teknoloji',MIATK:'Mia Teknoloji',REEDR:'Reeder',BIOEN:'Biotrend',HRKET:'Hareket Proje',MEYSU:'Meysu Gıda',DMRGD:'DMR Unlu Mamuller',ISDMR:'İskenderun Demir Çelik',DOAS:'Doğuş Otomotiv',TTRAK:'Türk Traktör',KARSN:'Karsan',EKGYO:'Emlak Konut',SNGYO:'Sinpaş',TRGYO:'Torunlar GYO',AGHOL:'AG Anadolu Grubu',GLYHO:'Global Yatırım Holding',KONYA:'Konya Çimento',BRYAT:'Borusan Yatırım',SELEC:'Selçuk Ecza',MPARK:'MLP Care',LKMNH:'Lokman Hekim',AKFGY:'Akfen GYO',AKFYE:'Akfen Yenilenebilir',GWIND:'Galata Wind',BTCIM:'Batıçim',BUCIM:'Bursa Çimento',CANTE:'Çan2 Termik',ISBTR:'İş Bankası B',TMSN:'Tümosan',FENER:'Fenerbahçe',GSRAY:'Galatasaray',BJKAS:'Beşiktaş',TSPOR:'Trabzonspor'});
+const SYMAP={ASELS:'Aselsan',TUPRS:'Tüpraş',THYAO:'Türk Hava Yolları',KCHOL:'Koç Holding',BIMAS:'BİM',SISE:'Şişecam',EREGL:'Ereğli',SASA:'Sasa',AKBNK:'Akbank',GARAN:'Garanti',YKBNK:'Yapı ve Kredi',ISCTR:'İş Bankası',KRDMD:'Kardemir',OTKAR:'Otokar',VESTL:'Vestel',ARCLK:'Arçelik',PETKM:'Petkim',SAHOL:'Sabancı',ENKAI:'Enka',TCELL:'Turkcell',FROTO:'Ford Otosan',TOASO:'Tofaş',CVKMD:'CVK Maden',EKIM:'Ekim Turizm',SSAAT:'SSB',ALARK:'Alarko',TKFEN:'Tekfen',TABGD:'Tab Gıda'};
+Object.assign(SYMAP,{TRALT:'TR Anadolu Metal',TRCAS:'Turcas',AKSA:'Aksa Akrilik',AKSEN:'Aksa Enerji',AKKOK:'Akkök',KLGYO:'Kiler GYO',ISMEN:'İş Yatırım',ISGYO:'İş GYO',DOHOL:'Doğan Holding',HEKTS:'Hektaş',PGSUS:'Pegasus',MGROS:'Migros',SOKM:'Şok Marketler',ASTOR:'Astor',KONTR:'Kontrolmatik',EUPWR:'Europower',GESAN:'Girişim Elektrik',SMRTG:'Smart Güneş',ALFAS:'Alfa Solar',CWENE:'CW Enerji',ODAS:'Odaş',ENJSA:'Enerjisa',ZOREN:'Zorlu Enerji',TTKOM:'Türk Telekom',TAVHL:'TAV Havalimanları',HALKB:'Halkbank',VAKBN:'Vakıfbank',TSKB:'TSKB',ALBRK:'Albaraka',SKBNK:'Şekerbank',ULKER:'Ülker',CCOLA:'Coca-Cola İçecek',AEFES:'Anadolu Efes',MAVI:'Mavi',BRSAN:'Borusan',CIMSA:'Çimsa',OYAKC:'Oyak Çimento',AKCNS:'Akçansa',GUBRF:'Gübre Fabrikaları',KOZAL:'Koza Altın',KOZAA:'Koza Anadolu',NETAS:'Netaş',YEOTK:'Yeo Teknoloji',MIATK:'Mia Teknoloji',REEDR:'Reeder',BIOEN:'Biotrend',HRKET:'Hareket Proje',MEYSU:'Meysu Gıda',DMRGD:'DMR Unlu Mamuller',ISDMR:'İskenderun Demir Çelik',DOAS:'Doğuş Otomotiv',TTRAK:'Türk Traktör',KARSN:'Karsan',EKGYO:'Emlak Konut',SNGYO:'Sinpaş',TRGYO:'Torunlar GYO',AGHOL:'AG Anadolu Grubu',GLYHO:'Global Yatırım Holding',KONYA:'Konya Çimento',BRYAT:'Borusan Yatırım',SELEC:'Selçuk Ecza',MPARK:'MLP Care',LKMNH:'Lokman Hekim',AKFGY:'Akfen GYO',AKFYE:'Akfen Yenilenebilir',GWIND:'Galata Wind',BTCIM:'Batıçim',BUCIM:'Bursa Çimento',CANTE:'Çan2 Termik',ISBTR:'İş Bankası B',TMSN:'Tümosan',FENER:'Fenerbahçe',GSRAY:'Galatasaray',BJKAS:'Beşiktaş',TSPOR:'Trabzonspor'});
 const SYMALT={KCHOL:['Koç Holding'],YKBNK:['Yapı Kredi'],GARAN:['Garanti BBVA'],ISCTR:['İş Bankası','İşbank'],THYAO:['THY'],EREGL:['Ereğli Demir','Erdemir'],FROTO:['Ford Otosan'],TOASO:['Tofaş'],SAHOL:['Sabancı Holding'],TCELL:['Turkcell'],AKSA:['Aksa'],TRALT:['Anadolu Metal'],HEKTS:['Hektaş'],ASELS:['Aselsan'],BIMAS:['BİM Birleşik Mağazalar'],DOHOL:['Doğan Şirketler Grubu']};
 const kn=s=>String(s||'').toLocaleLowerCase('tr').replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ş/g,'s').replace(/ü/g,'u').replace(/[^a-z0-9]+/g,' ').trim();
 function kapAliasGet(){try{return JSON.parse(localStorage.getItem('portfoy_kapalias')||'{}')||{}}catch(e){return{}}}
@@ -1770,8 +1756,8 @@ function kapSrcSet(k,v){const o=kapSrc();o[k]=v?1:0;try{localStorage.setItem(KSK
 function kapSrcUI(){const o=kapSrc(),el=$('kapSrcSeg');if(!el)return;el.innerHTML=[['midas','Midas'],['yedek','Yedek Arama'],['tablo','Google Tablo']].map(([k,nm])=>`<button class="${o[k]?'on':''}" data-ksk="${k}">${nm}</button>`).join('')}
 const SRCADI={midas:'Midas KAP',yedek:'Yedek Arama',tablo:'Google Tablo'};
 $('kapSrcSeg').addEventListener('click',e=>{const b=e.target.closest('[data-ksk]');if(!b)return;const k=b.dataset.ksk;const once=kapSrc()[k];kapSrcSet(k,!once);kapSrcUI();
- const SRCADI={midas:'Midas KAP',yedek:'Yedek Arama',tablo:'Google Tablo'};const ad=SRCADI[k];
- if(once){const del=kap.items.filter(x=>x.src===ad).length;kap.items=kap.items.filter(x=>x.src!==ad);kapPrune();kapSave();msg(ad+' kapatıldı — '+del+' eski haberi listeden kaldırıldı ✓');renderKap()}
+ const ad=SRCADI[k];
+ if(once){const del=kap.items.filter(x=>kapKey(x.src)===k).length;kap.items=kap.items.filter(x=>kapKey(x.src)!==k);kapPrune();kapSave();msg(ad+' kapatıldı — '+del+' eski haberi listeden kaldırıldı ✓');renderKap()}
  else{msg(ad+' açıldı ✓ — KAP sekmesinde 🔄 ile çekin')}});
 kapSrcUI();
 $('kapAlSave').addEventListener('click',()=>{const o={};$('kapAl').value.split('\n').forEach(l=>{const m=/^\s*([A-Za-z0-9]{2,8})\s*=\s*(.+)$/.exec(l);if(m){const n=m[2].split('|').map(s=>s.trim()).filter(Boolean);if(n.length)o[m[1].toUpperCase()]=n}});
@@ -1841,7 +1827,7 @@ const isLocked=()=>document.documentElement.classList.contains('locked');
 const lockNow=()=>{if(pinCfg()){try{sessionStorage.removeItem('portfoy_sess')}catch(e){}document.documentElement.classList.add('locked');$('lpin').value='';$('lmsg').textContent='';setTimeout(()=>$('lpin').focus(),60);bioAutoOk=false;try{bioUI()}catch(e){}}};
 function afterUnlock(){try{const st=sessionStorage.getItem('portfoy_tab');if(st&&$('t-'+st))go(st)}catch(e){}refresh();syncNow()}
 async function tryUnlock(){const c=pinCfg();if(!c){document.documentElement.classList.remove('locked');return}if(pinCool()){$('lmsg').textContent='Çok fazla deneme — biraz bekleyin';return}
- if(await hashPin($('lpin').value,c.salt)===c.hash){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}document.documentElement.classList.remove('locked');$('lpin').value='';bioReset();afterUnlock()}else{const n=Math.min(PMAX,pinSay()+1);sayYaz('portfoy_pin_n',n);$('lpin').value='';if(n>=PMAX){const until=Date.now()+BEKLE*1000;try{sessionStorage.setItem('portfoy_pin_cool',until)}catch(e){}sayYaz('portfoy_bio_n',0);sayYaz('portfoy_pin_n',0);$('lmsg').textContent='3 hatalı deneme — 1 dakika bekleyin';bioUI()}else $('lmsg').textContent='Yanlış PIN'}}
+ if(await hashPin($('lpin').value,c.salt)===c.hash){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}document.documentElement.classList.remove('locked');$('lpin').value='';bioReset();afterUnlock()}else{const n=Math.min(PMAX,pinSay()+1);sayYaz('portfoy_pin_n',n);$('lpin').value='';if(n>=PMAX){const until=Date.now()+BEKLE*1000;try{localStorage.setItem('portfoy_pin_cool',until)}catch(e){}sayYaz('portfoy_bio_n',0);sayYaz('portfoy_pin_n',0);$('lmsg').textContent='3 hatalı deneme — 1 dakika bekleyin';bioUI()}else $('lmsg').textContent='Yanlış PIN'}}
 function updatePinUI(){const c=pinCfg();$('pinState').textContent=c?'Açık':'Kapalı';$('pinState').className=c?'up':'mut';$('lockAfter').value=String(c&&c.after!=null?c.after:60)}
 async function setPin(){const v=$('pinNew').value.trim();if(!/^\d{4,8}$/.test(v))return msg('PIN 4-8 rakamdan oluşmalı.',1);const salt=Math.random().toString(36).slice(2),old=pinCfg();
  try{localStorage.setItem(PK,JSON.stringify({salt,hash:await hashPin(v,salt),len:v.length,after:old&&old.after!=null?old.after:60}))}catch(e){return msg('Kaydedilemedi',1)}try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaydedildi ✓. Uygulama yeni açılışta sorulur; sayfa yenilenince sorulmaz.')}
@@ -1927,16 +1913,16 @@ async function bioAuth(){const p=bioPlugin();
  else{const c=await navigator.credentials.create({publicKey:{challenge:ch,rp:{name:'PORTFÖY'},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'portfoy-kullanici',displayName:'PORTFÖY Sahibi'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-258}],authenticatorSelection:{userVerification:'required',residentKey:'discouraged'},attestation:'none'}});try{localStorage.setItem(BIOCRED,b64u(c.rawId))}catch(e){}}}
 const BMAX=3,PMAX=3,BEKLE=60;
 function bioSay(){try{return +(sessionStorage.getItem('portfoy_bio_n')||0)}catch(e){return 0}}
-function pinSay(){try{return +(sessionStorage.getItem('portfoy_pin_n')||0)}catch(e){return 0}}
-function sayYaz(k,n){try{sessionStorage.setItem(k,n)}catch(e){}}
-function bioReset(){sayYaz('portfoy_bio_n',0);sayYaz('portfoy_pin_n',0);try{sessionStorage.removeItem('portfoy_pin_cool')}catch(e){}}
-function pinCool(){try{const v=+(sessionStorage.getItem('portfoy_pin_cool')||0);return v>Date.now()?v:0}catch(e){return 0}}
+function pinSay(){try{return +(localStorage.getItem('portfoy_pin_n')||0)}catch(e){return 0}}
+function sayYaz(k,n){try{(/^portfoy_pin/.test(k)?localStorage:sessionStorage).setItem(k,n)}catch(e){}}
+function bioReset(){sayYaz('portfoy_bio_n',0);sayYaz('portfoy_pin_n',0);try{localStorage.removeItem('portfoy_pin_cool')}catch(e){}}
+function pinCool(){try{const v=+(localStorage.getItem('portfoy_pin_cool')||0);return v>Date.now()?v:0}catch(e){return 0}}
 let bioBusy=false,bioAutoOk=false;
 async function bioTry(auto){if(bioBusy){setTimeout(()=>bioTry(auto),800);return}if(!document.documentElement.classList.contains('locked'))return;if(localStorage.getItem(BIOEN)!=='1')return;if(bioSay()>=BMAX||pinSay()>=PMAX||pinCool())return;const b=$('bioBtn');bioBusy=true;if(b){b.disabled=true;b.classList.add('busy')}
  try{await bioAuth();bioReset();bioUnlock();bioBusy=false;if(b)b.classList.remove('busy');return}catch(e){sayYaz('portfoy_bio_n',Math.min(BMAX,bioSay()+1));if(b){b.classList.remove('busy');b.classList.add('err');setTimeout(()=>{try{$('bioBtn').classList.remove('err')}catch(x){}},900)}bioBusy=false;await bioUI()}}
 $('bioBtn').addEventListener('click',()=>bioTry(false));
 $('bioToPin').addEventListener('click',()=>{sayYaz('portfoy_bio_n',BMAX);bioUI()});
-$('bioSel').addEventListener('change',()=>{try{localStorage.setItem(BIOEN,$('bioSel').value)}catch(e){}msg($('bioSel').value==='1'?'Biyometrik giriş açık ✓':'Biyometrik giriş kapalı',1);bioUI()});
+$('bioSel').addEventListener('change',()=>{try{localStorage.setItem(BIOEN,$('bioSel').value)}catch(e){}msg($('bioSel').value==='1'?'Biyometrik giriş açık ✓':'Biyometrik giriş kapalı');bioUI()});
 async function bioUI(){const sel=$('bioSel');const av=await bioAvail();if(sel){[...sel.options].forEach(o=>{if(o.value==='1')o.disabled=!av});if(localStorage.getItem(BIOEN)==='1')sel.value='1';if(!av){const n=$('bioNot');if(n)n.textContent='Bu cihazda biyometrik doğrulama bulunamadı.'}}const kilit=document.documentElement.classList.contains('locked');const cool=pinCool();const bm=$('bioMark'),b=$('bioBtn'),pr=$('pinRow'),lf=$('lforgot'),lp=$('lpin'),lg=$('lgo');const bioMod=!!(av&&kilit&&localStorage.getItem(BIOEN)==='1'&&bioSay()<BMAX&&pinSay()<PMAX&&!cool);const gizliydi=pr&&pr.style.display==='none';if(bm)bm.classList.toggle('on',bioMod);if(pr)pr.style.display=bioMod?'none':'';if(lf)lf.style.display=bioMod?'none':'';if(b){b.disabled=bioBusy;b.classList.toggle('busy',bioMod&&bioBusy)}const bl=$('bioToPin');if(bl)bl.parentNode.style.display=bioMod?'':'none';const bd=$('bioDeneme');if(bd)bd.textContent=bioMod?(bioSay()>0?bioSay()+'/3 deneme':''):'';if(!bioMod){if(lp)lp.disabled=!!cool;if(lg){lg.disabled=!!cool;lg.textContent=cool?Math.max(1,Math.ceil((cool-Date.now())/1000))+' sn':'Aç'}if(kilit&&gizliydi)setTimeout(()=>{try{$('lpin').focus()}catch(e){}},80)}if(cool)setTimeout(()=>{try{bioUI()}catch(e){}},Math.max(300,cool-Date.now()+80));if(av&&kilit&&bioPlugin()&&localStorage.getItem(BIOEN)==='1'&&!bioBusy&&!bioAutoOk&&bioSay()<BMAX&&pinSay()<PMAX&&!cool){bioAutoOk=true;setTimeout(()=>bioTry(true),700)}}
 bioUI();$('lpin').addEventListener('input',()=>{const c=pinCfg();if(c&&$('lpin').value.length===c.len)tryUnlock()});
 $('lforgot').addEventListener('click',()=>{if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
