@@ -211,7 +211,7 @@ body.print-rp h3{color:#555}}
  <div class="mut sm">PIN her açılışta sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v47</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v48</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -1923,11 +1923,12 @@ async function bioTry(auto){if(bioBusy){setTimeout(()=>bioTry(auto),800);return}
 $('bioBtn').addEventListener('click',()=>bioTry(false));
 $('bioToPin').addEventListener('click',()=>{sayYaz('portfoy_bio_n',BMAX);bioUI()});
 $('bioSel').addEventListener('change',()=>{try{localStorage.setItem(BIOEN,$('bioSel').value)}catch(e){}msg($('bioSel').value==='1'?'Biyometrik giriş açık ✓':'Biyometrik giriş kapalı');bioUI()});
-async function bioUI(){const sel=$('bioSel');const av=await bioAvail();if(sel){[...sel.options].forEach(o=>{if(o.value==='1')o.disabled=!av});if(localStorage.getItem(BIOEN)==='1')sel.value='1';if(!av){const n=$('bioNot');if(n)n.textContent='Bu cihazda biyometrik doğrulama bulunamadı.'}}const kilit=document.documentElement.classList.contains('locked');const cool=pinCool();const bm=$('bioMark'),b=$('bioBtn'),pr=$('pinRow'),lf=$('lforgot'),lp=$('lpin'),lg=$('lgo');const bioMod=!!(av&&kilit&&localStorage.getItem(BIOEN)==='1'&&bioSay()<BMAX&&pinSay()<PMAX&&!cool);const gizliydi=pr&&pr.style.display==='none';if(bm)bm.classList.toggle('on',bioMod);if(pr)pr.style.display=bioMod?'none':'';if(lf)lf.style.display=bioMod?'none':'';if(b){b.disabled=bioBusy;b.classList.toggle('busy',bioMod&&bioBusy)}const bl=$('bioToPin');if(bl)bl.parentNode.style.display=bioMod?'':'none';const bd=$('bioDeneme');if(bd)bd.textContent=bioMod?(bioSay()>0?bioSay()+'/3 deneme':''):'';if(!bioMod){if(lp)lp.disabled=!!cool;if(lg){lg.disabled=!!cool;lg.textContent=cool?Math.max(1,Math.ceil((cool-Date.now())/1000))+' sn':'Aç'}if(kilit&&gizliydi)setTimeout(()=>{try{$('lpin').focus()}catch(e){}},80)}if(cool)setTimeout(()=>{try{bioUI()}catch(e){}},Math.max(300,cool-Date.now()+80));if(av&&kilit&&bioPlugin()&&localStorage.getItem(BIOEN)==='1'&&!bioBusy&&!bioAutoOk&&bioSay()<BMAX&&pinSay()<PMAX&&!cool){bioAutoOk=true;setTimeout(()=>bioTry(true),700)}}
+async function bioUI(){const sel=$('bioSel');const av=await bioAvail();if(sel){[...sel.options].forEach(o=>{if(o.value==='1')o.disabled=!av});if(localStorage.getItem(BIOEN)==='1')sel.value='1';if(!av){const n=$('bioNot');if(n)n.textContent='Bu cihazda biyometrik doğrulama bulunamadı.'}}const kilit=document.documentElement.classList.contains('locked');const cool=pinCool();const bm=$('bioMark'),b=$('bioBtn'),pr=$('pinRow'),lf=$('lforgot'),lp=$('lpin'),lg=$('lgo');const bioMod=!!(av&&kilit&&localStorage.getItem(BIOEN)==='1'&&bioSay()<BMAX&&pinSay()<PMAX&&!cool);const gizliydi=pr&&pr.style.display==='none';if(bm)bm.classList.toggle('on',bioMod);if(pr)pr.style.display=bioMod?'none':'';if(lf)lf.style.display=bioMod?'none':'';if(b){b.disabled=bioBusy;b.classList.toggle('busy',bioMod&&bioBusy)}const bl=$('bioToPin');if(bl)bl.parentNode.style.display=bioMod?'':'none';const bd=$('bioDeneme');if(bd)bd.textContent=bioMod?(bioSay()>0?bioSay()+'/3 deneme':''):'';if(!bioMod){const lm=$('lmsg');if(!cool&&lm&&/bekleyin/.test(lm.textContent))lm.textContent='';if(lp)lp.disabled=!!cool;if(lg){lg.disabled=!!cool;lg.textContent=cool?Math.max(1,Math.ceil((cool-Date.now())/1000))+' sn':'Aç'}if(kilit&&gizliydi)setTimeout(()=>{try{$('lpin').focus()}catch(e){}},80)}if(cool)setTimeout(()=>{try{bioUI()}catch(e){}},Math.max(250,Math.min(1000,cool-Date.now()+80)));if(av&&kilit&&bioPlugin()&&localStorage.getItem(BIOEN)==='1'&&!bioBusy&&!bioAutoOk&&bioSay()<BMAX&&pinSay()<PMAX&&!cool){bioAutoOk=true;setTimeout(()=>bioTry(true),700)}}
 bioUI();$('lpin').addEventListener('input',()=>{const c=pinCfg();if(c&&$('lpin').value.length===c.len)tryUnlock()});
 $('lforgot').addEventListener('click',()=>{if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
 $('themeSeg').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.t!=null)setTheme(e.target.dataset.t)});
 $('updBtn').addEventListener('click',async()=>{const r=window.__swReg;
+ if(IS_NATIVE)return msg('Uygulama güncellemesi yeni APK ile gelir (GitHub → Releases).');
  if(!r)return msg('Güncelleme kontrolü bu açılış modunda yok.',1);
  msg('Kontrol ediliyor…');window.__updFound=false;
  try{await r.update()}catch(e){}
@@ -1972,7 +1973,8 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  setInterval(()=>{if(!document.hidden&&!isLocked()&&navigator.onLine&&trades.length)refresh()},300000);
 })();
 render();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
+const IS_NATIVE=(()=>{try{return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())}catch(e){return false}})();
+if(!IS_NATIVE&&'serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
  window.__reloaded=false;window.__updFound=false;
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(window.__reloaded)return;window.__reloaded=true;setTimeout(()=>location.reload(),1200)});
  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{

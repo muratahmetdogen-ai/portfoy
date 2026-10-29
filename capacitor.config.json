@@ -3,7 +3,11 @@
   "appName": "Portföyüm",
   "webDir": "www",
   "server": {
-    "androidScheme": "https",
-    "url": "https://muratahmetdogen-ai.github.io/portfoy/"
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
   }
 }
