@@ -119,7 +119,71 @@ body.print-rp h3{color:#555}}
 .kchip.r{background:#fde5e5;color:#991b1b;border-color:#f7c9c9}
 .ktag{display:inline-block;font-size:10px;font-weight:800;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}.ktag.g{background:rgba(7,148,85,.13);color:#079455}.ktag.r{background:rgba(229,56,45,.11);color:#e5382d}
 .anlz{margin-top:9px;background:linear-gradient(135deg,rgba(28,37,71,.10),rgba(49,66,126,.05));border:1px solid rgba(28,37,71,.30);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}.mt .tile{min-width:0}.mhd{display:flex;align-items:center;white-space:nowrap;overflow:hidden}.mnm{overflow:hidden;text-overflow:ellipsis}.mhd .mcc,.mhd .mop,.mhd .mpre,.mhd .mcl{flex:none}.nev{display:flex;gap:8px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px}.nev:last-child{border-bottom:none}.ndt{flex:none;width:42px;color:var(--mut);font-size:11.5px;font-weight:700;padding-top:2px}.ndh,.ndm,.ndl{flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px}.ndh{background:#ef4444}.ndm{background:#f59e0b}.ndl{background:#94a3b8}.nfl{flex:none;font-size:13px;padding-top:1px}.ntt{flex:1;min-width:0}.ntt small{color:var(--mut);font-size:11px;display:block;margin-top:1px}.nws{display:block;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px;color:var(--tx);text-decoration:none}.nws:last-child{border-bottom:none}.nws small{color:var(--mut);font-size:11px;display:block;margin-top:2px}
-</style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin')&&!sessionStorage.getItem('portfoy_sess'))document.documentElement.classList.add('locked')}catch(e){}</script>
+</style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin')&&(!sessionStorage.getItem('portfoy_sess')||(localStorage.getItem('portfoy_vault')&&!sessionStorage.getItem('portfoy_dek'))))document.documentElement.classList.add('locked')}catch(e){}</script>
+<script>(function(){
+ var SENS=['portfoy_v2','portfoy_gh','portfoy_hist','portfoy_kap','portfoy_news','portfoy_fd','portfoy_siglog','portfoy_kapalias','portfoy_symnames','portfoy_tast','portfoy_yalias'],ITER=150000;
+ var LS=window.localStorage,gi=Storage.prototype.getItem,si=Storage.prototype.setItem,ri=Storage.prototype.removeItem;
+ var VM={},DEK=null,dirty=new Set(),timer=null,chain=Promise.resolve(),active=!!gi.call(LS,'portfoy_vault');
+ var te=new TextEncoder(),td=new TextDecoder();
+ var isS=function(t,k){return t===LS&&active&&SENS.indexOf(k)>-1};
+ Storage.prototype.getItem=function(k){if(isS(this,k))return Object.prototype.hasOwnProperty.call(VM,k)?VM[k]:null;return gi.call(this,k)};
+ Storage.prototype.setItem=function(k,v){if(isS(this,k)){VM[k]=String(v);dirty.add(k);sched();return}return si.call(this,k,v)};
+ Storage.prototype.removeItem=function(k){if(isS(this,k)){delete VM[k];dirty.add(k);sched();return}return ri.call(this,k)};
+ function b2s(b){var u=new Uint8Array(b),s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)}
+ function s2b(t){return Uint8Array.from(atob(t),function(c){return c.charCodeAt(0)})}
+ async function kdf(pw,salt,it){var km=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:it||ITER,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+ async function seal(key,bytes){var iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,bytes),o=new Uint8Array(12+ct.byteLength);o.set(iv);o.set(new Uint8Array(ct),12);return b2s(o)}
+ async function open(key,t){var b=s2b(t);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b.subarray(0,12)},key,b.subarray(12)))}
+ function imp(raw){return crypto.subtle.importKey('raw',raw,'AES-GCM',true,['encrypt','decrypt'])}
+ function sched(){clearTimeout(timer);timer=setTimeout(flush,200)}
+ function flush(){chain=chain.then(doFlush).catch(function(){});return chain}
+ async function doFlush(){
+  if(!DEK){dirty.clear();return}
+  var ks=Array.from(dirty);dirty.clear();
+  for(var i=0;i<ks.length;i++){var k=ks[i];
+   try{if(Object.prototype.hasOwnProperty.call(VM,k)){si.call(LS,'enc:'+k,await seal(DEK,te.encode(VM[k])));ri.call(LS,k)}
+    else{ri.call(LS,'enc:'+k);ri.call(LS,k)}}
+   catch(e){dirty.add(k)}}}
+ document.addEventListener('visibilitychange',function(){if(document.hidden)flush()});
+ window.addEventListener('pagehide',function(){flush()});
+ var V={
+  on:function(){return !!gi.call(LS,'portfoy_vault')},
+  hasDek:function(){return !!sessionStorage.getItem('portfoy_dek')},
+  getRaw:function(){return sessionStorage.getItem('portfoy_dek')},
+  setDekB64:function(t){sessionStorage.setItem('portfoy_dek',t)},
+  clearDek:function(){sessionStorage.removeItem('portfoy_dek');DEK=null},
+  flush:flush,
+  boot:async function(){
+   if(!active)return;var t=sessionStorage.getItem('portfoy_dek');if(!t)return;
+   try{DEK=await imp(s2b(t));
+    for(var i=0;i<SENS.length;i++){var k=SENS[i],e=gi.call(LS,'enc:'+k);
+     if(e!=null)VM[k]=td.decode(await open(DEK,e));
+     else{var p=gi.call(LS,k);if(p!=null){VM[k]=p;dirty.add(k)}}}
+    if(dirty.size)sched()}
+   catch(e){DEK=null;sessionStorage.removeItem('portfoy_dek');location.reload();await new Promise(function(){})}},
+  unwrap:async function(pw,w){var v=JSON.parse(gi.call(LS,'portfoy_vault')),kek=await kdf(pw,s2b(v['s'+w]),v.it);return open(kek,v['w'+w])},
+  create:async function(pin,rec){
+   var raw=crypto.getRandomValues(new Uint8Array(32)),sp=crypto.getRandomValues(new Uint8Array(16)),sr=crypto.getRandomValues(new Uint8Array(16));
+   var vault={v:1,it:ITER,sp:b2s(sp),sr:b2s(sr),wp:await seal(await kdf(pin,sp),raw),wr:await seal(await kdf(rec,sr),raw)};
+   var key=await imp(raw),snap={};
+   for(var i=0;i<SENS.length;i++){var p=gi.call(LS,SENS[i]);if(p!=null)snap[SENS[i]]=p}
+   for(var k in snap){si.call(LS,'enc:'+k,await seal(key,te.encode(snap[k])))}
+   for(var k2 in snap){if(td.decode(await open(key,gi.call(LS,'enc:'+k2)))!==snap[k2])throw new Error('doğrulama başarısız')}
+   si.call(LS,'portfoy_vault',JSON.stringify(vault));
+   for(var k3 in snap){var cur=gi.call(LS,k3);VM[k3]=cur!=null?cur:snap[k3];if(cur!==snap[k3])dirty.add(k3);ri.call(LS,k3)}
+   DEK=key;active=true;V.setDekB64(b2s(raw));if(dirty.size)sched()},
+  rewrap:async function(pw,w){
+   var v=JSON.parse(gi.call(LS,'portfoy_vault')),raw=s2b(sessionStorage.getItem('portfoy_dek')),s=crypto.getRandomValues(new Uint8Array(16));
+   v['s'+w]=b2s(s);v['w'+w]=await seal(await kdf(pw,s,v.it),raw);si.call(LS,'portfoy_vault',JSON.stringify(v))},
+  remove:async function(){
+   await flush();
+   for(var i=0;i<SENS.length;i++){var k=SENS[i];if(Object.prototype.hasOwnProperty.call(VM,k))si.call(LS,k,VM[k]);ri.call(LS,'enc:'+k)}
+   ri.call(LS,'portfoy_vault');active=false;DEK=null;sessionStorage.removeItem('portfoy_dek')},
+  wipe:function(){Object.keys(LS).forEach(function(k){if(/^(portfoy|enc:)/.test(k))ri.call(LS,k)});try{sessionStorage.clear()}catch(e){}}
+ };
+ window.__V=V;
+})();
+</script>
 </head><body>
 <h1><span style="display:inline-flex;align-items:center;gap:7px"><img src="icon-192.png" width="23" height="23" alt="" style="flex:none;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.18)">PORTFÖY</span><span class="badge" id="mode">…</span></h1>
 <div id="msg"></div>
@@ -204,14 +268,14 @@ body.print-rp h3{color:#555}}
  <h3>Güvenlik</h3>
  <div class="card set">
   <div class="sl"><span>PIN Kilidi</span><b id="pinState" class="mut">Kapalı</b></div>
-  <div><div class="g2"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="4-8 haneli PIN"><button id="pinSet">Kaydet</button></div><button class="s" id="pinOff" style="margin-top:8px">PIN’i kaldır (Mevcut PIN’i yazın)</button></div>
+  <div><div class="g2"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="4-8 haneli PIN"><button id="pinSet">Kaydet</button></div><input id="recNew" type="password" maxlength="64" autocomplete="off" placeholder="Kurtarma şifresi (en az 6 karakter)" style="margin-top:8px"><button class="s" id="pinOff" style="margin-top:8px">PIN’i kaldır (Mevcut PIN’i yazın)</button></div>
   <div class="sl"><span>Ekran kilitlenme süresi</span><select id="lockAfter" style="width:auto"><option value="0">Hemen</option><option value="60">1 dk sonra</option><option value="300">5 dk sonra</option><option value="-1">Sorma</option></select></div>
   <div class="sl"><span>Biyometrik Giriş</span><select id="bioSel" style="width:auto"><option value="0">Kapalı</option><option value="1">Açık</option></select></div>
  <div class="mut sm" id="bioNot">Parmak izi ya da yüz, telefondaki güvenlik çipinde doğrulanır; uygulamaya yalnızca evet/hayır cevabı döner, biyometrik veri hiçbir yere kaydedilmez. PIN yedekte kalır. 3 biyometrik denemeden sonra 3 PIN hakkı kalır.</div>
- <div class="mut sm">PIN her açılışta sorulur, doğru girilince fiyatlar ve veriler yenilenir. Bu kilit ekranı gizler, veriyi şifrelemez.</div>
+ <div class="mut sm">PIN her açılışta sorulur. PIN ve kurtarma şifresi telefondaki verileri şifreler (portföy kayıtları, GitHub anahtarı, geçmiş). PIN’i unutursan kurtarma şifresiyle girer, yeni PIN koyarsın. İkisini de unutursan telefondaki veri okunamaz; GitHub yedeğinden geri yüklersin. 4 haneli PIN tek başına zayıf bir şifredir; mümkünse 6-8 hane kullan.</div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v48</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v49</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -266,12 +330,12 @@ body.print-rp h3{color:#555}}
 <div id="lock"><div id="lockbg"><img src="70-kilit-kasa.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></div>
  <div id="bioMark"><button id="bioBtn" aria-label="Parmak iziyle aç" style="background:none;border:none;padding:14px;cursor:pointer;color:#e8c268"><svg viewBox="0 0 24 24" width="96" height="96" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 8.5a8.5 8.5 0 0 1 12 0"/><path d="M7.5 11a6 6 0 0 1 9 0"/><path d="M9.6 13.4a3.1 3.1 0 0 1 4.8 0v3.3"/><path d="M8.2 15.8c.2 1.7.7 3.2 1.4 4.4"/><path d="M15.8 15.8c-.2 1.7-.7 3.2-1.4 4.4"/><path d="M4.9 11.7c-.5 1.5-.8 3.1-.8 4.8 0 1.5.2 3 .6 4.3"/><path d="M19.1 11.7c.5 1.5.8 3.1.8 4.8 0 1.5-.2 3-.6 4.3"/><path d="M12 16.9v3.6"/></svg></button><div id="bioDeneme" style="margin-top:8px;min-height:18px;font-size:12.5px;color:#9aa3b8"></div><div id="bioPinLink"><button class="t" id="bioToPin" style="margin-top:10px">PIN ile gir</button></div></div>
  <div id="pinRow"><input id="lpin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" style="max-width:220px;text-align:center;font-size:20px"><button id="lgo" style="max-width:220px">Aç</button><div id="lmsg" class="err sm"></div></div>
- <button class="t" id="lforgot">PIN’i unuttum</button></div>
+ <button class="t" id="lforgot">PIN’i unuttum</button><button class="t" id="lwipe" style="display:none">İkisini de unuttum — telefondaki veriyi sil</button></div>
 <div id="tip"></div>
 <datalist id="secList"><option>Savunma</option><option>Bankacılık</option><option>Holding</option><option>Enerji</option><option>Teknoloji</option><option>Telekomünikasyon</option><option>Otomotiv</option><option>Gıda</option><option>Perakende</option><option>Sağlık</option><option>Kimya</option><option>Metal</option><option>İnşaat</option><option>Ulaştırma</option><option>Turizm</option><option>Çimento</option><option>Sigorta</option><option>Tekstil</option><option>Madencilik</option><option>Kâğıt</option><option>Fon</option><option>Kripto</option><option>Diğer</option></datalist>
 <nav id="nav"><button class="on" data-tab="pf"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M4.5 9.5 12 4l7.5 5.5V20a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1Z"/><path d="M9.5 21v-6h5v6"/></svg></span>Portföy</button><button data-tab="kz"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 17v-4"/><path d="M13 17V7"/><path d="M18 17v-7"/></svg></span>Analiz</button><button data-tab="his"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M5 3h14v18l-2.3-1.5L14.4 21l-2.4-1.5L9.6 21l-2.3-1.5L5 21Z"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h3"/></svg></span>İşlemler</button><button data-tab="add"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="m9 3-4 4 4 4"/><path d="M5 7h14"/><path d="m15 21 4-4-4-4"/><path d="M19 17H5"/></svg></span>Al/Sat</button><button data-tab="kap"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span><b class="nb" id="kapN"></b>KAP</button><button data-tab="news"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V9h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8Z"/></svg></span>Haberler</button><button data-tab="bak"><span><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span>Ayarlar</button></nav>
 
-<script>
+<script type="text/plain" id="mainjs">
 const $=id=>document.getElementById(id);
 const nf=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmt=n=>nf.format(n),qf=n=>Number(n).toLocaleString('tr-TR',{maximumFractionDigits:4});
@@ -368,7 +432,7 @@ function render(){
   const rec={d,s:SIGS.map(x=>({sym:x.sym,sev:x.sev,txt:x.txt}))},ix=log.findIndex(x=>x.d===d);
   if(ix>=0)log[ix]=rec;else{log.push(rec);while(log.length>7)log.shift()}
   if(SIGS.length)localStorage.setItem('portfoy_siglog',JSON.stringify(log))}catch(e){}
- $('alerts').innerHTML=open.flatMap(s=>{const g=goals[s.sym],p=s.p;if(!g||p==null)return[];const r=[];if(g.target>0&&p>=g.target)r.push(`🎯 ${esc(s.sym)} hedef fiyata ulaştı (${fmt(p)} ≥ ${fmt(g.target)})`);if(g.stop>0&&p<=g.stop)r.push(`🛑 ${esc(s.sym)} zarar-kes seviyesinde (${fmt(p)} ≤ ${fmt(g.stop)})`);return r}).map(t=>`<div class="al">${t}</div>`).join('');
+ $('alerts').innerHTML=bakWarn()+open.flatMap(s=>{const g=goals[s.sym],p=s.p;if(!g||p==null)return[];const r=[];if(g.target>0&&p>=g.target)r.push(`🎯 ${esc(s.sym)} hedef fiyata ulaştı (${fmt(p)} ≥ ${fmt(g.target)})`);if(g.stop>0&&p<=g.stop)r.push(`🛑 ${esc(s.sym)} zarar-kes seviyesinde (${fmt(p)} ≤ ${fmt(g.stop)})`);return r}).map(t=>`<div class="al">${t}</div>`).join('');
  /* pozisyonlar */
  const openD=new Set([...document.querySelectorAll('#pos .card[data-card] details[open]')].map(d=>d.closest('.card').dataset.card)),coll=new Set((()=>{try{return JSON.parse(_ls('portfoy_coll','[]'))}catch(e){return[]}})());
  const sort=$('sort').value,qu=pfq.trim().toLocaleUpperCase('en'),ql=pfq.trim().toLocaleLowerCase('tr'),mv=s=>kmode==='day'?s.day:s.pl;
@@ -488,7 +552,12 @@ function go(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('
 const csvCell=c=>'"'+String(c??'').replace(/"/g,'""')+'"';
 function toCSV(){return'\ufeff'+[['tarih','islem','hisse','adet','fiyat','komisyon','kurum','not','para'],...[...trades].sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.side==='buy'?'alış':t.side==='div'?'temettü':'satış',t.sym,t.qty,t.price,t.comm||0,t.brk,t.note,t.cur||'TRY'])].map(r=>r.map(csvCell).join(',')).join('\n')}
 function toJSON(){return JSON.stringify({app:'portfoy',version:2,exported:new Date().toISOString(),trades:trades.map(({id,...t})=>t),prices:Object.values(prices),snaps:snaps,meta:Object.values(meta),goals:Object.values(goals)},null,1)}
-async function exportFile(name,data){
+const BAKK='portfoy_lastbak';
+function bakMark(){try{localStorage.setItem(BAKK,String(Date.now()))}catch(e){}}
+function bakWarn(){if(!trades.length)return'';const t=+_ls(BAKK,0);
+ if(!t)return'<div class="al">⚠ Henüz yedek alınmadı. Ayarlar → “Şimdi Eşitle” ya da “Yedeği İndir (.json)”.</div>';
+ const d=Math.floor((Date.now()-t)/864e5);return d>=7?`<div class="al">⚠ Son yedek ${d} gün önce. Ayarlar → “Şimdi Eşitle” ya da “Yedeği İndir (.json)”.</div>`:''}
+async function exportFile(name,data){if(/\.json$/.test(name))bakMark();
  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}catch(e){}
  $('out').style.display='block';$('out').value=data;
  msg('Dosya indirildi. İndirilmediyse aşağıdaki metni kopyalayıp bir dosyaya yapıştırınız.')
@@ -1486,7 +1555,7 @@ async function syncNow(){const c=ghCfg();if(!c)return;if(syncing){again=true;ret
    if(g.m&&sameMaps(mg,g.m)){done=true;break}
    const p=await ghPut(c,mg,g.sha);if(!p.conflict)done=true}
   if(!done)throw new Error('Çakışma çözülemedi, tekrar dene');
-  setSt('☁️ GitHub ile eşit · '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}))}
+  bakMark();setSt('☁️ GitHub ile eşit · '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}))}
  catch(e){setSt('⚠ '+(e.message==='Failed to fetch'?'GitHub’a ulaşılamadı (internet?)':e.message),1)}
  syncing=false;if(again){again=false;dirty()}}
 function initSync(){
@@ -1820,18 +1889,38 @@ async function saveYt(inp){const card=inp.closest('.card[data-card]');if(!card)r
 async function saveSector(box){const sym=box.dataset.box,v=box.querySelector('.sec').value.trim();try{if(v)await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,sec:v});else{const nm={...(meta[sym]||{})};delete nm.sec;const hasOther=Object.keys(nm).some(k=>k!=='kind'&&k!=='sym'&&k!=='upd');if(hasOther)await S.set('m_'+sym,{...nm,upd:Date.now()});else await S.del('m_'+sym)}msg('Sektör kaydedildi ✓');render()}catch(e){msg('Kaydedilemedi',1)}}
 function quick(side,sym){const s=calc(trades)[sym];if(!s)return;resetForm();$('side').value=side;$('mkt2').value=mk(s);$('cur').value=s.cur;sideUI();mktUI();if(mk(s)!=='Nakit')$('sym').value=sym;const p=priceOf(s);if(mk(s)!=='Nakit')$('prc').value=p??'';upTot();go('add')}
 /* ---------- PIN ve tema ---------- */
-const PK='portfoy_pin';
+const PK='portfoy_pin',V=window.__V,BIOSRV='portfoy.local';let recMode=false;
 async function hashPin(p,salt){const d=salt+':'+p;try{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(d));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}let h=5381;for(const c of d)h=((h<<5)+h+c.charCodeAt(0))|0;return'x'+h}
 const pinCfg=()=>{try{return JSON.parse(localStorage.getItem(PK)||'null')}catch(e){return null}};
 const isLocked=()=>document.documentElement.classList.contains('locked');
-const lockNow=()=>{if(pinCfg()){try{sessionStorage.removeItem('portfoy_sess')}catch(e){}document.documentElement.classList.add('locked');$('lpin').value='';$('lmsg').textContent='';setTimeout(()=>$('lpin').focus(),60);bioAutoOk=false;try{bioUI()}catch(e){}}};
+const lockNow=()=>{if(pinCfg()){try{sessionStorage.removeItem('portfoy_sess')}catch(e){}
+ if(V.on()){V.clearDek();V.flush().then(()=>location.reload());return}
+ document.documentElement.classList.add('locked');$('lpin').value='';$('lmsg').textContent='';setTimeout(()=>$('lpin').focus(),60);bioAutoOk=false;try{bioUI()}catch(e){}}};
 function afterUnlock(){try{const st=sessionStorage.getItem('portfoy_tab');if(st&&$('t-'+st))go(st)}catch(e){}refresh();syncNow()}
 async function tryUnlock(){const c=pinCfg();if(!c){document.documentElement.classList.remove('locked');return}if(pinCool()){$('lmsg').textContent='Çok fazla deneme — biraz bekleyin';return}
- if(await hashPin($('lpin').value,c.salt)===c.hash){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}document.documentElement.classList.remove('locked');$('lpin').value='';bioReset();afterUnlock()}else{const n=Math.min(PMAX,pinSay()+1);sayYaz('portfoy_pin_n',n);$('lpin').value='';if(n>=PMAX){const until=Date.now()+BEKLE*1000;try{localStorage.setItem('portfoy_pin_cool',until)}catch(e){}sayYaz('portfoy_bio_n',0);sayYaz('portfoy_pin_n',0);$('lmsg').textContent='3 hatalı deneme — 1 dakika bekleyin';bioUI()}else $('lmsg').textContent='Yanlış PIN'}}
-function updatePinUI(){const c=pinCfg();$('pinState').textContent=c?'Açık':'Kapalı';$('pinState').className=c?'up':'mut';$('lockAfter').value=String(c&&c.after!=null?c.after:60)}
-async function setPin(){const v=$('pinNew').value.trim();if(!/^\d{4,8}$/.test(v))return msg('PIN 4-8 rakamdan oluşmalı.',1);const salt=Math.random().toString(36).slice(2),old=pinCfg();
- try{localStorage.setItem(PK,JSON.stringify({salt,hash:await hashPin(v,salt),len:v.length,after:old&&old.after!=null?old.after:60}))}catch(e){return msg('Kaydedilemedi',1)}try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaydedildi ✓. Uygulama yeni açılışta sorulur; sayfa yenilenince sorulmaz.')}
-async function offPin(){const c=pinCfg();if(!c)return msg('PIN zaten kapalı.');if(await hashPin($('pinNew').value.trim(),c.salt)!==c.hash)return msg('Kaldırmak için kutuya mevcut PIN’i yazınız.',1);try{localStorage.removeItem(PK)}catch(e){}$('pinNew').value='';updatePinUI();msg('PIN kaldırıldı.')}
+ let ok=false,raw=null;const val=$('lpin').value;
+ if(V.on()){try{raw=await V.unwrap(val,recMode?'r':'p');ok=true}catch(e){}}
+ else ok=(await hashPin(val,c.salt)===c.hash);
+ if(ok){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}$('lpin').value='';bioReset();
+  if(V.on()){let b='';for(let i=0;i<raw.length;i++)b+=String.fromCharCode(raw[i]);V.setDekB64(btoa(b));if(recMode)try{sessionStorage.setItem('portfoy_newpin','1')}catch(e){}location.reload();return}
+  document.documentElement.classList.remove('locked');afterUnlock()}
+ else{const n=Math.min(PMAX,pinSay()+1);sayYaz('portfoy_pin_n',n);$('lpin').value='';if(n>=PMAX){const until=Date.now()+BEKLE*1000;try{localStorage.setItem('portfoy_pin_cool',until)}catch(e){}sayYaz('portfoy_bio_n',0);sayYaz('portfoy_pin_n',0);$('lmsg').textContent='3 hatalı deneme — 1 dakika bekleyin';bioUI()}else $('lmsg').textContent=recMode?'Yanlış kurtarma şifresi':'Yanlış PIN'}}
+function updatePinUI(){const c=pinCfg();$('pinState').textContent=c?(V.on()?'Açık · şifreli':'Açık'):'Kapalı';$('pinState').className=c?'up':'mut';$('lockAfter').value=String(c&&c.after!=null?c.after:60)}
+async function bioStoreKey(){const p=bioPlugin();if(!p||!V.on()||localStorage.getItem(BIOEN)!=='1')return;try{await p.setCredentials({username:'portfoy',password:V.getRaw(),server:BIOSRV})}catch(e){msg('Biyometrik anahtar kaydedilemedi; PIN ile gir.',1)}}
+async function setPin(){const v=$('pinNew').value.trim(),rp=$('recNew').value;if(!/^\d{4,8}$/.test(v))return msg('PIN 4-8 rakamdan oluşmalı.',1);
+ if((!V.on()||rp)&&rp.length<6)return msg('Kurtarma şifresi en az 6 karakter olmalı.',1);
+ if(rp&&rp===v)return msg('Kurtarma şifresi PIN ile aynı olamaz.',1);
+ const old=pinCfg(),after=old&&old.after!=null?old.after:60;
+ try{msg('Şifreleniyor…');
+  if(!V.on())await V.create(v,rp);else{await V.rewrap(v,'p');if(rp)await V.rewrap(rp,'r')}
+  localStorage.setItem(PK,JSON.stringify({len:v.length,after,vault:1}))}
+ catch(e){return msg('Kaydedilemedi: '+(e.message||e),1)}
+ try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}$('pinNew').value='';$('recNew').value='';updatePinUI();await bioStoreKey();msg('PIN ve kurtarma şifresi kaydedildi ✓ Veriler şifrelendi.')}
+async function offPin(){const c=pinCfg();if(!c)return msg('PIN zaten kapalı.');
+ if(V.on()){try{await V.unwrap($('pinNew').value.trim(),'p')}catch(e){return msg('Kaldırmak için kutuya mevcut PIN’i yazınız.',1)}
+  try{await V.remove()}catch(e){return msg('Kaldırılamadı: '+(e.message||e),1)}try{const p=bioPlugin();if(p)await p.deleteCredentials({server:BIOSRV})}catch(e){}}
+ else if(await hashPin($('pinNew').value.trim(),c.salt)!==c.hash)return msg('Kaldırmak için kutuya mevcut PIN’i yazınız.',1);
+ try{localStorage.removeItem(PK)}catch(e){}$('pinNew').value='';$('recNew').value='';updatePinUI();msg('PIN kaldırıldı; veriler şifresiz saklanıyor.')}
 function setTheme(v){_ss('portfoy_theme',v||null);v?document.documentElement.setAttribute('data-theme',v):document.documentElement.removeAttribute('data-theme');document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',(b.dataset.t||'')===(v||'')))}
 /* ---------- olaylar ---------- */
 $('nav').addEventListener('click',e=>{const b=e.target.closest?e.target.closest('button'):e.target;if(b&&b.dataset.tab){closeWin();go(b.dataset.tab);if(b.dataset.tab==='kap')kapOpen()}});
@@ -1902,12 +1991,13 @@ $('lgo').addEventListener('click',tryUnlock);
 /* v36 biyometrik giriş — veri telefondaki güvenlik çipinde kalır, uygulamaya evet/hayır döner */
 const BIOEN='portfoy_bio_en',BIOCRED='portfoy_bio_cred';
 function bioPlugin(){try{return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NativeBiometric)||null}catch(e){return null}}
-async function bioAvail(){const p=bioPlugin();if(p){try{const r=await p.isAvailable();return !!(r&&r.isAvailable)}catch(e){return false}}try{if(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())return true}catch(e){}return false}
-function bioUnlock(){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}document.documentElement.classList.remove('locked');$('lpin').value='';$('lmsg').textContent='';afterUnlock()}
+async function bioAvail(){const p=bioPlugin();if(V.on()&&!p)return false;if(p){try{const r=await p.isAvailable();return !!(r&&r.isAvailable)}catch(e){return false}}try{if(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())return true}catch(e){}return false}
+function bioUnlock(){try{sessionStorage.setItem('portfoy_sess','1')}catch(e){}if(V.on()){V.setDekB64(window.__bdek||'');window.__bdek=null;location.reload();return}document.documentElement.classList.remove('locked');$('lpin').value='';$('lmsg').textContent='';afterUnlock()}
 function b64u(x){return btoa(String.fromCharCode.apply(null,new Uint8Array(x)))}
 function u64b(t){return Uint8Array.from(atob(t),c=>c.charCodeAt(0)).buffer}
 async function bioAuth(){const p=bioPlugin();
- if(p){await p.verifyIdentity({reason:'Uygulamayı açmak için doğrulama',title:'PORTFÖY',subtitle:'Biyometrik doğrulama',description:'Parmak izinizi ya da yüzünüzü kullanın'});return}
+ if(p){await p.verifyIdentity({reason:'Uygulamayı açmak için doğrulama',title:'PORTFÖY',subtitle:'Biyometrik doğrulama',description:'Parmak izinizi ya da yüzünüzü kullanın'});if(V.on()){const c=await p.getCredentials({server:BIOSRV});if(!c||!c.password)throw new Error('anahtar yok');window.__bdek=c.password}return}
+ if(V.on())throw new Error('şifreli veri için cihaz biyometriği gerekir');
  const ch=crypto.getRandomValues(new Uint8Array(32));const cred=localStorage.getItem(BIOCRED);
  if(cred){await navigator.credentials.get({publicKey:{challenge:ch,userVerification:'required',allowCredentials:[{type:'public-key',id:u64b(cred)}]}})}
  else{const c=await navigator.credentials.create({publicKey:{challenge:ch,rp:{name:'PORTFÖY'},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'portfoy-kullanici',displayName:'PORTFÖY Sahibi'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-258}],authenticatorSelection:{userVerification:'required',residentKey:'discouraged'},attestation:'none'}});try{localStorage.setItem(BIOCRED,b64u(c.rawId))}catch(e){}}}
@@ -1922,10 +2012,15 @@ async function bioTry(auto){if(bioBusy){setTimeout(()=>bioTry(auto),800);return}
  try{await bioAuth();bioReset();bioUnlock();bioBusy=false;if(b)b.classList.remove('busy');return}catch(e){sayYaz('portfoy_bio_n',Math.min(BMAX,bioSay()+1));if(b){b.classList.remove('busy');b.classList.add('err');setTimeout(()=>{try{$('bioBtn').classList.remove('err')}catch(x){}},900)}bioBusy=false;await bioUI()}}
 $('bioBtn').addEventListener('click',()=>bioTry(false));
 $('bioToPin').addEventListener('click',()=>{sayYaz('portfoy_bio_n',BMAX);bioUI()});
-$('bioSel').addEventListener('change',()=>{try{localStorage.setItem(BIOEN,$('bioSel').value)}catch(e){}msg($('bioSel').value==='1'?'Biyometrik giriş açık ✓':'Biyometrik giriş kapalı');bioUI()});
+$('bioSel').addEventListener('change',async()=>{try{localStorage.setItem(BIOEN,$('bioSel').value)}catch(e){}
+ if(V.on()){const p=bioPlugin();try{if($('bioSel').value==='1'){if(!p)throw new Error('yok');await p.setCredentials({username:'portfoy',password:V.getRaw(),server:BIOSRV})}else if(p)await p.deleteCredentials({server:BIOSRV})}catch(e){if($('bioSel').value==='1'){$('bioSel').value='0';try{localStorage.setItem(BIOEN,'0')}catch(x){}return msg('Biyometrik anahtar kaydedilemedi.',1)}}}
+ msg($('bioSel').value==='1'?'Biyometrik giriş açık ✓':'Biyometrik giriş kapalı');bioUI()});
 async function bioUI(){const sel=$('bioSel');const av=await bioAvail();if(sel){[...sel.options].forEach(o=>{if(o.value==='1')o.disabled=!av});if(localStorage.getItem(BIOEN)==='1')sel.value='1';if(!av){const n=$('bioNot');if(n)n.textContent='Bu cihazda biyometrik doğrulama bulunamadı.'}}const kilit=document.documentElement.classList.contains('locked');const cool=pinCool();const bm=$('bioMark'),b=$('bioBtn'),pr=$('pinRow'),lf=$('lforgot'),lp=$('lpin'),lg=$('lgo');const bioMod=!!(av&&kilit&&localStorage.getItem(BIOEN)==='1'&&bioSay()<BMAX&&pinSay()<PMAX&&!cool);const gizliydi=pr&&pr.style.display==='none';if(bm)bm.classList.toggle('on',bioMod);if(pr)pr.style.display=bioMod?'none':'';if(lf)lf.style.display=bioMod?'none':'';if(b){b.disabled=bioBusy;b.classList.toggle('busy',bioMod&&bioBusy)}const bl=$('bioToPin');if(bl)bl.parentNode.style.display=bioMod?'':'none';const bd=$('bioDeneme');if(bd)bd.textContent=bioMod?(bioSay()>0?bioSay()+'/3 deneme':''):'';if(!bioMod){const lm=$('lmsg');if(!cool&&lm&&/bekleyin/.test(lm.textContent))lm.textContent='';if(lp)lp.disabled=!!cool;if(lg){lg.disabled=!!cool;lg.textContent=cool?Math.max(1,Math.ceil((cool-Date.now())/1000))+' sn':'Aç'}if(kilit&&gizliydi)setTimeout(()=>{try{$('lpin').focus()}catch(e){}},80)}if(cool)setTimeout(()=>{try{bioUI()}catch(e){}},Math.max(250,Math.min(1000,cool-Date.now()+80)));if(av&&kilit&&bioPlugin()&&localStorage.getItem(BIOEN)==='1'&&!bioBusy&&!bioAutoOk&&bioSay()<BMAX&&pinSay()<PMAX&&!cool){bioAutoOk=true;setTimeout(()=>bioTry(true),700)}}
-bioUI();$('lpin').addEventListener('input',()=>{const c=pinCfg();if(c&&$('lpin').value.length===c.len)tryUnlock()});
-$('lforgot').addEventListener('click',()=>{if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
+bioUI();$('lpin').addEventListener('input',()=>{const c=pinCfg();if(c&&!recMode&&$('lpin').value.length===c.len)tryUnlock()});
+$('lpin').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
+function recUI(){const l=$('lpin');l.placeholder=recMode?'Kurtarma şifresi':'PIN';l.maxLength=recMode?64:8;l.setAttribute('inputmode',recMode?'text':'numeric');l.value='';$('lmsg').textContent='';$('lforgot').textContent=recMode?'PIN ile girmeyi dene':'PIN’i unuttum';$('lwipe').style.display=recMode?'':'none'}
+$('lwipe').addEventListener('click',async()=>{if(prompt('Telefondaki TÜM veri silinecek (GitHub yedeği silinmez). Onaylamak için SIL yaz:')==='SIL'){try{const p=bioPlugin();if(p)await p.deleteCredentials({server:BIOSRV})}catch(e){}V.wipe();location.reload()}});
+$('lforgot').addEventListener('click',()=>{if(V.on()){recMode=!recMode;recUI();return}if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
 $('themeSeg').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.t!=null)setTheme(e.target.dataset.t)});
 $('updBtn').addEventListener('click',async()=>{const r=window.__swReg;
  if(IS_NATIVE)return msg('Uygulama güncellemesi yeni APK ile gelir (GitHub → Releases).');
@@ -1969,7 +2064,8 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  taSettingsUI();kapAlUI();
  mktUI();
  try{const st=sessionStorage.getItem('portfoy_tab');if(st&&!isLocked()&&$('t-'+st))go(st)}catch(e){}
- if(!isLocked()&&trades.length)setTimeout(refresh,600);
+ let NEWPIN=false;try{if(sessionStorage.getItem('portfoy_newpin')&&!isLocked()){NEWPIN=true;sessionStorage.removeItem('portfoy_newpin');go('bak');setTimeout(()=>{msg('Kurtarma şifresiyle girdin. Yeni bir PIN belirle (Ayarlar → PIN Kilidi).');try{$('pinNew').focus()}catch(e){}},500)}}catch(e){}
+ if(!NEWPIN&&!isLocked()&&trades.length)setTimeout(refresh,600);
  setInterval(()=>{if(!document.hidden&&!isLocked()&&navigator.onLine&&trades.length)refresh()},300000);
 })();
 render();
@@ -1986,4 +2082,5 @@ if(!IS_NATIVE&&'serviceWorker' in navigator&&/^https?:/.test(location.protocol))
  setInterval(()=>{if(!document.hidden&&navigator.serviceWorker.controller&&window.__swReg)window.__swReg.update().catch(()=>{})},300000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&window.__swReg)window.__swReg.update().catch(()=>{})});
 }
-</script></body></html>
+</script>
+<script>(async function(){try{await window.__V.boot()}catch(e){}var sc=document.createElement('script');sc.textContent=document.getElementById('mainjs').textContent;document.body.appendChild(sc)})()</script></body></html>
