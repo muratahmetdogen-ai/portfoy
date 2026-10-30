@@ -2,11 +2,6 @@ name: APK derle
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - index.html
-      - sw.js
 
 permissions:
   contents: write
@@ -26,31 +21,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # Imza anahtari: ilk derlemede uretilir, KEYSTORE_PASS ile sifrelenip depoya (keystore.enc) yazilir,
-      # sonraki derlemelerde ayni anahtar kullanilir -> APK'lar ustune kurulabilir
-      - name: Imza anahtarini hazirla
-        env:
-          KS_PASS: ${{ secrets.KEYSTORE_PASS }}
-        run: |
-          if [ -z "$KS_PASS" ]; then echo "HATA: KEYSTORE_PASS gizli anahtari tanimli degil"; exit 1; fi
-          mkdir -p ~/.android
-          if [ -f keystore.enc ]; then
-            openssl enc -d -aes-256-cbc -pbkdf2 -in keystore.enc -out ~/.android/debug.keystore -pass env:KS_PASS
-            echo "Imza anahtari depodan cozuldu"
-          else
-            keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=Android Debug,O=Android,C=US"
-            openssl enc -aes-256-cbc -pbkdf2 -salt -in ~/.android/debug.keystore -out keystore.enc -pass env:KS_PASS
-            git config user.name "github-actions"
-            git config user.email "actions@github.com"
-            git add keystore.enc
-            git commit -m "Imza anahtari (sifreli)"
-            git push
-            echo "Yeni imza anahtari uretildi ve sifreli kaydedildi"
-          fi
-          ls -l ~/.android/debug.keystore
+      # İmza anahtarını önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
+      - name: Imza anahtarini koru
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: portfoy-anahtar-${{ github.run_number }}
+          restore-keys: |
+            portfoy-anahtar-
+            portfoy-debug-anahtari
 
       - name: Bagimliliklari kur
-        run: npm install
+        run: npm install && npm i @capgo/capacitor-native-biometric@6
 
       - name: Web dosyalarini hazirla
         run: |
@@ -61,12 +43,6 @@ jobs:
         run: |
           if [ ! -f android/gradlew ]; then npx cap add android; fi
           npx cap sync android
-
-      - name: Biyometrik iznini ekle
-        run: |
-          M=android/app/src/main/AndroidManifest.xml
-          grep -q USE_BIOMETRIC $M || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n</manifest>#' $M
-          grep -n BIOMETRIC $M
 
       - name: Cuzdan ikonunu Android boyutlarina uygula
         run: |
@@ -112,3 +88,4 @@ jobs:
           tag_name: apk-${{ github.run_number }}
           name: Portföyüm APK ${{ github.run_number }}
           files: portfoy.apk
+          
