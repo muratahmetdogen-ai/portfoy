@@ -944,10 +944,55 @@ try{const hm=$('hsMaxw'),hl=$('hsVollo'),hv=$('hsVolhi');if(hm&&hl&&hv&&$('hsSav
 /* ---------- v19: 📰 Haberler ---------- */
 let newsBusy=false,newsData=null;
 async function newsFetch(url,ms){return kGet(url,ms||9000)}
+function teParse(txt){const out=[];let sec=null;
+ const AY={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+ for(const ln0 of String(txt||'').split('\n')){
+  const ln=ln0.trim();if(!ln.startsWith('|'))continue;
+  const mD=ln.match(/^\|\s*(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\s+([A-Za-z]+)\s+(\d{1,2})\s+(\d{4})\s*\|/);
+  if(mD){const a=AY[mD[1].slice(0,3).toLowerCase()]||0;if(a)sec={a:a,d:+mD[2],y:+mD[3]};continue}
+  const mR=ln.match(/^\|\s*(\d{1,2}:\d{2})\s*([AP]M)\s*\|\s*([A-Z]{2})\s*\|/);
+  if(!mR||!sec)continue;
+  const cl=ln.split('|').map(function(x){return x.trim()});
+  if(cl.length<9)continue;
+  const duz=function(x){return x.replace(/\[([^\]]*)\]\([^)]*\)/g,'$1').trim()};
+  const ti=duz(cl[3]).replace(/\s*(?:Q[1-4]|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:\/\d{1,2})?\s*$/i,'');
+  let h=parseInt(mR[1].split(':')[0],10)%12;if(/pm/i.test(mR[2]))h+=12;
+  const t=Date.UTC(sec.y,sec.a-1,sec.d,h,parseInt(mR[1].split(':')[1],10));
+  out.push({t:t,c:mR[3].toUpperCase(),ti:ti,a:duz(cl[4]),p:duz(cl[5])})}
+ return out.filter(x=>x.t>0)}
+const TEC={USD:'US',EUR:'EA',GBP:'GB',JPY:'JP',CHF:'CH',CAD:'CA',AUD:'AU',NZD:'NZ',CNY:'CN',TRY:'TR'};
+function teNorm(s){s=String(s||'').toLowerCase().replace(/y\/y/g,'yoy').replace(/m\/m/g,'mom').replace(/q\/q/g,'qoq');
+ return kn(s).replace(/\bcpi\b/g,'inflation').replace(/\bhpi\b/g,'house price index').replace(/\bflash\b/g,'prelim')}
+function teCc(x){const t=(x.ti||'').toLowerCase();
+ if(/german/.test(t))return'DE';if(/french/.test(t))return'FR';if(/spanish/.test(t))return'ES';if(/italian/.test(t))return'IT';
+ return TEC[x.c]||''}
+async function teFill(items){
+ try{
+  if(!items||!items.length)return;
+  const now=Date.now();let rows=null;
+  try{const c=JSON.parse(localStorage.getItem('portfoy_ffact')||'null');if(c&&c.t&&now-c.t<2*3600e3&&Array.isArray(c.r)&&c.r.length)rows=c.r}catch(e){}
+  if(!rows){const txt=await newsFetch('https://tradingeconomics.com/calendar',14000);rows=teParse(txt);
+   if(rows.length)try{localStorage.setItem('portfoy_ffact',JSON.stringify({t:now,r:rows.slice(0,600)}))}catch(e){}}
+  if(!rows||!rows.length)return;
+  for(const x of items){
+   if(x.a||x.t>now+30*60e3)continue;
+   const cc=teCc(x),A=teNorm(x.ti).split(' ').filter(Boolean);
+   let best=null,bs=0;
+   for(const r of rows){
+    const dt=Math.abs(r.t-x.t);if(dt>45*60e3)continue;
+    const B=teNorm(r.ti).split(' ').filter(Boolean);
+    let ic=0;for(const w of A)if(B.indexOf(w)>-1)ic++;
+    const mn=Math.max(1,Math.min(A.length,B.length));let sc=ic/mn;
+    if(cc&&r.c===cc)sc+=0.35;else if(cc)sc-=0.1;
+    if(sc>bs||(sc===bs&&best&&dt<Math.abs(best.t-x.t))){bs=sc;best=r}}
+   if(best&&bs>=0.45&&best.a)x.a=best.a}
+ }catch(e){}}
 async function ffCal(){
  const t=await newsFetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
  const d=JSON.parse(t.slice(t.indexOf('['),t.lastIndexOf(']')+1));
- return(Array.isArray(d)?d:[]).map(x=>({t:x.date?+new Date(x.date):0,ti:x.title||'',c:x.country||'',im:x.impact||'Low',f:x.forecast||'',p:x.previous||'',a:x.actual||''})).filter(x=>x.t>0)}
+ const out=(Array.isArray(d)?d:[]).map(x=>({t:x.date?+new Date(x.date):0,ti:x.title||'',c:x.country||'',im:x.impact||'Low',f:x.forecast||'',p:x.previous||'',a:x.actual||''})).filter(x=>x.t>0);
+ try{await teFill(out)}catch(e){}
+ return out}
 function rssItems(t){t=String(t||'');
  const i1=t.indexOf('<item'),i2=t.lastIndexOf('</item>');
  const x=i1>-1&&i2>i1?t.slice(i1,i2+7):t;
@@ -998,7 +1043,8 @@ function evRow(x,saatli){const d=new Date(x.t);
  const vd=x.a?evVerdict(x):null,known=vd&&!vd.unk;
  const cl=!x.a?'':!known?'':vd.v==='olumlu'?' evg':vd.v==='olumsuz'?' evr':' evy';
  const parts=[];if(x.p)parts.push('önceki '+esc(x.p));if(x.f)parts.push('beklenti '+esc(x.f));if(x.a)parts.push('<b>açıklanan '+esc(x.a)+'</b>');
- const fpx=parts.length?`<small>${parts.join(' · ')}</small>`:'';
+ const bek=!x.a&&x.t<Date.now()&&(x.f||x.p)?' · <span style="opacity:.65">⏳ açıklanan bekleniyor</span>':'';
+ const fpx=parts.length?`<small>${parts.join(' · ')}${bek}</small>`:'';
  const ver=known?`<small class="evv"><b>${vd.v==='olumlu'?'▲ İyi':vd.v==='olumsuz'?'▼ Kötü':'● Nötr'}</b>${vd.why?' — '+vd.why:''}</small>`:'';
  return`<div class="nev${cl}"><span class="ndt">${hh}</span>${imDot(x.im)}<span class="nfl">${NFL[x.c]||'🌍'}</span><div class="ntt">${esc(x.ti)}${fpx}${ver}</div></div>`}
 function newsRow(x){const dtsm=x.t?new Intl.DateTimeFormat('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(x.t)):'';
