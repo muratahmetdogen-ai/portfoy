@@ -959,7 +959,26 @@ function teParse(txt){const out=[];let sec=null;
   let h=parseInt(mR[1].split(':')[0],10)%12;if(/pm/i.test(mR[2]))h+=12;
   const t=Date.UTC(sec.y,sec.a-1,sec.d,h,parseInt(mR[1].split(':')[1],10));
   out.push({t:t,c:mR[3].toUpperCase(),ti:ti,a:duz(cl[4]),p:duz(cl[5])})}
- return out.filter(x=>x.t>0)}
+ if(out.length)return out.filter(x=>x.t>0);
+ if(/<tr[\s>]/.test(String(txt||'')))return teParseHTML(txt);
+ return[]}
+function teParseHTML(html){const h=String(html||'');const out=[];
+ const saats=[];let m;
+ const reT=/(20\d{2}-\d{2}-\d{2})["'][^>]*>\s*(?:<span[^>]*>)?\s*(\d{1,2}):(\d{2})\s*([AP]M)\s*</ig;
+ while((m=reT.exec(h)))saats.push({p:m.index,d:m[1],h:+m[2]%12+(/pm/i.test(m[4])?12:0),mn:+m[3]});
+ const reE=/class='calendar-event'[^>]*>([^<]+)</ig;const olay=[];
+ while((m=reE.exec(h)))olay.push({p:m.index,ti:m[1].replace(/\s+/g,' ').trim()});
+ for(let i=0;i<olay.length;i++){
+  const o=olay[i],sonraki=olay[i+1]?olay[i+1].p:Math.min(o.p+4000,h.length);
+  const seg=h.slice(o.p,sonraki);
+  let st=null;for(let k=0;k<saats.length;k++){if(saats[k].p<o.p)st=saats[k];else break}
+  if(!st||o.p-st.p>6000)continue;
+  const t=Date.UTC(+st.d.slice(0,4),+st.d.slice(5,7)-1,+st.d.slice(8,10),st.h,st.mn);
+  const mf=/flag flag-([a-z]{2})/i.exec(seg);
+  const ma=/id=["']?actual["']?[^>]*>([^<]*)</i.exec(seg);
+  const mp=/id=["']?previous["']?[^>]*>([^<]*)</i.exec(seg);
+  out.push({t:t,c:mf?mf[1].toUpperCase():'',ti:o.ti,a:(ma?ma[1]:'').trim(),p:(mp?mp[1]:'').trim()})}
+ return out.filter(x=>x.t>0&&x.ti)}
 const TEC={USD:'US',EUR:'EA',GBP:'GB',JPY:'JP',CHF:'CH',CAD:'CA',AUD:'AU',NZD:'NZ',CNY:'CN',TRY:'TR'};
 function teNorm(s){s=String(s||'').toLowerCase().replace(/y\/y/g,'yoy').replace(/m\/m/g,'mom').replace(/q\/q/g,'qoq');
  return kn(s).replace(/\bcpi\b/g,'inflation').replace(/\bhpi\b/g,'house price index').replace(/\bflash\b/g,'prelim')}
@@ -971,21 +990,33 @@ async function teFill(items){
   if(!items||!items.length)return;
   const now=Date.now();let rows=null;
   try{const c=JSON.parse(localStorage.getItem('portfoy_ffact')||'null');if(c&&c.t&&now-c.t<2*3600e3&&Array.isArray(c.r)&&c.r.length)rows=c.r}catch(e){}
-  if(!rows){const txt=await newsFetch('https://tradingeconomics.com/calendar',14000);rows=teParse(txt);
-   if(rows.length)try{localStorage.setItem('portfoy_ffact',JSON.stringify({t:now,r:rows.slice(0,600)}))}catch(e){}}
+  if(!rows){
+   try{const txt=await newsFetch('https://tradingeconomics.com/calendar',14000);rows=teParse(txt)}catch(e){rows=null}
+   if(!rows||!rows.length){try{
+    if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){
+     const r2=await fetch('https://tradingeconomics.com/calendar',{headers:{'User-Agent':'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile'}});
+     const t2=await r2.text();
+     if(t2&&t2.length>1e5){rows=teParse(t2);if(!rows||!rows.length)rows=teParseHTML(t2)}}
+   }catch(e){}}
+   if(rows&&rows.length)try{localStorage.setItem('portfoy_ffact',JSON.stringify({t:now,r:rows.slice(0,600)}))}catch(e){}}
   if(!rows||!rows.length)return;
   for(const x of items){
    if(x.a||x.t>now+30*60e3)continue;
    const cc=teCc(x),A=teNorm(x.ti).split(' ').filter(Boolean);
-   let best=null,bs=0;
-   for(const r of rows){
-    const dt=Math.abs(r.t-x.t);if(dt>45*60e3)continue;
-    const B=teNorm(r.ti).split(' ').filter(Boolean);
-    let ic=0;for(const w of A)if(B.indexOf(w)>-1)ic++;
-    const mn=Math.max(1,Math.min(A.length,B.length));let sc=ic/mn;
-    if(cc&&r.c===cc)sc+=0.35;else if(cc)sc-=0.1;
-    if(sc>bs||(sc===bs&&best&&dt<Math.abs(best.t-x.t))){bs=sc;best=r}}
-   if(best&&bs>=0.45&&best.a)x.a=best.a}
+   const pu=function(sinir,ulkeSart){
+    let best=null,bs=0;
+    for(const r of rows){
+     const dt=Math.abs(r.t-x.t);if(dt>sinir)continue;
+     if(ulkeSart&&(!cc||r.c!==cc))continue;
+     const B=teNorm(r.ti).split(' ').filter(Boolean);
+     let ic=0;for(const w of A)if(B.indexOf(w)>-1)ic++;
+     const mn=Math.max(1,Math.min(A.length,B.length));let sc=ic/mn;
+     if(cc&&r.c===cc)sc+=0.35;else if(cc)sc-=0.1;
+     if(sc>bs||(sc===bs&&best&&dt<Math.abs(best.t-x.t))){bs=sc;best=r}}
+    return best&&bs>=(ulkeSart?0.8:0.45)?best:null};
+   let best=pu(45*60e3,false);
+   if(!best)best=pu(210*60e3,true);
+   if(best&&best.a)x.a=best.a}
  }catch(e){}}
 async function ffCal(){
  const t=await newsFetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
@@ -1926,7 +1957,7 @@ function kapTemplate(){const syms=[...new Set(Object.values(calc(trades)).filter
 async function copyKapTpl(){const t=kapTemplate();if(!t)return msg('En az bir hisse ekleyiniz.',1);$('kapTpl').style.display='block';$('kapTpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('kapTpl').select();ok=document.execCommand('copy')}catch(x){}}
  msg(ok?'Kopyalandı ✓ Google tablonda E1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda E1 hücresine yapıştır.',!ok)}
 /* ---------- KAP doğrudan çekme (tablosuz) ---------- */
-const KTR=[u=>'https://r.jina.ai/'+u,u=>'https://api.cors.lol/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
+const KTR=[u=>'https://r.jina.ai/'+u,u=>'https://api.cors.lol/?url='+encodeURIComponent(u),u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),u=>'https://corsproxy.io/?url='+encodeURIComponent(u)];
 let KTRi=0;
 async function kGet(u,ms){const ord=[];for(let i=0;i<KTR.length;i++)ord.push((KTRi+i)%KTR.length);let le=null;for(const ix of ord){try{const r=await getText(KTR[ix](u),ms);KTRi=ix;return r}catch(e){le=e}}throw le||new Error('kaynak yok')}
 function gSkip24(){try{const g=_ls('portfoy_gskip',0)*1;return !!(g&&Date.now()-g<24*3600e3)}catch(e){return false}}
