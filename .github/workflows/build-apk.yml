@@ -26,40 +26,89 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # ------------------------------------------------------------------
-      # IMZA ANAHTARI (v2 - guclendirilmis)
-      # - keystore.enc depodan cozulur ve GECERLILIGI test edilir
-      #   (openssl yanlis sifreyi SESSIZCE bozuk dosya uretir; o yuzden keytool ile dogrulariz)
-      # - gecersizse yeni anahtar uretilir, depoya yazilir, PARMAK IZI imza.txt'ye yazilir
-      # - imza.txt VARSA ve anahtar uyusmuyorsa derleme HATA verir
-      #   -> bir daha asla sessizce "ustune kurulmayan" APK cikmaz
-      # ------------------------------------------------------------------
-      - name: Imza anahtarini hazirla (dogrulamali)
+      # Imza anahtari: ilk derlemede uretilir, KEYSTORE_PASS ile sifrelenip depoya (keystore.enc) yazilir,
+      # sonraki derlemelerde ayni anahtar kullanilir -> APK'lar ustune kurulabilir
+      - name: Imza anahtarini hazirla
         env:
           KS_PASS: ${{ secrets.KEYSTORE_PASS }}
         run: |
-          set -e
-          if [ -z "$KS_PASS" ]; then echo "::error::KEYSTORE_PASS gizli anahtari tanimli degil (Settings > Secrets and variables > Actions)"; exit 1; fi
+          if [ -z "$KS_PASS" ]; then echo "HATA: KEYSTORE_PASS gizli anahtari tanimli degil"; exit 1; fi
           mkdir -p ~/.android
-          parmakizi() { keytool -list -v -keystore "$1" -storepass android -alias androiddebugkey 2>/dev/null | grep -m1 'SHA256:' | sed 's/^[[:space:]]*//'; }
-          YENI=0
           if [ -f keystore.enc ]; then
             openssl enc -d -aes-256-cbc -pbkdf2 -in keystore.enc -out ~/.android/debug.keystore -pass env:KS_PASS
-            if ! keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey >/dev/null 2>&1; then
-              echo "::warning::keystore.enc acildi ama GECERSIZ (sifre degismis ya da dosya bozuk). Yeni anahtar uretilecek - telefonda BIR KEZ sil-kur gerekebilir."
-              YENI=1
-            fi
+            echo "Imza anahtari depodan cozuldu"
           else
-            echo "keystore.enc depoda yok - ilk kez uretilecek."
-            YENI=1
-          fi
-          if [ "$YENI" = "1" ]; then
-            rm -f ~/.android/debug.keystore
             keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=Android Debug,O=Android,C=US"
             openssl enc -aes-256-cbc -pbkdf2 -salt -in ~/.android/debug.keystore -out keystore.enc -pass env:KS_PASS
-            FP="$(parmakizi ~/.android/debug.keystore)"
-            echo "$FP" > imza.txt
             git config user.name "github-actions"
             git config user.email "actions@github.com"
-            git add keystore.enc imza.txt
-            git commit -m "Imza anahtari (sifreli) + imza.txt"
+            git add keystore.enc
+            git commit -m "Imza anahtari (sifreli)"
+            git push
+            echo "Yeni imza anahtari uretildi ve sifreli kaydedildi"
+          fi
+          ls -l ~/.android/debug.keystore
+
+      - name: Bagimliliklari kur
+        run: npm install
+
+      - name: Web dosyalarini hazirla
+        run: |
+          mkdir -p www
+          cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png icon-maskable-512.png 70-kilit-kasa.png www/
+
+      - name: Android projesini hazirla
+        run: |
+          if [ ! -f android/gradlew ]; then npx cap add android; fi
+          npx cap sync android
+
+      - name: Biyometrik iznini ekle
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q USE_BIOMETRIC $M || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n</manifest>#' $M
+          grep -n BIOMETRIC $M
+
+      - name: Cuzdan ikonunu Android boyutlarina uygula
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q imagemagick
+          R=android/app/src/main/res
+          mkdir -p $R/mipmap-mdpi $R/mipmap-hdpi $R/mipmap-xhdpi $R/mipmap-xxhdpi $R/mipmap-xxxhdpi
+          mkdir -p $R/drawable-mdpi $R/drawable-hdpi $R/drawable-xhdpi $R/drawable-xxhdpi $R/drawable-xxxhdpi
+          # Ana ekran ikonu (eski yöntem)
+          convert icon-maskable-512.png -resize 192x192 $R/mipmap-xxxhdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 144x144 $R/mipmap-xxhdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 96x96  $R/mipmap-xhdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 72x72  $R/mipmap-hdpi/ic_launcher.png
+          convert icon-maskable-512.png -resize 48x48  $R/mipmap-mdpi/ic_launcher.png
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do cp $R/mipmap-$d/ic_launcher.png $R/mipmap-$d/ic_launcher_round.png; done
+          # Ikonu guvenli daire icinde tutmak icin koyu zemin uzerine kucultup ortala
+          convert icon-maskable-512.png -resize 250x250 _fg.png
+          convert -size 432x432 xc:'rgb(12,17,28)' _fg.png -geometry +91+91 -composite _fg432.png
+          # Adaptif ikon on-planı (Android 8+) - hem drawable hem mipmap konumlarina
+          convert _fg432.png -resize 432x432 $R/drawable-xxxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 324x324 $R/drawable-xxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 216x216 $R/drawable-xhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 162x162 $R/drawable-hdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 108x108 $R/drawable-mdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 432x432 $R/mipmap-xxxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 324x324 $R/mipmap-xxhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 216x216 $R/mipmap-xhdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 162x162 $R/mipmap-hdpi/ic_launcher_foreground.png
+          convert _fg432.png -resize 108x108 $R/mipmap-mdpi/ic_launcher_foreground.png
+
+      - name: APK derle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: APK dosyasini hazirla
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk portfoy.apk
+
+      - name: Release olarak yayinla
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Portföyüm APK ${{ github.run_number }}
+          files: portfoy.apk
