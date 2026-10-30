@@ -26,12 +26,28 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # İmza anahtarını önbellekte tutar -> sonraki APK'lar üstüne kurulabilir
-      - name: Imza anahtarini koru
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: portfoy-debug-anahtari
+      # Imza anahtari: ilk derlemede uretilir, KEYSTORE_PASS ile sifrelenip depoya (keystore.enc) yazilir,
+      # sonraki derlemelerde ayni anahtar kullanilir -> APK'lar ustune kurulabilir
+      - name: Imza anahtarini hazirla
+        env:
+          KS_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          if [ -z "$KS_PASS" ]; then echo "HATA: KEYSTORE_PASS gizli anahtari tanimli degil"; exit 1; fi
+          mkdir -p ~/.android
+          if [ -f keystore.enc ]; then
+            openssl enc -d -aes-256-cbc -pbkdf2 -in keystore.enc -out ~/.android/debug.keystore -pass env:KS_PASS
+            echo "Imza anahtari depodan cozuldu"
+          else
+            keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 36500 -dname "CN=Android Debug,O=Android,C=US"
+            openssl enc -aes-256-cbc -pbkdf2 -salt -in ~/.android/debug.keystore -out keystore.enc -pass env:KS_PASS
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+            git add keystore.enc
+            git commit -m "Imza anahtari (sifreli)"
+            git push
+            echo "Yeni imza anahtari uretildi ve sifreli kaydedildi"
+          fi
+          ls -l ~/.android/debug.keystore
 
       - name: Bagimliliklari kur
         run: npm install
