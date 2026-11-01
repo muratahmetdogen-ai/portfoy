@@ -121,7 +121,7 @@ body.print-rp h3{color:#555}}
 .anlz{margin-top:9px;background:linear-gradient(135deg,rgba(28,37,71,.10),rgba(49,66,126,.05));border:1px solid rgba(28,37,71,.30);border-radius:10px;padding:9px 11px;font-size:13.5px;line-height:1.45}.anlz b{color:var(--ac)}.mcc{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--mut);border:1px solid var(--bd);border-radius:4px;padding:0 3px;margin-left:4px;vertical-align:1px;background:var(--bg)}.mop{display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;margin-left:4px;box-shadow:0 0 5px rgba(16,185,129,.9);vertical-align:1px}.mpre{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:4px;box-shadow:0 0 5px rgba(245,158,11,.9);vertical-align:1px}.mcl{font-size:9px;margin-left:3px;vertical-align:1px;opacity:.8}.mt .tile{min-width:0}.mhd{display:flex;align-items:center;white-space:nowrap;overflow:hidden}.mnm{overflow:hidden;text-overflow:ellipsis}.mhd .mcc,.mhd .mop,.mhd .mpre,.mhd .mcl{flex:none}.nev{display:flex;gap:8px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px}.nev:last-child{border-bottom:none}.ndt{flex:none;width:42px;color:var(--mut);font-size:11.5px;font-weight:700;padding-top:2px}.ndh,.ndm,.ndl{flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px}.ndh{background:#ef4444}.ndm{background:#f59e0b}.ndl{background:#94a3b8}.nfl{flex:none;font-size:13px;padding-top:1px}.ntt{flex:1;min-width:0}.ntt small{color:var(--mut);font-size:11px;display:block;margin-top:1px}.nws{display:block;padding:9px 2px;border-bottom:1px solid var(--bd);font-size:13.5px;color:var(--tx);text-decoration:none}.nws:last-child{border-bottom:none}.nev.evg,.nev.evr,.nev.evy{border-radius:12px;padding:9px 10px;margin:6px 0;border:1px solid transparent}.nev.evg{background:rgba(7,148,85,.12);border-color:rgba(7,148,85,.38)}.nev.evr{background:rgba(229,56,45,.11);border-color:rgba(229,56,45,.38)}.nev.evy{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.42)}.nev.evg .evv{color:var(--up)}.nev.evr .evv{color:var(--dn)}.nev.evy .evv{color:#b7791f}.evv{font-weight:600}.set>#secPanel{padding:0;border:0}.set>#secPanel>div{padding:13px 14px;border-bottom:1px solid var(--bd)}.set>#secPanel>div:last-child{border-bottom:0}.nws small{color:var(--mut);font-size:11px;display:block;margin-top:2px}
 </style><script>try{var _t=localStorage.getItem('portfoy_theme');if(_t)document.documentElement.setAttribute('data-theme',_t);if(localStorage.getItem('portfoy_pin')&&(!sessionStorage.getItem('portfoy_sess')||(localStorage.getItem('portfoy_vault')&&!sessionStorage.getItem('portfoy_dek'))))document.documentElement.classList.add('locked')}catch(e){}</script>
 <script>(function(){
- var SENS=['portfoy_v2','portfoy_gh','portfoy_hist','portfoy_kap','portfoy_news','portfoy_fd','portfoy_siglog','portfoy_kapalias','portfoy_symnames','portfoy_tast','portfoy_yalias'],ITER=150000;
+ var SENS=['portfoy_v2','portfoy_gh','portfoy_hist','portfoy_kap','portfoy_news','portfoy_fd','portfoy_siglog','portfoy_kapalias','portfoy_symnames','portfoy_tast','portfoy_yalias','portfoy_newslog'],ITER=150000;
  var LS=window.localStorage,gi=Storage.prototype.getItem,si=Storage.prototype.setItem,ri=Storage.prototype.removeItem;
  var VM={},DEK=null,dirty=new Set(),timer=null,chain=Promise.resolve(),active=!!gi.call(LS,'portfoy_vault');
  var te=new TextEncoder(),td=new TextDecoder();
@@ -224,6 +224,8 @@ body.print-rp h3{color:#555}}
  <div class="mut sm" id="kapSt" style="margin:6px 2px 10px"></div>
  <input id="kapq" placeholder="🔍 Haber başlığında ara…" style="margin:8px 0 10px"><div class="chp" id="kapCats" style="margin:0 0 10px"></div>
  <div class="card" id="kapSent" style="margin:0 0 10px;display:none"></div>
+ <div class="card" id="kapStats" style="margin:0 0 10px;display:none"></div>
+ <div class="card" id="kapReact" style="margin:0 0 10px;display:none"></div>
  <div class="card" style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="mut sm" style="flex:none">Kaynak:</span><div class="chp" id="kapSrcSeg" style="margin:0"></div></div>
  <div class="g2" style="margin-bottom:10px"><button class="s" id="kapRead">Tümünü Oku ✓</button><button class="s" id="kapDel">Tümünü Sil 🗑</button></div>
  <div class="chp" id="kapChips" style="margin-bottom:10px"></div>
@@ -279,7 +281,7 @@ body.print-rp h3{color:#555}}
   </div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v55</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v56</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -911,6 +913,89 @@ function kapSentCalc(items){
   if(sc>0)b.p++;else b.n++;b.s+=sc*Math.pow(0.5,Math.max(0,Date.now()-x.t)/(10*864e5))}
  Object.values(by).forEach(b=>{b.s=Math.round(b.s*10)/10});
  return Object.entries(by).sort((a,b)=>b[1].s-a[1].s||((b[1].p+b[1].n)-(a[1].p+a[1].n)))}
+/* v56: haber akışı grafiği, haber sonrası fiyat tepkisi, gündem teması dağılımı */
+let kapStSym='';
+const pr1=v=>(v>=0?'+':'')+(v*100).toLocaleString('tr-TR',{maximumFractionDigits:1})+'%';
+function nlogLoad(){try{const d=JSON.parse(localStorage.getItem('portfoy_newslog')||'null');return d&&Array.isArray(d.items)?d:{items:[]}}catch(e){return{items:[]}}}
+function nlogSync(){const d=nlogLoad(),have=new Set(d.items.map(x=>x.id));let ch=false;
+ for(const x of kap.items){if(!x.t||have.has(x.id))continue;d.items.push({id:x.id,sym:x.sym,t:x.t,ti:x.title,sc:textScore(x.title)});have.add(x.id);ch=true}
+ const lim=Date.now()-400*864e5,n0=d.items.length;d.items=d.items.filter(x=>x.t>=lim).sort((a,b)=>b.t-a.t).slice(0,600);
+ if(ch||d.items.length!==n0)try{localStorage.setItem('portfoy_newslog',JSON.stringify(d))}catch(e){}}
+function kapDayCounts(items,days){const now=Date.now(),out=[];
+ for(let i=days-1;i>=0;i--)out.push({k:trDate(new Date(now-i*864e5)),p:0,n:0,z:0,s:0});
+ const m=new Map(out.map(o=>[o.k,o]));
+ for(const x of items){const t=x.t||x.seen;if(!t)continue;const o=m.get(trDate(new Date(t)));if(!o)continue;const sc=textScore(x.title);o.s+=sc;if(sc>0)o.p++;else if(sc<0)o.n++;else o.z++}
+ return out}
+function flowSVG(arr){const w=340,h=170,mid=88,pad=10,bw=(w-2*pad)/arr.length,mx=Math.max(1,...arr.map(o=>Math.max(o.p,o.n))),sc=52/mx;
+ let g=`<line x1="${pad}" x2="${w-pad}" y1="${mid}" y2="${mid}" style="stroke:var(--bd)"/>`;
+ arr.forEach((o,i)=>{const x=pad+i*bw+bw*0.15,ww=bw*0.7,hp=o.p*sc,hn=o.n*sc;
+  if(o.p)g+=`<rect x="${x.toFixed(1)}" y="${(mid-hp).toFixed(1)}" width="${ww.toFixed(1)}" height="${hp.toFixed(1)}" rx="2" style="fill:var(--up)"/><text x="${(x+ww/2).toFixed(1)}" y="${(mid-hp-3).toFixed(1)}" text-anchor="middle" font-size="9" style="fill:var(--up)">${o.p}</text>`;
+  if(o.n)g+=`<rect x="${x.toFixed(1)}" y="${mid}" width="${ww.toFixed(1)}" height="${hn.toFixed(1)}" rx="2" style="fill:var(--dn)"/><text x="${(x+ww/2).toFixed(1)}" y="${(mid+hn+10).toFixed(1)}" text-anchor="middle" font-size="9" style="fill:var(--dn)">${o.n}</text>`;
+  const dn=+o.k.slice(8,10);g+=`<text x="${(x+ww/2).toFixed(1)}" y="${h-6}" text-anchor="middle" font-size="8.5" style="fill:var(--mut)">${i===arr.length-1?'bugün':dn}</text>`});
+ return`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">${g}</svg>`}
+function flowText(arr,items){
+ const a=arr.slice(-7),b=arr.slice(-14,-7),sum=(r,k)=>r.reduce((x,o)=>x+o[k],0),
+  p1=sum(a,'p'),n1=sum(a,'n'),p0=sum(b,'p'),n0=sum(b,'n'),s1=sum(a,'s'),s0=sum(b,'s');
+ let t=`Son 7 günde ${p1} olumlu, ${n1} olumsuz haber geldi (önceki 7 gün: ${p0} olumlu, ${n0} olumsuz).`;
+ if(p1+n1+p0+n0<3)return t+' Henüz yorum için az haber var.';
+ t+=s1-s0>=2?' Haber akışının tonu önceki haftaya göre belirgin iyileşti.':s1-s0<=-2?' Haber akışının tonu önceki haftaya göre belirgin bozuldu.':' Haber akışının tonu önceki haftayla benzer.';
+ const by={};for(const x of items){const tm=x.t||x.seen;if(tm&&tm>Date.now()-7*864e5)by[x.sym]=(by[x.sym]||0)+1}
+ const top=Object.entries(by).sort((x,y)=>y[1]-x[1])[0];
+ if(top&&top[1]>=2)t+=` Bu hafta en çok haber gelen hisse ${top[0]} (${top[1]} haber).`;
+ return t}
+function reactCalc(){
+ const d=nlogLoad(),cache={};
+ const days=sym=>cache[sym]||(cache[sym]=HIST[sym].t.map(t=>trDate(new Date(t))));
+ const evs=[],syms=new Set();
+ for(const x of d.items){if(!x.sc||Math.abs(x.sc)<2)continue;const H=HIST[x.sym];if(!H||!H.c||H.c.length<30)continue;
+  const dk=days(x.sym),n=H.c.length,tm=new Date(x.t);
+  let hm=0;try{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit',hour12:false}).format(tm).split(':');hm=(+p[0]%24)*60+ +p[1]}catch(e){}
+  const evDay=trDate(tm),after=hm>=1090;
+  let e=-1;for(let i=0;i<n;i++){if(after?dk[i]>evDay:dk[i]>=evDay){e=i;break}}
+  const o={sym:x.sym,t:x.t,ti:x.ti,sc:x.sc,r1:null,r3:null};
+  if(e>=1){o.r1=H.c[e]/H.c[e-1]-1;if(e+2<n)o.r3=H.c[e+2]/H.c[e-1]-1}
+  evs.push(o);syms.add(x.sym)}
+ const grp=sgn=>{const g={n1:0,s1:0,h1:0,n3:0,s3:0,h3:0};
+  for(const o of evs){if(Math.sign(o.sc)!==sgn)continue;
+   if(o.r1!=null){g.n1++;g.s1+=o.r1;if(o.r1*sgn>0)g.h1++}
+   if(o.r3!=null){g.n3++;g.s3+=o.r3;if(o.r3*sgn>0)g.h3++}}return g};
+ const base={n:0,s1:0,u1:0,s3:0,n3:0};
+ for(const sym of syms){const c=HIST[sym].c,n=c.length;
+  for(let i=Math.max(1,n-250);i<n;i++){const r=c[i]/c[i-1]-1;base.n++;base.s1+=r;if(r>0)base.u1++;
+   if(i+2<n){base.n3++;base.s3+=c[i+2]/c[i-1]-1}}}
+ return{evs,pos:grp(1),neg:grp(-1),base}}
+function reactHTML(){
+ const R=reactCalc(),P=R.pos,N=R.neg,B=R.base;
+ if(!R.evs.length)return`<div class="mut sm" style="margin-top:6px">Henüz ölçülecek güçlü haber yok. Elindeki hisselerin fiyat geçmişi inince ve güçlü olumlu/olumsuz haberler biriktikçe burada görünecek.</div>`;
+ const b1=B.n?B.s1/B.n:0,b3=B.n3?B.s3/B.n3:0,row=(nm,g,cl)=>`<tr><td><b class="${cl}">${nm}</b></td><td>${g.n1}</td><td class="${g.n1?(g.s1>=0?'up':'dn'):''}">${g.n1?pr1(g.s1/g.n1):'—'}</td><td>${g.n1?'%'+Math.round(g.h1/g.n1*100):'—'}</td><td class="${g.n3?(g.s3>=0?'up':'dn'):''}">${g.n3?pr1(g.s3/g.n3):'—'}</td></tr>`;
+ let t=`${P.n1+N.n1} güçlü haberin ardından fiyat tepkisi ölçüldü. Referans: aynı hisselerin sıradan bir günü ortalama ${pr1(b1)}, rastgele günün yükselme oranı %${B.n?Math.round(B.u1/B.n*100):0}.`;
+ if(P.n1>=3){const a=P.s1/P.n1,d=a-b1;t+=` Olumlu haberlerde ilk gün ortalama ${pr1(a)} (isabet %${Math.round(P.h1/P.n1*100)}): ${d>=0.004?'piyasa bu haberlere belirgin olumlu tepki vermiş':d>=0.001?'hafif olumlu tepki var':'olumlu haberlerin fiyata yansıması zayıf; haber çıkmadan önce fiyatlanmış olabilir'}.`}
+ if(N.n1>=3){const a=N.s1/N.n1,d=a-b1;t+=` Olumsuz haberlerde ilk gün ortalama ${pr1(a)} (isabet %${Math.round(N.h1/N.n1*100)}): ${d<=-0.004?'piyasa olumsuz haberleri belirgin cezalandırmış':d<=-0.001?'hafif olumsuz tepki var':'olumsuz haberlere tepki zayıf'}.`}
+ if(P.n1<3&&N.n1<3)t+=' Örnek sayısı az; haber arşivi büyüdükçe sonuç güvenilirleşir.';
+ t+=' Haberin tam saati Midas’ta “X saat/gün önce” olarak geldiği için ±1 gün sapabilir; sonuçları yön göstergesi olarak oku.';
+ const list=R.evs.slice(0,6).map(o=>`<div class="sm" style="padding:6px 0;border-top:1px solid var(--bd)"><b>${esc(o.sym)}</b> <span class="${o.sc>0?'up':'dn'}">${o.sc>0?'▲':'▼'}</span> ${esc(o.ti.length>70?o.ti.slice(0,70)+'…':o.ti)}<div class="mut sm">${dshort(o.t)} · ilk gün ${o.r1==null?'bekleniyor':'<b class="'+(o.r1>=0?'up':'dn')+'">'+pr1(o.r1)+'</b>'} · 3 gün ${o.r3==null?'bekleniyor':'<b class="'+(o.r3>=0?'up':'dn')+'">'+pr1(o.r3)+'</b>'}</div></div>`).join('');
+ return`<div style="overflow-x:auto"><table style="margin-top:6px"><tr><th>Haber</th><th>Adet</th><th>İlk gün</th><th>İsabet</th><th>3 gün</th></tr>${row('▲ Olumlu',P,'up')}${row('▼ Olumsuz',N,'dn')}</table></div>${anlzB(t)}<div style="margin-top:8px"><b class="sm">Son güçlü haberler</b>${list}</div><div class="mut sm" style="margin-top:6px">İsabet: olumlu haberden sonra fiyat yukarıdaysa, olumsuzdan sonra aşağıdaysa isabetli sayılır. Örnek: ASELS için sipariş haberi akşam gelirse etkisi ertesi günün fiyatında aranır.</div>`}
+function renderKapStats(){
+ try{nlogSync()}catch(e){}
+ const el=$('kapStats'),el2=$('kapReact');if(!el||!el2)return;
+ if(!$('t-kap').classList.contains('on'))return;
+ const all=kapVisible();
+ if(!all.length){el.style.display='none';el2.style.display='none';return}
+ const syms=[...new Set(all.map(x=>x.sym))].sort();if(kapStSym&&!syms.includes(kapStSym))kapStSym='';
+ const items=all.filter(x=>!kapStSym||x.sym===kapStSym),arr=kapDayCounts(items,14);
+ el.style.display='block';
+ el.innerHTML=`<div class="row"><b>📊 Haber Akışı</b><span class="mut sm">son 14 gün · yeşil olumlu, kırmızı olumsuz</span></div>
+  <div class="chp" style="margin:8px 0">${['',...syms].map(s=>`<button class="${kapStSym===s?'on':''}" data-sts="${esc(s)}">${s?esc(s):'Tümü'}</button>`).join('')}</div>
+  ${flowSVG(arr)}${anlzB(flowText(arr,items))}<div class="mut sm" style="margin-top:6px">Çubukların üstü o gün gelen olumlu, altı olumsuz haber sayısıdır. Örnek: üst üste iki gün kırmızı çubuk, hisse için art arda kötü haber akışı demektir.</div>`;
+ el2.style.display='block';
+ let body='';try{body=reactHTML()}catch(e){body='<div class="mut sm">Hesaplanamadı.</div>'}
+ el2.innerHTML=`<div class="row"><b>🎯 Haber Sonrası Fiyat Tepkisi</b><span class="mut sm">güçlü haberlerden sonra</span></div>${body}`}
+function themeCard(list,baslik){
+ if(!list||!list.length)return'';
+ const th=newsThemes(list).slice(0,6);if(!th.length)return'';
+ const mx=th[0][1],tot=th.reduce((a,x)=>a+x[1],0);
+ return`<div class="card"><b>🧭 ${baslik}</b><div style="margin-top:8px">${th.map(([n,c],i)=>`<div class="row sm"><span>${esc(n)}</span><span><b>${c}</b> haber · %${Math.round(c/tot*100)}</span></div><div class="bar"><i style="width:${Math.round(c/mx*100)}%;background:${COL[i%COL.length]}"></i></div>`).join('')}</div><div class="mut sm">Başlıklardaki konu sayımına dayanır. Örnek: “Faiz” çubuğu uzunsa piyasanın o günkü gündemi para politikası demektir.</div></div>`}
+
 function kapSentRender(all){
  const se=$('kapSent');if(!se)return;
  const sent=kapSentCalc(all);
@@ -1149,12 +1234,12 @@ function newsRender(){if(!newsData)return;
  $('nsp').innerHTML=`<div class="card"><b>📈 Açıklanan veriler (bu hafta)</b><div style="margin-top:4px">${done.length?done.map(x=>evRow(x,false)).join(''):'<div class="mut sm">Kayıttan gösterilecek veri yok.</div>'}</div></div>`
   +anlzB(dataAnalysis(cal,'past'))
   +`<div class="card"><b>🗞️ Son 1 haftanın öne çıkan haberleri</b><div style="margin-top:4px">${(n7.slice(0,10).map(newsRow).join(''))||'<div class="mut sm">Haber akışı alınamadı.</div>'}</div></div>`
-  +anlzB(newsAnalysis(n7));
+  +anlzB(newsAnalysis(n7))+themeCard(n7,'Haftanın gündem temaları');
  const td=trDate(new Date()),tod=cal.filter(x=>trDate(new Date(x.t))===td&&x.im!=='Holiday').sort((a,b)=>a.t-b.t);
  $('nst').innerHTML=`<div class="card"><b>⏰ Bugün açıklanacak veriler</b><div style="margin-top:4px">${tod.length?tod.map(x=>evRow(x,true)).join(''):'<div class="mut sm">Bugün takvimde öne çıkan veri yok.</div>'}</div></div>`
   +anlzB(dataAnalysis(cal,'today'))
   +`<div class="card"><b>🗞️ Bugünün gündemi</b><div style="margin-top:4px">${(n1.slice(0,10).map(newsRow).join(''))||'<div class="mut sm">Haber akışı alınamadı.</div>'}</div></div>`
-  +anlzB(newsAnalysis(n1));
+  +anlzB(newsAnalysis(n1))+themeCard(n1,'Bugünün gündem temaları');
  const up=cal.filter(x=>x.t>Date.now()).sort((a,b)=>a.t-b.t).slice(0,16);
  $('nsf').innerHTML=`<div class="card"><b>🗓️ Beklenen veriler</b><div style="margin-top:4px">${up.length?up.map(x=>evRow(x,true)).join(''):'<div class="mut sm">Kalan günlerde kayıtlı veri yok; yeni haftanın takvimi hafta başında yayımlanır.</div>'}</div></div>`
   +anlzB(dataAnalysis(cal,'future'))}
@@ -1930,7 +2015,7 @@ const kapSave=()=>{try{localStorage.setItem(KK,JSON.stringify(kap))}catch(e){}};
 const hid=x=>{let h=5381;for(const c of String(x))h=((h<<5)+h+c.charCodeAt(0))|0;return'k'+(h>>>0).toString(36)};
 function pdate(v){if(!v)return 0;const m=String(v).match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);if(m)return+new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));const t=Date.parse(v);return isNaN(t)?0:t}
 function kapJunk(x){if(x.sym!=='EKIM')return false;const tn=' '+kn(x.title||'')+' ';if(tn.includes(' ekim turizm '))return false;return ayTarihMi(tn,'ekim')}
-function kapPrune(){const now=Date.now(),lim=now-14*864e5;kap.items=kap.items.filter(x=>(x.t||x.seen)>=lim&&!kapJunk(x));for(const k of Object.keys(kap.read))if(kap.read[k]<now-8*864e5)delete kap.read[k];for(const k of Object.keys(kap.del))if(kap.del[k]<now-8*864e5)delete kap.del[k]}
+function kapPrune(){const now=Date.now(),lim=now-14*864e5;kap.items=kap.items.filter(x=>(x.t||x.seen)>=lim&&!kapJunk(x));for(const k of Object.keys(kap.read))if(kap.read[k]<now-8*864e5)delete kap.read[k];for(const k of Object.keys(kap.del))if(kap.del[k]<now-8*864e5)delete kap.del[k];try{nlogSync()}catch(e){}}
 function ingestKap(table){let seen=0;const now=Date.now(),have=new Set(kap.items.map(x=>x.id));
  table.forEach(r=>{const sym=String(r[9]||'').trim().toLocaleUpperCase('en');if(!sym)return;seen++;
   const cells=r.slice(4,9),url=cells.find(c=>/^https?:\/\//.test(String(c||''))),dt=cells.map(c=>pdate(c)).find(x=>x>0)||0;
@@ -1946,7 +2031,7 @@ function renderKap(){const all=kapVisible(),unread=all.filter(x=>!kap.read[x.id]
  const nb=$('kapN');nb.textContent=n>99?'99+':n;nb.style.display=n?'block':'none';
  const q=kapQ.trim().toLocaleLowerCase('tr'),items=all.filter(x=>(!kapCat||kapCatOf(x)===kapCat)&&(!q||(x.sym+' '+(x.title||'')).toLocaleLowerCase('tr').includes(q)));
  $('kapSt').textContent=kap.t?`Son güncelleme ${dts(kap.t)} · ${items.length}/${all.length} haber · ${n} okunmamış · son 14 gün`:'Henüz çekilmedi. Ayarlar’dan KAP kaynağını kur, sonra yenile.';
- kapSentRender(all);$('kapCats').innerHTML=[['','Tümü'],['ser','Sermaye Artırımı'],['tem','Temettü'],['bil','Bilanço & Finansal'],['oth','Diğer']].map(([k,nm])=>`<button class="${kapCat===k?'on':''}" data-kc="${k}">${nm}</button>`).join('');
+ kapSentRender(all);try{renderKapStats()}catch(e){}$('kapCats').innerHTML=[['','Tümü'],['ser','Sermaye Artırımı'],['tem','Temettü'],['bil','Bilanço & Finansal'],['oth','Diğer']].map(([k,nm])=>`<button class="${kapCat===k?'on':''}" data-kc="${k}">${nm}</button>`).join('');
  const syms=[...new Set(items.map(x=>x.sym))].sort();if(kapSym&&!syms.includes(kapSym))kapSym='';
  $('kapChips').innerHTML=items.length?`<button class="${kapSym?'':'on'}" data-ks="">Hepsi (${items.length})</button>`+syms.map(x=>`<button class="${kapSym===x?'on':''}" data-ks="${esc(x)}">${esc(x)} (${items.filter(i=>i.sym===x).length})</button>`).join(''):'';
  const list=items.filter(x=>!kapSym||x.sym===kapSym).sort((a,b)=>((kap.read[a.id]?1:0)-(kap.read[b.id]?1:0))||((b.t||b.seen)-(a.t||a.seen)));
@@ -2220,6 +2305,7 @@ window.addEventListener('afterprint',()=>document.body.classList.remove('print-r
 const prnPrep=()=>{document.querySelectorAll('#rpv details').forEach(d=>d.open=true);$('prnHead').textContent='📊 Portföyüm — '+new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric',weekday:'long'})};
 window.addEventListener('beforeprint',()=>{if(!document.body.classList.contains('print-rp'))prnPrep()});
 $('rf').addEventListener('click',refresh);$('kapRf').addEventListener('click',()=>{kapDirect();refresh()});$('kapRead').addEventListener('click',kapMarkAll);$('kapDel').addEventListener('click',kapDelAll);$('kapTplBtn').addEventListener('click',copyKapTpl);
+$('kapStats').addEventListener('click',e=>{const v=e.target.dataset&&e.target.dataset.sts;if(v==null)return;kapStSym=v;renderKapStats()});
 $('kapChips').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.ks!=null){kapSym=e.target.dataset.ks;renderKap()}});
 $('kapList').addEventListener('click',e=>{const c=e.target.closest('[data-kid]');if(!c)return;const it=kap.items.find(x=>x.id===c.dataset.kid);if(!it)return;kap.read[it.id]=Date.now();kapSave();renderKap();if(it.url)window.open(it.url,'_blank','noopener')});
 $('tplBtn').addEventListener('click',copyTpl);$('sheetBtn').addEventListener('click',saveSheet);
