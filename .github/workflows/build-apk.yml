@@ -103,6 +103,16 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: APK'yi anahtarimizla imzala ve parmak izini yaz
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          $BT/apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey $APK
+          echo "== APK imzasi (her derlemede AYNI olmali) =="
+          $BT/apksigner verify --print-certs $APK | grep -i "SHA-256"
+          echo "== Anahtar dosyasi =="
+          keytool -list -keystore ~/.android/debug.keystore -storepass android | grep -i "SHA-256"
+
       - name: APK dosyasini hazirla
         run: cp android/app/build/outputs/apk/debug/app-debug.apk portfoy.apk
 
