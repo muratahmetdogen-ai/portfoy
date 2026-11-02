@@ -284,7 +284,7 @@ body.print-rp h3{color:#555}}
   </div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v57</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v58</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -425,6 +425,7 @@ function render(){
  const by=calc(trades),all=Object.values(by),open=all.filter(s=>s.qty>1e-9),sm=summary();
  open.forEach(s=>{const f=fx(s.cur),p=priceOf(s),pv=prevOf(s);s.p=p;s.val=p!=null?s.qty*p:s.cost;s.pl=s.val-s.cost;s.plp=s.cost?s.pl/s.cost*100:0;s.valTL=s.val*f;s.costTL=s.cost*f;
   s.day=(p!=null&&pv)?s.qty*(p-pv):null;s.dayPct=(p!=null&&pv)?(p/pv-1)*100:null;s.dayTL=s.day!=null?s.day*f:null;s.prevTL=pv?s.qty*pv*f:0});
+ try{histAdjust()}catch(e){}
  if(taOn)open.forEach(s=>{s.ta=taCalc(s.sym)});
  scanSignals(open);try{renderHealth()}catch(e){}
  /* hero */
@@ -852,9 +853,8 @@ function priceHealth(){const rows=[],now=Date.now(),dn=new Date(),wd=dn.getDay()
   const iss=[],age=(now-(p.at||0))/36e5;
   if(age>96)iss.push({k:'old',txt:'fiyat '+Math.floor(age/24)+' gündür güncellenmemiş'});
   else if(age>30&&!weekend)iss.push({k:'old',txt:'fiyat dünden eski ('+Math.floor(age)+' saat)'});
-  let jump=false;
-  if(p.prev>0){const ch=(p.price/p.prev-1)*100;if(Math.abs(ch)>=20){jump=true;iss.push({k:'jump',txt:'bir günde %'+fmt(Math.abs(ch))+(ch>0?' yükseliş':' düşüş')+'; veri hatası, bölünme ya da bedelsiz olabilir'})}}
-  if(!jump){const h=HIST[s.sym];if(h&&h.c&&h.c.length){const lc=h.c[h.c.length-1];if(lc>0&&Math.abs(p.price/lc-1)>0.25)iss.push({k:'dev',txt:'fiyat son geçmiş kapanıştan %'+fmt(Math.abs((p.price/lc-1)*100))+' farklı; kaynak kontrol edilmeli'})}}
+  
+  if(p.prev>0){const ch=(p.price/p.prev-1)*100;if(Math.abs(ch)>=20){iss.push({k:'jump',txt:'bir günde %'+fmt(Math.abs(ch))+(ch>0?' yükseliş':' düşüş')+'; veri hatası, bölünme ya da bedelsiz olabilir'})}}
   rows.push({sym:s.sym,src:p.src||'',iss})}
  return rows}
 function renderHealth(){const el=$('hlth');if(!el)return;
@@ -1462,6 +1462,12 @@ async function refresh(){
  else if(ok.length)msg(ok.length+' fiyat güncellendi ✓');
 }
 /* ---------- teknik analiz motoru ---------- */
+function histAdjust(){let ch=false;
+ for(const sym of Object.keys(HIST)){const H=HIST[sym],p=prices[sym];
+  if(!H||H.adj||!H.c||!H.c.length||!p||!(p.price>0))continue;
+  const lc=H.c[H.c.length-1];if(!(lc>0))continue;const r=p.price/lc;
+  if(Math.abs(r-1)>0.35){H.c=H.c.map(x=>x*r);if(Array.isArray(H.h))H.h=H.h.map(x=>x*r);if(Array.isArray(H.l))H.l=H.l.map(x=>x*r);H.adj=+r.toFixed(4);ch=true}}
+ if(ch){try{if(typeof SRC==='object')Object.keys(SRC).forEach(k=>delete SRC[k]);if(typeof BTC==='object')BTC.key=null}catch(e){}histSave()}}
 function histPrune(opens){const keep=new Set(opens.map(s=>s.sym));Object.keys(HIST).forEach(k=>{if(!keep.has(k))delete HIST[k]})}
 function histSave(){try{localStorage.setItem('portfoy_hist',JSON.stringify(HIST))}catch(e){try{Object.keys(HIST).forEach(k=>delete HIST[k])}catch(x){}}}
 /* Aktarım zinciri: tarayıcı Origin başlığını yansıtan kaynaklar önce; hatırlanan başarılı transport en başta denenir */
@@ -1527,7 +1533,7 @@ async function histEnsure(force){
    else if(mk(s)==='Döviz'&&(s.sym==='USD'||s.sym==='EUR'))d=await histFX(s.sym);
    else d=await histFetch(s.sym,s.cur);
    if(d){HIST[s.sym]={t:d.t,c:d.c,v:d.v,h:d.h,l:d.l,at:now};okA.push(s.sym);
-    if(!(prices[s.sym]&&prices[s.sym].prev>0)){const pv=d.c[d.c.length-2];if(pv>0&&prices[s.sym])prices[s.sym].prev=pv}}
+    if(!(prices[s.sym]&&prices[s.sym].prev>0)){const pv=d.c[d.c.length-2],lc=d.c[d.c.length-1],pp=prices[s.sym]&&prices[s.sym].price;if(pv>0&&pp>0&&lc>0&&Math.abs(pp/lc-1)<0.15)prices[s.sym].prev=pv}}
    else failA.push(s.sym)}catch(e){failA.push(s.sym)}}))
   if(i+3<need.length)await new Promise(r=>setTimeout(r,500))}
  histPrune(opens);histSave();
@@ -1929,7 +1935,7 @@ function taDetailsHTML(s){const t=s.ta;if(!t)return'';const c=cs(s.cur),p=s.p!=n
   </table>
   ${srHTML(s)}
   <div class="aib">🤖 <b>AI Analiz</b><div style="margin-top:4px">${aiCached(s,t)}</div></div>
-  <div class="mut sm" style="margin-top:6px">${t.n} günlük geçmiş · ${dts(t.at)} indirildi${t.noHL?' · <b>kanal göstergeleri için “Analiz Verilerini Güncelle” önerilir</b>':''} · yatırım tavsiyesi değildir.</div></details>`}
+  <div class="mut sm" style="margin-top:6px">${t.n} günlük geçmiş · ${dts(t.at)} indirildi${HIST[s.sym]&&HIST[s.sym].adj?' · geçmiş seri fiyat ölçeğine uyarlandı (×'+HIST[s.sym].adj.toLocaleString('tr-TR',{maximumFractionDigits:2})+')':''}${t.noHL?' · <b>kanal göstergeleri için “Analiz Verilerini Güncelle” önerilir</b>':''} · yatırım tavsiyesi değildir.</div></details>`}
 function renderTa(open){const el=$('tav');if(!el)return;
  if(!taOn){el.innerHTML='<div class="card empty">Teknik analiz kapalı.<br>Ayarlar → “Teknik analiz &amp; sinyaller”den açabilirsin.</div>';return}
  const rows=open.filter(s=>s.ta).sort((a,b)=>b.ta.score-a.ta.score);
