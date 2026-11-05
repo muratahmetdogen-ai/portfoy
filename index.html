@@ -239,19 +239,20 @@ body.print-rp h3{color:#555}}
 <section class="tab" id="t-add">
  <h3 id="formTitle">Yeni işlem</h3>
  <div class="card"><div class="g2">
-  <div><label>İşlem</label><select id="side"><option value="buy">Alış</option><option value="sell">Satış</option><option value="div">Temettü</option><option value="bonus">Bedelsiz sermaye artırımı</option><option value="rights">Bedelli sermaye artırımı</option><option value="cdep">Nakit yatır (bankadan → hesaba)</option><option value="cwd">Nakit çek (hesaptan → bankaya)</option></select></div>
+  <div><label>İşlem</label><select id="side"><option value="buy">Alış</option><option value="sell">Satış</option><option value="div">Temettü</option><option value="bonus">Bedelsiz sermaye artırımı</option><option value="rights">Bedelli sermaye artırımı</option><option value="cdep">Nakit yatır (bankadan → hesaba)</option><option value="cwd">Nakit çek (hesaptan → bankaya)</option><option value="cconv">Nakit çevir (ör. TL → Dolar)</option></select></div>
   <div><label>Tarih</label><input id="dt" type="date"></div>
-  <div class="full"><label>Pazar</label><select id="mkt2"><option value="BIST">BIST</option><option value="ABD">ABD Borsası</option><option value="Avrupa">Avrupa Borsası</option><option value="Fon">Fon</option><option value="Döviz">Döviz</option><option value="Nakit">Nakit</option></select></div>
-  <div><label style="display:flex;justify-content:space-between;align-items:center;gap:6px">Hisse Kodu <button type="button" class="s" id="heldBtn" style="display:none;width:auto;padding:2px 9px;font-size:11.5px;margin:0">📋 Elindekiler</button></label><input id="sym" placeholder="HISSE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"><datalist id="heldDl"></datalist></div>
+  <div class="full"><label>Pazar</label><select id="mkt2"><option value="BIST">BIST</option><option value="ABD">ABD Borsası</option><option value="Avrupa">Avrupa Borsası</option><option value="Fon">Fon</option><option value="Döviz">Döviz</option><option value="Nakit" hidden>Nakit</option></select></div>
+  <div><label id="symL">Hisse Kodu</label><input id="sym" list="heldList" placeholder="HISSE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"><select id="symSel" style="display:none"></select><datalist id="heldList"></datalist></div>
   <div><label>Para Birimi</label><select id="cur"><option value="TRY">TL (₺)</option><option value="USD">Dolar ($)</option><option value="EUR">Euro (€)</option></select></div>
   <div id="rateWrap" style="display:none"><label id="rateL">Oran (%)</label><input id="rate" type="number" inputmode="decimal" step="any" placeholder="ör. 100"></div>
   <div class="mut sm full" id="capNote" style="display:none"></div>
-  <div class="full" id="cashRow" style="display:none"><label style="display:flex;gap:8px;align-items:center;color:var(--tx);font-size:14px;margin:0"><input type="checkbox" id="cashFlag" checked style="width:auto;flex:none"><span id="cashFlagL">Nakitten düş</span></label><div class="mut sm" id="cashNote" style="margin-top:4px"></div></div>
-  <div><label id="qtyL">Adet</label><input id="qty" type="number" inputmode="decimal" step="any"><div id="qtyHint" class="mut sm" style="display:none;margin-top:2px;font-size:11.5px"></div></div>
+  <div class="full" id="convWrap" style="display:none"><div class="g2"><div><label>Hedef para birimi</label><select id="convTo"><option value="USD">Dolar ($)</option><option value="EUR">Euro (€)</option><option value="TRY">TL (₺)</option></select></div><div><label>Gelen tutar</label><input id="convQty" type="number" inputmode="decimal" step="any"></div></div></div>
+  <div><label id="qtyL">Adet</label><input id="qty" type="number" inputmode="decimal" step="any"><div class="mut sm" id="qtyMax" style="margin-top:3px"></div></div>
   <div><label id="prcL">Fiyat</label><input id="prc" type="number" inputmode="decimal" step="any"></div>
   <div><label>Komisyon</label><input id="comm" type="number" inputmode="decimal" step="any" placeholder="0"></div>
   <div><label>Aracı Kurum</label><input id="brk" placeholder="Midas"></div>
   <div class="full"><label>Not</label><input id="note" placeholder="İsteğe bağlı"></div>
+  <div class="full" id="cashRow" style="display:none"><label style="display:flex;gap:8px;align-items:center;color:var(--tx);font-size:14px;margin:0"><input type="checkbox" id="cashFlag" checked style="width:auto;flex:none"><span id="cashFlagL">Nakitten düş</span></label><div class="mut sm" id="cashNote" style="margin-top:4px"></div></div>
  </div>
  <div class="row" style="margin-top:12px"><span class="mut">Toplam Tutar</span><b id="tot">0,00 ₺</b></div>
  <div class="btns"><button id="add">Kaydet</button><button class="s" id="cancel" style="display:none">Vazgeç</button></div></div>
@@ -279,7 +280,7 @@ body.print-rp h3{color:#555}}
   </div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v60</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v61</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -358,22 +359,23 @@ const num=v=>parseFloat(String(v??'').replace(',','.'));
 
 /* ---------- hesaplama ---------- */
 const isCashSym=x=>/^NAKIT(_|$)/.test(String(x||'')),cashSymOf=c=>c==='USD'?'NAKIT_USD':c==='EUR'?'NAKIT_EUR':'NAKIT';
-function cashMove(by,t,amt){const cur=t.cur||'TRY',k=cashSymOf(cur),s=by[k]??={sym:k,lots:[],realized:0,div:0,over:false,bought:0,sold:0,sells:[],divs:[],cur};
- if(amt>=0){let q=amt;if(s.def>0){const u=Math.min(s.def,q);s.def-=u;q-=u}if(q>1e-9)s.lots.push({q,p:1,d:t.date,b:''})}
- else{let q=-amt;while(q>1e-9&&s.lots.length){const l=s.lots[0],u=Math.min(q,l.q);l.q-=u;q-=u;if(l.q<=1e-9)s.lots.shift()}if(q>1e-9)s.def=(s.def||0)+q}}
+function cashApply(by,e){const cur=e.cur||'TRY',k=cashSymOf(cur),s=by[k]??={sym:k,lots:[],realized:0,div:0,over:false,bought:0,sold:0,sells:[],divs:[],cur};
+ if(e.amt>=0){let q=e.amt;if(s.def>0){const u=Math.min(s.def,q);s.def-=u;q-=u}if(q>1e-9)s.lots.push({q,p:1,d:e.date,b:e.brk||''})}
+ else{let q=-e.amt;while(q>1e-9&&s.lots.length){const l=s.lots[0],u=Math.min(q,l.q);l.q-=u;q-=u;if(l.q<=1e-9)s.lots.shift()}if(q>1e-9){if(e.exp)s.over=true;else s.def=(s.def||0)+q}}}
 function calc(list){
- const by={},ord=t=>t.side==='div'?1:t.side==='sell'?2:0;
+ const by={},ev=[],ord=t=>t.side==='div'?1:t.side==='sell'?2:0;
  [...list].sort((a,b)=>a.date.localeCompare(b.date)||ord(a)-ord(b)||(a.ts||0)-(b.ts||0)).forEach(t=>{
   const s=by[t.sym]??={sym:t.sym,lots:[],realized:0,div:0,over:false,bought:0,sold:0,sells:[],divs:[],cur:t.cur||'TRY'};
   const c=t.comm||0;
-  if(t.fx){if(t.side==='buy'){cashMove(by,{cur:'TRY',date:t.date},-(t.qty*t.price+c));cashMove(by,{cur:t.sym,date:t.date},t.qty)}else{cashMove(by,{cur:t.sym,date:t.date},-t.qty);cashMove(by,{cur:'TRY',date:t.date},t.qty*t.price-c)}return}
-  if(t.side==='div'){const a=t.price-c;s.div+=a;s.divs.push({date:t.date,amount:a});if(t.cash&&!isCashSym(t.sym))cashMove(by,t,a);return}
+  if(isCashSym(t.sym)){ev.push({cur:t.cur||'TRY',date:t.date,ts:t.ts||0,amt:t.side==='sell'?-t.qty:t.qty,exp:true,brk:t.brk||''});if(t.conv)ev.push({cur:t.conv.cur,date:t.date,ts:t.ts||0,amt:t.conv.qty,exp:false,brk:''});return}
+  if(t.side==='div'){const a=t.price-c;s.div+=a;s.divs.push({date:t.date,amount:a});if(t.cash)ev.push({cur:t.cur||'TRY',date:t.date,ts:t.ts||0,amt:a,exp:false,brk:''});return}
   if(t.side==='bonus'){const q0=s.lots.reduce((a,l)=>a+l.q,0);if(q0>1e-9&&t.qty>0){const f=(q0+t.qty)/q0;s.lots.forEach(l=>{l.q*=f;l.p/=f})}return}
-  if(t.side==='buy'||t.side==='rights'){s.bought+=t.qty*t.price+c;{let lq=t.qty;if(isCashSym(t.sym)&&s.def>0){const u=Math.min(s.def,lq);s.def-=u;lq-=u}if(lq>1e-9)s.lots.push({q:lq,p:t.price+c/t.qty,d:t.date,b:t.brk||''})}if(t.cash&&!isCashSym(t.sym))cashMove(by,t,-(t.qty*t.price+c))}
+  if(t.side==='buy'||t.side==='rights'){s.bought+=t.qty*t.price+c;{let lq=t.qty;if(isCashSym(t.sym)&&s.def>0){const u=Math.min(s.def,lq);s.def-=u;lq-=u}if(lq>1e-9)s.lots.push({q:lq,p:t.price+c/t.qty,d:t.date,b:t.brk||''})}if(t.cash)ev.push({cur:t.cur||'TRY',date:t.date,ts:t.ts||0,amt:-(t.qty*t.price+c),exp:false,brk:''})}
   else{s.sold+=t.qty*t.price-c;let q=t.qty;const sp=t.price-c/t.qty;
    while(q>1e-9&&s.lots.length){const l=s.lots[0],u=Math.min(q,l.q);s.realized+=u*(sp-l.p);s.sells.push({date:t.date,buyDate:l.d,q:u,proceeds:u*sp,cost:u*l.p,profit:u*(sp-l.p),buyBrk:l.b});l.q-=u;q-=u;if(l.q<=1e-9)s.lots.shift()}
-   if(q>1e-9)s.over=true;if(t.cash&&!isCashSym(t.sym))cashMove(by,t,t.qty*t.price-c)}
+   if(q>1e-9)s.over=true;if(t.cash)ev.push({cur:t.cur||'TRY',date:t.date,ts:t.ts||0,amt:t.qty*t.price-c,exp:false,brk:''})}
  });
+ ev.sort((a,b)=>a.date.localeCompare(b.date)||((b.amt>0)-(a.amt>0))||(a.ts-b.ts)).forEach(e=>cashApply(by,e));
  Object.values(by).forEach(s=>{s.qty=s.lots.reduce((a,l)=>a+l.q,0);s.cost=s.lots.reduce((a,l)=>a+l.q*l.p,0);s.avg=s.qty?s.cost/s.qty:0;s.first=s.lots[0]?.d});
  return by;
 }
@@ -402,7 +404,6 @@ let mt;function msg(t,bad){const m=$('msg');m.textContent=t||'';m.className=bad?
 
 function msgUndo(t,fn){const m=$('msg');m.textContent=t+' ';m.className='ok';const b=document.createElement('button');b.textContent='Geri al';b.className='t';b.style.cssText='width:auto;padding:2px 10px;color:var(--ac);font-weight:700';b.onclick=async()=>{await fn();msg('Geri alındı ✓')};m.appendChild(b);m.style.display='block';clearTimeout(mt);mt=setTimeout(()=>{m.style.display='none'},8000)}
 /* ---------- çizim ---------- */
-const MAD=m=>m==='ABD'?'ABD Borsası':m==='Avrupa'?'Avrupa Borsası':m;
 const MKTS=['BIST','ABD','Avrupa','Fon','Döviz','Nakit'],MKCUR={BIST:'TRY',Fon:'TRY',ABD:'USD',Avrupa:'EUR',Döviz:'TRY',Nakit:'TRY'};
 const marketOf=(sym,cur)=>{if(isCashSym(sym))return'Nakit';const m=meta[sym];if(m&&m.market)return m.market;if(m&&m.type==='Fon')return'Fon';return cur==='USD'?'ABD':cur==='EUR'?'Avrupa':'BIST'};
 const mk=s=>marketOf(s.sym,s.cur);
@@ -464,7 +465,7 @@ function render(){
  $('pos').innerHTML=MKTS.filter(m=>groups[m]).map(m=>{const arr=groups[m].sort(cmp);
   const gv=arr.reduce((a,s)=>a+s.valTL,0),ga=arr.reduce((a,s)=>a+(dayOrTot(s)||0),0),gb=kmode==='day'?arr.reduce((a,s)=>a+s.prevTL,0):arr.reduce((a,s)=>a+s.costTL,0);
   const gp=gb?ga/gb*100:null;
-  return`<details class="grp" data-grp="${m}" ${coll.has(m)?'':'open'}><summary><span class="gt">${m}<small>${arr.length} pozisyon</small></span><span class="gs"><b>${D(gv,'TRY')}</b><br>${gp==null?'<span class="mut">—</span>':`<span class="${cls(ga)}">${SD(ga,'TRY')} · ${pct(gp)}</span>`}</span></summary>${arr.map(s=>posCard(s,sm.val)).join('')}</details>`}).join('')
+  return`<details class="grp" data-grp="${m}" ${coll.has(m)?'':'open'}><summary><span class="gt">${mkl(m)}<small>${arr.length} pozisyon</small></span><span class="gs"><b>${D(gv,'TRY')}</b><br>${gp==null?'<span class="mut">—</span>':`<span class="${cls(ga)}">${SD(ga,'TRY')} · ${pct(gp)}</span>`}</span></summary>${arr.map(s=>posCard(s,sm.val)).join('')}</details>`}).join('')
   ||'<div class="card empty">'+(open.length?'Aramayla eşleşen pozisyon yok.':'Henüz açık pozisyon yok.<br>“İşlem” sekmesinden alış ekle.')+'</div>';
  document.querySelectorAll('#pos .card[data-card]').forEach(c=>{if(openD.has(c.dataset.card))c.querySelectorAll('details').forEach(d=>d.open=true)});
  const nClosed=all.filter(s=>s.qty<=1e-9&&Math.abs(s.realized)+Math.abs(s.div)>1e-9&&mk(s)!=='Nakit').length;$('closedBtn').textContent=`Kapanan Pozisyonlar (${nClosed}) ›`;
@@ -484,7 +485,7 @@ function posCard(s,totVal){
  const ty=m;
  const qact=m==='Nakit'?'':`<div class="qact"><button class="qb b" data-buy="${esc(s.sym)}">+ Al</button><button class="qb s2" data-sell="${esc(s.sym)}">- Sat</button></div>`;
  const secv=(meta[s.sym]&&meta[s.sym].sec)||'';
- return`<div class="card" data-card="${esc(s.sym)}"><div class="row"><div><b class="sym">${esc(name)}</b><span class="mk">${MAD(m)}</span>${tg}<div class="mut sm">${sub}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="r">${right}</div>${qact}</div></div>
+ return`<div class="card" data-card="${esc(s.sym)}"><div class="row"><div><b class="sym">${esc(name)}</b><span class="mk">${mkl(m)}</span>${tg}<div class="mut sm">${sub}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="r">${right}</div>${qact}</div></div>
  <div class="chips">${chips}</div>
  <details style="margin-top:8px"><summary>İşlem detayları</summary>
   <div style="margin-top:6px">${s.lots.map(l=>`<div class="lot"><span>${l.d} · ${heldDays(l.d)} gün${l.b?' · '+esc(l.b):''}</span><span>${qf(l.q)} × ${fmt(l.p)} ${cs(s.cur)}</span></div>`).join('')}</div>
@@ -519,7 +520,7 @@ function renderKz(all){
  $('kzlist').innerHTML=rows.map(r=>rowCard(r)).join('')||'<div class="card empty">Henüz işlem yok.</div>';
 }
 function rowCard(r,compact){const S_=r.f?SD(r.total,r.cur):sg(r.total)+' '+cs(r.cur);
- return`<div class="card tile" data-hs="${esc(r.sym)}"><div class="row"><div><b class="sym">${esc(r.sym)}</b><span class="mk">${MAD(r.m)}</span> <span class="badge">${r.openQ?'Açık':'Kapalı'}</span></div>
+ return`<div class="card tile" data-hs="${esc(r.sym)}"><div class="row"><div><b class="sym">${esc(r.sym)}</b><span class="mk">${mkl(r.m)}</span> <span class="badge">${r.openQ?'Açık':'Kapalı'}</span></div>
  <div class="r"><b class="${cls(r.total)}">${S_}</b><div class="${cls(r.total)} sm">${pct(r.pp)}</div></div></div>
  ${compact?(r.last?`<div class="mut sm" style="margin-top:4px">Son satış: ${esc(r.last)}</div>`:''):`<div class="chips"><span>Satıştan K/Z: ${sg(r.realized)} ${cs(r.cur)}</span>${r.div?`<span>Temettü: ${sg(r.div)} ${cs(r.cur)}</span>`:''}<span>Açık Pozisyon K/Z: ${r.openQ?(r.noPrice?'fiyat yok':sg(r.unreal)+' '+cs(r.cur)):'—'}</span><span>Toplam İşlem Hacmi: ${fmt(r.bought)} ${cs(r.cur)}</span></div>`}</div>`}
 function openWin(title,html){$('wt').textContent=title;$('wb').innerHTML=html;$('win').style.display='block';$('win').scrollTop=0}
@@ -534,61 +535,20 @@ function renderHist(){
  const hs=$('hs').value,hd=$('hside').value,q=($('hq').value||'').trim().toLocaleLowerCase('tr');
  const list=trades.filter(t=>(!hs||t.sym===hs)&&(!hd||(hd==='cash'?isCashSym(t.sym):(t.side===hd&&!isCashSym(t.sym))))&&(!q||(t.sym+' '+(t.brk||'')+' '+(t.note||'')).toLocaleLowerCase('tr').includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||(b.ts||0)-(a.ts||0));
  $('hcount').textContent=`İşlemler (${list.length})`;
- $('hist').innerHTML=list.map(t=>`<div class="card"><div class="row"><b class="${t.side==='sell'?'dn':'up'}">${(isCashSym(t.sym)?(t.side==='sell'?'NAKİT ÇEKME':'NAKİT YATIRMA'):({buy:'ALIŞ',sell:'SATIŞ',div:'TEMETTÜ',bonus:'BEDELSİZ',rights:'BEDELLİ'})[t.side])||'İŞLEM'} · ${esc(isCashSym(t.sym)?'Nakit '+cs(t.cur):t.sym)}</b><span class="mut sm">${esc(t.date)}</span></div>
- <div class="mut sm" style="margin-top:4px">${isCashSym(t.sym)?`<b style="color:var(--tx)">${fmt(t.qty)} ${cs(t.cur)}</b>`:t.side==='div'?`Temettü geliri <b style="color:var(--tx)">${fmt(t.price)} ${cs(t.cur)}</b>`:t.side==='bonus'?`<b style="color:var(--tx)">+${qf(t.qty)} yeni hisse</b>${t.rate?' · %'+fmt(t.rate)+' bedelsiz':''} · maliyet değişmez, ortalama maliyet düşer`:`${qf(t.qty)} × ${fmt(t.price)} ${cs(t.cur)} = <b style="color:var(--tx)">${fmt(t.qty*t.price)} ${cs(t.cur)}</b>${t.side==='rights'&&t.rate?' · %'+fmt(t.rate)+' bedelli':''}`}${t.comm?` · komisyon ${fmt(t.comm)}`:''}</div>
- ${t.cash?`<div class="mut sm">↳ ${cs(t.cur)} nakit hesabından ${t.side==='sell'?'eklendi':'düşüldü'}: <b>${fmt(t.qty*t.price+(t.side==='sell'?-1:1)*(t.comm||0))} ${cs(t.cur)}</b></div>`:''}
+ $('hist').innerHTML=list.map(t=>`<div class="card"><div class="row"><b class="${t.side==='sell'?'dn':'up'}">${(isCashSym(t.sym)?(t.conv?'NAKİT ÇEVİRME':t.side==='sell'?'NAKİT ÇEKME':'NAKİT YATIRMA'):({buy:'ALIŞ',sell:'SATIŞ',div:'TEMETTÜ',bonus:'BEDELSİZ',rights:'BEDELLİ'})[t.side])||'İŞLEM'} · ${esc(isCashSym(t.sym)?'Nakit '+cs(t.cur):t.sym)}</b><span class="mut sm">${esc(t.date)}</span></div>
+ <div class="mut sm" style="margin-top:4px">${isCashSym(t.sym)?(t.conv?`<b style="color:var(--tx)">${fmt(t.qty)} ${cs(t.cur)} → ${fmt(t.conv.qty)} ${cs(t.conv.cur)}</b> · kur ${fmt(t.cur==='TRY'?t.qty/t.conv.qty:t.conv.cur==='TRY'?t.conv.qty/t.qty:t.qty/t.conv.qty)}`:`<b style="color:var(--tx)">${fmt(t.qty)} ${cs(t.cur)}</b>`):t.side==='div'?`Temettü geliri <b style="color:var(--tx)">${fmt(t.price)} ${cs(t.cur)}</b>`:t.side==='bonus'?`<b style="color:var(--tx)">+${qf(t.qty)} yeni hisse</b>${t.rate?' · %'+fmt(t.rate)+' bedelsiz':''} · maliyet değişmez, ortalama maliyet düşer`:`${qf(t.qty)} × ${fmt(t.price)} ${cs(t.cur)} = <b style="color:var(--tx)">${fmt(t.qty*t.price)} ${cs(t.cur)}</b>${t.side==='rights'&&t.rate?' · %'+fmt(t.rate)+' bedelli':''}`}${t.comm?` · komisyon ${fmt(t.comm)}`:''}</div>
+ ${t.cash?`<div class="mut sm">↳ ${cs(t.cur)} nakit hesabından ${t.side==='sell'||t.side==='div'?'eklendi':'düşüldü'}: <b>${fmt(t.side==='div'?t.price-(t.comm||0):t.qty*t.price+(t.side==='sell'?-1:1)*(t.comm||0))} ${cs(t.cur)}</b></div>`:''}
  ${t.brk||t.note?`<div class="mut sm">${esc(t.brk)}${t.brk&&t.note?' · ':''}${esc(t.note)}</div>`:''}
  <div style="text-align:right"><button class="t" data-edit="${esc(t.id)}">Düzenle</button><button class="t" data-del="${esc(t.id)}">Sil</button></div></div>`).join('')||'<div class="card empty">Kayıt yok.</div>';
 }
 
 /* ---------- form ---------- */
-function sideUI(){const d=$('side').value==='div';$('qty').parentElement.style.display=d?'none':'';$('prcL').textContent=d?'Temettü tutarı (net)':'Fiyat';capUI();cashOpUI();cashFlagUI()}
-function cashOpUI(){const sd=$('side').value,op=sd==='cdep'||sd==='cwd';
- $('mkt2').parentElement.style.display=op?'none':'';
- if(!op)return;
- const cur=$('cur').value,k=cashSymOf(cur),dt=$('dt').value,acc=calc(trades.filter(t=>t.id!==editing&&(!dt||t.date<=dt)))[k],bal=acc?acc.qty:0,q=parseFloat($('qty').value)||0;
- $('qtyL').textContent=(sd==='cdep'?'Yatırılan tutar (':'Çekilen tutar (')+cs(cur)+')';$('sym').readOnly=true;$('sym').value=k;$('cur').disabled=false;
- $('prc').parentElement.style.display='none';$('comm').parentElement.style.display='none';$('qty').parentElement.style.display='';
- const n=$('capNote');n.style.display='';
- n.textContent='Mevcut '+cs(cur)+' nakit: '+fmt(bal)+(q>0?' → '+fmt(sd==='cdep'?bal+q:bal-q)+(sd==='cwd'&&q>bal+1e-9?' ⚠ bakiyeden fazla':''):'')+'. '+(sd==='cdep'?'Bankadan yatırım hesabına aktarılan para nakite eklenir.':'Hesaptan bankaya çekilen para nakitten düşer.')}
-function cashFlagUI(){const sd=$('side').value,m=$('mkt2').value,on=(sd==='buy'||sd==='sell'||sd==='rights'||sd==='div')&&m!=='Nakit',row=$('cashRow');
- row.style.display=on?'':'none';if(!on)return;
- const dvx=m==='Döviz',cur=dvx?'TRY':(m==='ABD'||m==='Avrupa')?$('cur').value:'TRY',buy=sd!=='sell'&&sd!=='div',dt=$('dt').value,hes=calc(trades.filter(t=>t.id!==editing&&(!dt||t.date<=dt))),acc=hes[cashSymOf(cur)],bal=acc?acc.qty:0;
- const q=parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0,cm=parseFloat($('comm').value)||0,chk=$('cashFlag').checked;let etiket,not2='';
- if(sd==='div'){const amt=p-cm;etiket='Temettüyü nakite ekle ('+cs(cur)+' hesabı)';not2='Mevcut '+cs(cur)+' nakit: '+fmt(bal)+(chk&&amt>0?' → '+fmt(bal+amt):'')}
- else if(dvx){const fx2=$('sym').value.trim().toLocaleUpperCase('en');
-  if(buy){const amt=q*p+cm;etiket='TL hesabından düş → '+fx2+' hesabına ekle';const after=bal-amt;
-   not2='Mevcut TL: '+fmt(bal)+(chk&&amt>0?' → '+fmt(Math.max(0,after))+(after<-1e-9?' ⚠ TL yetmiyor — işlem kaydedilmez':''):'')+(fx2?' · '+fmt(q)+' '+fx2+' hesaba eklenir':'')}
-  else{const a2=hes[cashSymOf(fx2)],b2=a2?a2.qty:0;etiket=fx2+' hesabından düş → TL hesabına ekle';
-   not2='Mevcut '+fx2+': '+fmt(b2)+(chk&&q>0?(b2+1e-9<q?' ⚠ '+fx2+' yetmiyor — işlem kaydedilmez':' → '+fmt(b2-q)):'')+' · TL hesabına +'+fmt(q*p-cm)}}
- else{const amt=buy?q*p+cm:q*p-cm,after=buy?bal-amt:bal+amt;etiket=(buy?'Nakitten düş':'Nakite ekle')+' ('+cs(cur)+' nakit hesabı)';
-  not2='Mevcut '+cs(cur)+' nakit: '+fmt(bal)+(chk&&amt>0?' → '+fmt(Math.max(0,after))+(after<-1e-9?' ⚠ nakit yetmiyor — işlem kaydedilmez':''):'')}
- $('cashFlagL').textContent=etiket;
- $('cashNote').textContent=not2}
+function sideUI(){formUI()}
+function cashOpUI(){notesUI()}
+function cashFlagUI(){notesUI()}
+function capUI(){formUI()}
+function mktUI(){formUI()}
 function heldAt(sym,date){const s=calc(trades.filter(t=>t.id!==editing&&t.date<=date))[sym];return s?s.qty:0}
-function qtyHintUI(){const h=$('qtyHint');if(!h)return;const sd=$('side').value,m=$('mkt2').value,sym=$('sym').value.trim().toLocaleUpperCase('en').replace(/\s/g,'');
- let txt='';
- if(m!=='Nakit'&&(sd==='buy'||sd==='sell')){
-  if(sd==='buy'){const p=parseFloat($('prc').value)||0;
-   if($('cashFlag').checked&&p>0){const hk=m==='Döviz'?'NAKIT':cashSymOf($('cur').value),a2=calc(trades.filter(t=>t.id!==editing&&(!$('dt').value||t.date<=$('dt').value)))[hk],bal=a2?a2.qty:0,n=Math.floor(bal/p+1e-9);
-    txt=n>0?'Max: '+qf(n)+' adet alabilirsin ('+cs(m==='Döviz'?'TRY':$('cur').value)+' bakiye '+fmt(bal)+')':'⚠ '+cs(m==='Döviz'?'TRY':$('cur').value)+' bakiyen bu fiyat için yetmiyor'}}
-  else if(sym){const held=heldAt(sym,$('dt').value);if(held>0)txt='Max: '+qf(held)+' Lot'}}
- h.style.display=txt?'':'none';h.textContent=txt}
-function heldUI(){const sd=$('side').value,m=$('mkt2').value,b=$('heldBtn'),dl=$('heldDl');if(!b||!dl)return;
- if(m==='Döviz'){b.style.display='none';dl.innerHTML='<option value="USD"><option value="EUR">';$('sym').setAttribute('list','heldDl');return}
- const secilebilir=(sd==='sell'||sd==='bonus'||sd==='rights');
- b.style.display=secilebilir?'':'none';
- const held=Object.values(calc(trades)).filter(s2=>s2.qty>1e-9&&!isCashSym(s2.sym)&&mk(s2)===m);
- dl.innerHTML=held.map(s2=>'<option value="'+esc(s2.sym)+'">').join('');
- if(sd==='buy'&&held.length)$('sym').setAttribute('list','heldDl');else $('sym').removeAttribute('list')}
-function capUI(){const sd=$('side').value,bo=sd==='bonus',ri=sd==='rights',on=(bo||ri)&&$('mkt2').value!=='Nakit';
- $('rateWrap').style.display=on?'':'none';$('capNote').style.display=on?'':'none';
- if(!on)return;
- $('qty').parentElement.style.display='';$('qtyL').textContent=bo?'Gelen yeni hisse (adet)':'Alınan yeni hisse (adet)';
- $('rateL').textContent=bo?'Bedelsiz oranı (%)':'Bedelli oranı (%)';
- $('prc').parentElement.style.display=bo?'none':'';$('comm').parentElement.style.display=bo?'none':'';
- if(ri)$('prcL').textContent='Kullanım fiyatı (hisse başı)';
- capCalc(false)}
 function capCalc(fill){const sd=$('side').value;if(sd!=='bonus'&&sd!=='rights')return;
  const sym=$('sym').value.trim().toLocaleUpperCase('en').replace(/\s/g,''),dt=$('dt').value,r=parseFloat($('rate').value),n=$('capNote');
  if(!sym){n.textContent='Önce hisse kodunu yaz; oranı girince yeni adet kendiliğinden hesaplanır.';return}
@@ -597,42 +557,105 @@ function capCalc(fill){const sd=$('side').value;if(sd!=='bonus'&&sd!=='rights')r
  const ek=sd==='rights'?' Bedelli: yeni hisseler için kullanım fiyatı × adet kadar ödeme yaparsın, tutar maliyetine eklenir.':' Bedelsiz: ödeme yoktur, toplam maliyet aynı kalır, hisse başına ortalama maliyet düşer.';
  if(r>0){const q=Math.floor(h*r/100+1e-9);if(fill){$('qty').value=q;upTot()}n.textContent='Elindeki '+qf(h)+' adet × %'+fmt(r)+' = '+qf(q)+' yeni hisse. Adedi elle de değiştirebilirsin.'+ek}
  else n.textContent='Elindeki '+qf(h)+' adet. Oranı yaz, yeni adet hesaplansın (ör. %100 → her 1 hisse için 1 yeni hisse).'+ek}
-function mktUI(){const sd=$('side').value,m=$('mkt2').value,nk=m==='Nakit',dv=sd==='div';
- const izin=(sd==='cdep'||sd==='cwd')?['Nakit']:(sd==='div'||sd==='bonus'||sd==='rights')?['BIST','ABD','Avrupa']:['BIST','ABD','Avrupa','Fon','Döviz'];
- [...$('mkt2').options].forEach(o=>o.disabled=izin.indexOf(o.value)<0);
- if(izin.indexOf(m)<0){$('mkt2').value='BIST';return mktUI()}
- const tek={BIST:'TRY',ABD:'USD',Avrupa:'EUR','Döviz':'TRY'}[m];
- if(tek){$('cur').disabled=true;$('cur').value=tek}else $('cur').disabled=false;
- $('sym').readOnly=nk;if(nk){$('sym').value=cashSymOf($('cur').value);$('prc').value=1}else if(isCashSym($('sym').value)){$('sym').value='';$('prc').value=''}
- $('prc').parentElement.style.display=nk?'none':'';$('comm').parentElement.style.display=nk?'none':'';
- $('qtyL').textContent=nk?'Tutar ('+cs($('cur').value)+')':m==='Döviz'?'Miktar':'Adet';
- if(!dv&&m==='Döviz')$('prcL').textContent=sd==='sell'?'Satış kuru (₺)':'Alış kuru (₺)';else if(!dv)$('prcL').textContent='Fiyat';
- $('sym').placeholder=m==='Döviz'?'USD veya EUR':m==='Nakit'?'NAKIT':'THYAO';capUI();cashOpUI();cashFlagUI();heldUI();qtyHintUI()}
-function upTot(){const q=$('side').value==='div'||$('side').value==='bonus'?1:parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0;$('tot').textContent=fmt(q*p)+' '+cs($('cur').value)}
-function resetForm(){editing=null;['qty','prc','comm','note','rate'].forEach(i=>$(i).value='');$('formTitle').textContent='Yeni işlem';$('cashFlag').checked=true;$('cur').value=MKCUR[$('mkt2').value]||'TRY';$('add').textContent='Kaydet';$('cancel').style.display='none';mktUI();upTot()}
+const MKLAB={BIST:'BIST',ABD:'ABD Borsası',Avrupa:'Avrupa Borsası',Fon:'Fon',Döviz:'Döviz',Nakit:'Nakit'},mkl=m=>MKLAB[m]||m;
+const MKALL={buy:['BIST','ABD','Avrupa','Fon','Döviz'],sell:['BIST','ABD','Avrupa','Fon','Döviz'],div:['BIST','ABD','Avrupa'],bonus:['BIST','ABD','Avrupa'],rights:['BIST','ABD','Avrupa']};
+function curRule(m){return m==='ABD'?['USD']:m==='Avrupa'?['EUR']:m==='Fon'?['TRY','USD','EUR']:['TRY']}
+function heldList(m){return Object.values(calc(trades.filter(t=>t.id!==editing))).filter(s=>s.qty>1e-9&&!isCashSym(s.sym)&&mk(s)===m).sort((a,b)=>a.sym.localeCompare(b.sym))}
+const normSym=v=>String(v||'').trim().toLocaleUpperCase('en').replace(/\s/g,'');
+let FUI=false;
+function formUI(){if(FUI)return;FUI=true;try{_formUI()}catch(e){try{console.error(e)}catch(x){}}FUI=false}
+function _formUI(){
+ const sd=$('side').value,cashOp=sd==='cdep'||sd==='cwd'||sd==='cconv',old=editing?trades.find(t=>t.id===editing):null;
+ const mo=$('mkt2'),allow=MKALL[sd]||['Nakit'];
+ [...mo.options].forEach(o=>{o.textContent=mkl(o.value);const ok=cashOp?o.value==='Nakit':allow.includes(o.value);o.hidden=!ok;o.disabled=!ok});
+ if(cashOp)mo.value='Nakit';else if(!allow.includes(mo.value))mo.value='BIST';
+ const m=mo.value;mo.parentElement.style.display=cashOp?'none':'';
+ const sm=!cashOp&&(sd==='sell'||sd==='div'||sd==='bonus'||sd==='rights'||m==='Döviz'),ss=$('symSel');
+ $('sym').parentElement.style.display=cashOp?'none':'';
+ if(!cashOp&&isCashSym($('sym').value))$('sym').value='';
+ if(sm){let opts;
+  if(m==='Döviz')opts=[['USD','USD · Dolar'],['EUR','EUR · Euro']];
+  else{opts=heldList(m).map(s=>[s.sym,s.sym+' · '+qf(s.qty)+(m==='Fon'?' adet':' lot')]);if(old&&!isCashSym(old.sym)&&!opts.some(o=>o[0]===old.sym)&&marketOf(old.sym,old.cur||'TRY')===m)opts.push([old.sym,old.sym])}
+  ss.innerHTML=opts.length?opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(''):'<option value="">(bu pazarda elinde yok)</option>';
+  const want=normSym($('sym').value);ss.value=opts.some(o=>o[0]===want)?want:(opts[0]?opts[0][0]:'');
+  $('sym').value=ss.value;ss.style.display='';$('sym').style.display='none'}
+ else{ss.style.display='none';$('sym').style.display='';$('sym').readOnly=false;
+  $('heldList').innerHTML=Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!isCashSym(s.sym)).map(s=>`<option value="${esc(s.sym)}">`).join('')}
+ $('symL').textContent=m==='Döviz'&&!cashOp?'Döviz cinsi':sm?'Hisse Kodu (seç)':'Hisse Kodu';
+ /* para birimi */
+ const symNow=cashOp?'':normSym($('sym').value);
+ let ac=cashOp?['TRY','USD','EUR']:curRule(m);
+ const pos=symNow?trades.find(t=>t.sym===symNow&&t.id!==editing&&!isCashSym(t.sym)):null;
+ if(pos)ac=[pos.cur||'TRY'];
+ if(old&&!cashOp&&!ac.includes(old.cur||'TRY')&&(!pos||(pos.cur||'TRY')===(old.cur||'TRY')))ac=[...ac,old.cur||'TRY'];
+ [...$('cur').options].forEach(o=>{const ok=ac.includes(o.value);o.disabled=!ok;o.hidden=!ok});
+ if(!ac.includes($('cur').value))$('cur').value=ac[0];
+ $('cur').disabled=ac.length<2;
+ const cur=$('cur').value;
+ if(cashOp)$('sym').value=cashSymOf(cur);
+ /* alanlar */
+ const dv=sd==='div',bo=sd==='bonus',ri=sd==='rights';
+ $('qty').parentElement.style.display=dv?'none':'';
+ $('prc').parentElement.style.display=(cashOp||bo)?'none':'';$('comm').parentElement.style.display=(cashOp||bo)?'none':'';
+ $('qtyL').textContent=cashOp?(sd==='cdep'?'Yatırılan tutar':sd==='cwd'?'Çekilen tutar':'Çıkan tutar')+' ('+cs(cur)+')':bo?'Gelen yeni hisse (adet)':ri?'Alınan yeni hisse (adet)':m==='Döviz'?'Miktar ('+symNow+')':'Adet';
+ $('prcL').textContent=dv?'Temettü tutarı (net)':ri?'Kullanım fiyatı (hisse başı)':m==='Döviz'?(sd==='sell'?'Satış kuru (₺)':'Alış kuru (₺)'):'Fiyat';
+ $('rateWrap').style.display=(bo||ri)?'':'none';$('rateL').textContent=bo?'Bedelsiz oranı (%)':'Bedelli oranı (%)';
+ $('convWrap').style.display=sd==='cconv'?'':'none';
+ if(sd==='cconv'){[...$('convTo').options].forEach(o=>{o.hidden=o.disabled=(o.value===cur)});if($('convTo').value===cur)$('convTo').value=['USD','TRY','EUR'].find(c=>c!==cur)}
+ $('cashRow').style.display=(!cashOp&&(sd==='buy'||sd==='sell'||dv||ri))?'':'none';
+ notesUI()}
+function notesUI(){
+ const sd=$('side').value,cashOp=sd==='cdep'||sd==='cwd'||sd==='cconv',m=$('mkt2').value,cur=$('cur').value,dt=$('dt').value,sym=normSym($('sym').value);
+ const bal=c=>{const a=calc(trades.filter(t=>t.id!==editing&&(!dt||t.date<=dt)))[cashSymOf(c)];return a?a.qty:0};
+ const q=parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0,cm=parseFloat($('comm').value)||0,chk=$('cashFlag').checked,cn=$('capNote'),mx=$('qtyMax');
+ mx.textContent='';
+ if(cashOp){cn.style.display='';const b=bal(cur);
+  if(sd==='cconv'){const to=$('convTo').value,tq=parseFloat($('convQty').value)||0,bt=bal(to);
+   let t='Mevcut '+cs(cur)+' nakit: '+fmt(b)+(q>0?' → '+fmt(b-q)+(q>b+1e-9?' ⚠ bakiyeden fazla':''):'')+'. '+cs(to)+' nakit: '+fmt(bt)+(tq>0?' → '+fmt(bt+tq):'')+'.';
+   if(q>0&&tq>0){const r=cur==='TRY'?q/tq:to==='TRY'?tq/q:q/tq;t+=' Kur: '+(cur==='TRY'?'1 '+cs(to)+' = '+fmt(r)+' ₺':to==='TRY'?'1 '+cs(cur)+' = '+fmt(r)+' ₺':'1 '+cs(to)+' = '+fmt(r)+' '+cs(cur))+'.'}
+   cn.textContent=t}
+  else cn.textContent='Mevcut '+cs(cur)+' nakit: '+fmt(b)+(q>0?' → '+fmt(sd==='cdep'?b+q:b-q)+(sd==='cwd'&&q>b+1e-9?' ⚠ bakiyeden fazla':''):'')+'. '+(sd==='cdep'?'Bankadan yatırım hesabına aktarılan para nakite eklenir.':'Hesaptan bankaya çekilen para nakitten düşer.');
+  return}
+ if(sd==='bonus'||sd==='rights'){cn.style.display='';capCalc(false)}else cn.style.display='none';
+ if(!(sd==='buy'||sd==='sell'||sd==='div'||sd==='rights'))return;
+ const buy=sd==='buy'||sd==='rights',amt=sd==='div'?p-cm:buy?q*p+cm:q*p-cm,b=bal(cur),unit=m==='Döviz'?(sym||'adet'):m==='Fon'?'adet':'Lot';
+ $('cashFlagL').textContent=(buy?'Nakitten düş':'Nakite ekle')+' ('+cs(cur)+' nakit hesabı)';
+ let t='Mevcut '+cs(cur)+' nakit: '+fmt(b);
+ if(chk&&amt>0){const after=buy?b-amt:b+amt;t+=' → '+fmt(Math.max(0,after));if(after<-1e-9)t+=' ⚠ nakit yetmiyor (eksik '+fmt(-after)+' '+cs(cur)+'); işlem kaydedilmez'}
+ if(!chk)t+=' · kutu kapalı: nakit hesabı etkilenmez (eski kayıtlar için)';
+ $('cashNote').textContent=t;
+ if(sd==='sell'&&sym)mx.textContent='Max: '+qf(heldAt(sym,dt))+' '+unit;
+ else if(sd==='buy'&&chk){if(p>0){const raw=Math.max(0,(b-cm)/p),mq=(m==='Fon'||m==='Döviz')?Math.floor(raw*1e4+1e-9)/1e4:Math.floor(raw+1e-9);mx.textContent='Alınabilir Max: '+qf(mq)+' '+unit+' ('+fmt(b)+' '+cs(cur)+' nakitle)'}else mx.textContent='Nakit: '+fmt(b)+' '+cs(cur)+' · fiyatı yazınca alınabilir Max adet görünür'}}
+function upTot(){const sd=$('side').value,q=parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0,cashOp=sd==='cdep'||sd==='cwd'||sd==='cconv';
+ const v=cashOp?q:sd==='div'?p:sd==='bonus'?0:q*p;$('tot').textContent=fmt(v)+' '+cs($('cur').value)}
+function resetForm(){editing=null;['qty','prc','comm','note','rate','convQty','sym'].forEach(i=>$(i).value='');$('formTitle').textContent='Yeni işlem';$('cashFlag').checked=true;$('add').textContent='Kaydet';$('cancel').style.display='none';formUI();upTot()}
 async function saveTrade(){
- const sd0=$('side').value,mkv=(sd0==='cdep'||sd0==='cwd')?'Nakit':$('mkt2').value,sdv=sd0==='cdep'?'buy':sd0==='cwd'?'sell':sd0,isDiv=sdv==='div',isBo=sdv==='bonus',isRi=sdv==='rights';
- let sym=$('sym').value.trim().toLocaleUpperCase('en').replace(/\s/g,''),qty=isDiv?1:parseFloat($('qty').value),price=parseFloat($('prc').value),comm=parseFloat($('comm').value)||0;const date=$('dt').value,cur=mkv==='ABD'||mkv==='Avrupa'||mkv==='Nakit'?$('cur').value:'TRY';
- if(mkv==='Nakit'){sym=cashSymOf(cur);price=1;comm=0}
+ const sd0=$('side').value,cashOp=sd0==='cdep'||sd0==='cwd'||sd0==='cconv',mkv=cashOp?'Nakit':$('mkt2').value,sdv=sd0==='cdep'?'buy':(sd0==='cwd'||sd0==='cconv')?'sell':sd0,isDiv=sdv==='div'&&!cashOp,isBo=sdv==='bonus',isRi=sdv==='rights';
+ const cur=$('cur').value;let sym=normSym($('sym').value),qty=isDiv?1:parseFloat($('qty').value),price=parseFloat($('prc').value),comm=parseFloat($('comm').value)||0;const date=$('dt').value;
+ if(cashOp){sym=cashSymOf(cur);price=1;comm=0}
  if(isBo){price=0;comm=0}
- if(mkv==='Döviz'&&!/^(USD|EUR)$/.test(sym))return msg('Döviz için kod USD ya da EUR seçmelisiniz',1);
- if(!/^[A-Z0-9._-]{1,12}$/.test(sym)||!(qty>0)||!(price>=0)||!date||comm<0||(isDiv&&!(price>0)))return msg('Bilgileri doğru giriniz',1);
- if((isBo||isRi)&&!(heldAt(sym,date)>0))return msg('Bedelsiz/bedelli için o tarihte hissenin elinde olması gerekir; önce alış kaydı ekle.',1);
  const old=editing&&trades.find(t=>t.id===editing);
+ if(!cashOp&&!curRule(mkv).includes(cur)&&!trades.some(x=>x.sym===sym&&x.id!==editing&&(x.cur||'TRY')===cur)&&!(old&&(old.cur||'TRY')===cur))return msg(mkl(mkv)+' işlemleri '+curRule(mkv).map(c=>cs(c)).join(' / ')+' ile yapılır.',1);
+ let conv=null;
+ if(sd0==='cconv'){const toC=$('convTo').value,tq=parseFloat($('convQty').value);if(toC===cur||!(tq>0))return msg('Hedef para birimini ve gelen tutarı doğru giriniz',1);conv={cur:toC,qty:tq}}
+ if(mkv==='Döviz'&&!/^(USD|EUR)$/.test(sym))return msg('Döviz için USD ya da EUR seçmelisiniz',1);
+ if(!/^[A-Z0-9._-]{1,12}$/.test(sym)||!(qty>0)||!(price>=0)||!date||comm<0||(isDiv&&!(price>0)))return msg('Bilgileri doğru giriniz',1);
+ if((isBo||isRi||isDiv)&&!(heldAt(sym,date)>0))return msg('Bu işlem için o tarihte hissenin elinde olması gerekir; önce alış kaydı ekle.',1);
  const t={kind:'trade',sym,cur,side:sdv,qty,price,comm,date,brk:$('brk').value.trim(),note:$('note').value.trim(),ts:old?old.ts:Date.now()};
  if((isBo||isRi)&&parseFloat($('rate').value)>0)t.rate=parseFloat($('rate').value);
- if($('cashFlag').checked&&(sdv==='buy'||sdv==='sell'||sdv==='rights'||sdv==='div')&&mkv!=='Nakit')t.cash=true;
- if(t.cash&&mkv==='Döviz'&&(sdv==='buy'||sdv==='sell'))t.fx=true;
+ if(conv)t.conv=conv;
+ if($('cashFlag').checked&&(sdv==='buy'||sdv==='sell'||isDiv||isRi)&&!cashOp)t.cash=true;
  const id=old?old.id:'t'+Date.now()+Math.random().toString(36).slice(2,6);
  const prev=trades.find(x=>x.sym===sym&&x.id!==id);
  if(prev&&(prev.cur||'TRY')!==cur)return msg(sym+' daha önce '+cs(prev.cur||'TRY')+' ile girilmiş; aynı hisse iki farklı para biriminde girilemez.',1);
- if(t.cash&&(sdv==='buy'||sdv==='rights')){const hk=mkv==='Döviz'?'NAKIT':cashSymOf(cur),once=calc(trades.filter(x=>x.id!==id&&(!date||x.date<=date))),a2=once[hk],bal=a2?a2.qty:0,need=qty*price+comm;
-  if(bal+1e-9<need)return msg('⚠ Yeterli '+(hk==='NAKIT'?'TL':hk==='NAKIT_USD'?'dolar':'euro')+' bakiyeniz yok — gerekli '+fmt(need)+' '+cs(mkv==='Döviz'?'TRY':cur)+', mevcut '+fmt(bal)+'. İşlem kaydedilmedi.',1)}
- if(t.cash&&sdv==='sell'&&mkv==='Döviz'){const once=calc(trades.filter(x=>x.id!==id&&(!date||x.date<=date))),a2=once[cashSymOf(sym)],bal=a2?a2.qty:0;
-  if(bal+1e-9<qty)return msg('⚠ Yeterli '+sym+' bakiyeniz yok — eldeki '+fmt(bal)+', satılacak '+fmt(qty)+'. İşlem kaydedilmedi.',1)}
  const next=trades.filter(x=>x.id!==id).concat({...t,id});
- if(calc(next)[sym]?.over)return msg(isCashSym(sym)?'Nakit bakiyenden fazla çekim yapamazsın':'Elinizdeki adetten fazla satış girdiniz',1);
- try{await S.set(id,t);if(mkv!==marketOf(sym,cur))await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:mkv});const cw=Object.values(calc(trades)).filter(x=>isCashSym(x.sym)&&x.def>0.005).map(x=>fmt(x.def)+' '+cs(x.cur)).join(', ');msg('Kaydedildi ✓'+(cw?' · ⚠ nakit hesabında açık var: '+cw+' (nakit eklenince kapanır)':''),!!cw&&false);resetForm();go('pf')}catch(e){msg('Kaydedilemedi: '+(e.message||e.code),1)}
+ if(!isCashSym(sym)&&calc(next)[sym]?.over)return msg('Elinizdeki adetten fazla satış girdiniz (Max: '+qf(heldAt(sym,date))+')',1);
+ const cN=calc(next);
+ if(cN[cashSymOf(cur)]?.over&&(cashOp||t.cash))return msg('Yetersiz nakit: '+cs(cur)+' hesabından bakiyeden fazla çıkış yapamazsın.',1);
+ if(t.cash&&(sdv==='buy'||isRi)){const k=cashSymOf(cur),b0=(calc(trades.filter(x=>x.id!==id))[k]||{}).def||0,b1=(cN[k]||{}).def||0;
+  if(b1>b0+0.005){const bal=((calc(trades.filter(x=>x.id!==id&&x.date<=date))[k])||{}).qty||0;
+   return msg('Yetersiz nakit: '+cs(cur)+' hesabında '+fmt(bal)+' var, işlem '+fmt(qty*price+comm)+' gerektiriyor (eksik '+fmt(b1-b0)+'). Önce “Nakit yatır” ya da “Nakit çevir” ekle; eski bir kayıt giriyorsan “Nakitten düş” kutusunu kaldır.',1)}}
+ try{await S.set(id,t);if(mkv!==marketOf(sym,cur))await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,market:mkv});msg('Kaydedildi ✓');resetForm();go('pf')}catch(e){msg('Kaydedilemedi: '+(e.message||e.code),1)}
 }
 function go(t){if(t!=='bak'&&typeof secClose==='function'&&secUntil)secClose();setTimeout(()=>{try{autoRefresh()}catch(e){}},200);document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));try{sessionStorage.setItem('portfoy_tab',t)}catch(e){}if(t==='news')setTimeout(()=>{if(!newsData&&!newsBusy)newsLoad()},80);else if(t==='kz')setTimeout(()=>{try{render()}catch(e){}},0)}
 
@@ -2128,7 +2151,7 @@ function renderChart(){
 
 function distData(open,dim){const m={};let tot=0;
  open.forEach(s=>{const f=fx(s.cur);if(!f)return;const p=priceOf(s),mm=mk(s);s.lots.forEach(l=>{const v=l.q*(p!=null?p:l.p)*f;tot+=v;
-  const k=dim==='Hisse'?(mm==='Nakit'?'Nakit':s.sym):dim==='Pazar'?MAD(mm):dim==='Sektör'?(meta[s.sym]&&meta[s.sym].sec||'Belirtilmemiş'):dim==='Kurum'?(l.b||'Belirtilmemiş'):(mm==='Döviz'?(s.sym==='USD'?'$ Dolar':'€ Euro'):s.cur==='TRY'?'₺ TL':s.cur==='USD'?'$ Dolar':'€ Euro');m[k]=(m[k]||0)+v})});
+  const k=dim==='Hisse'?(mm==='Nakit'?'Nakit':s.sym):dim==='Pazar'?mkl(mm):dim==='Sektör'?(meta[s.sym]&&meta[s.sym].sec||'Belirtilmemiş'):dim==='Kurum'?(l.b||'Belirtilmemiş'):(mm==='Döviz'?(s.sym==='USD'?'$ Dolar':'€ Euro'):s.cur==='TRY'?'₺ TL':s.cur==='USD'?'$ Dolar':'€ Euro');m[k]=(m[k]||0)+v})});
  let items=Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({k,v}));
  if(items.length>7){const rest=items.slice(7).reduce((a,x)=>a+x.v,0);items=items.slice(0,7).concat({k:'Diğer',v:rest})}
  return{items,tot}}
@@ -2189,11 +2212,11 @@ function renderStats(all){const el=$('rpA'),T=trades.filter(t=>!isCashSym(t.sym)
  h+=card('Açık pozisyonlar',kv('Pozisyon sayısı',vals.length)+kv('Kârda / zararda',`${open2.filter(x=>x.pl>0).length} / ${open2.filter(x=>x.pl<0).length}`)+kv('Ağırlıklı ort. süre',vals.length&&valTL?fmt(vals.reduce((a,x)=>a+x.age*x.v,0)/valTL)+' gün':'—')+kv('En uzun tutulan',vals.length?(()=>{const o=vals.reduce((a,b)=>b.age>a.age?b:a);return esc(o.sym)+' · '+o.age+' gün'})():'—')
   +kv('En iyi açık pozisyon',open2.length?(()=>{const o=open2.reduce((a,b)=>b.pl>a.pl?b:a);return esc(o.sym)+' '+pct(o.pl)})():'—','up')+kv('En kötü açık pozisyon',open2.length?(()=>{const o=open2.reduce((a,b)=>b.pl<a.pl?b:a);return esc(o.sym)+' '+pct(o.pl)})():'—','dn'));
  h+=card('Risk ve çeşitlendirme',kv('En büyük pozisyon payı',vals[0]?`${esc(vals[0].sym)} · %${fmt(top1)}`:'—')+kv('İlk 3 pozisyon payı','%'+fmt(top3))+kv('Etkin hisse sayısı',hhi?fmt(1/hhi):'—')+kv('Yabancı para payı',valTL?'%'+fmt(vals.filter(x=>['ABD','Avrupa'].includes(x.m)).reduce((a,x)=>a+x.v,0)/valTL*100):'—')+kv('Nakit + döviz payı',valTL?'%'+fmt(vals.filter(x=>['Nakit','Döviz'].includes(x.m)).reduce((a,x)=>a+x.v,0)/valTL*100):'—'));
- const sorted=[...rows].sort((a,b)=>b.total*b.f-a.total*a.f),top=a=>a.map(r=>kv(esc(r.sym)+' <span class="mk">'+r.m+'</span>',SD(r.total,r.cur)+' · '+pct(r.pp),cls(r.total))).join('');
+ const sorted=[...rows].sort((a,b)=>b.total*b.f-a.total*a.f),top=a=>a.map(r=>kv(esc(r.sym)+' <span class="mk">'+mkl(r.m)+'</span>',SD(r.total,r.cur)+' · '+pct(r.pp),cls(r.total))).join('');
  h+=card('En çok kazandıran 5 hisse',top(sorted.filter(r=>r.total*r.f>0).slice(0,5))||'<div class="mut sm">Yok</div>');
  h+=card('En çok kaybettiren 5 hisse',top([...sorted].reverse().filter(r=>r.total*r.f<0).slice(0,5))||'<div class="mut sm">Yok</div>');
  const M={};rows.forEach(r=>{(M[r.m]??={k:0,b:0});M[r.m].k+=r.total*r.f;M[r.m].b+=r.bought*r.f});
- h+=card('Pazara göre K/Z',Object.entries(M).sort((a,b)=>b[1].k-a[1].k).map(([m,o])=>kv(MAD(m),SD(o.k,'TRY')+' · '+pct(o.b?o.k/o.b*100:0),cls(o.k))).join(''));
+ h+=card('Pazara göre K/Z',Object.entries(M).sort((a,b)=>b[1].k-a[1].k).map(([m,o])=>kv(mkl(m),SD(o.k,'TRY')+' · '+pct(o.b?o.k/o.b*100:0),cls(o.k))).join(''));
  const B={};T.filter(isTrd).forEach(t=>{const k=t.brk||'Belirtilmemiş';(B[k]??={n:0,v:0,r:0});B[k].n++;B[k].v+=t.qty*t.price*F(t.cur)});P.forEach(p=>{const k=p.buyBrk||'Belirtilmemiş';(B[k]??={n:0,v:0,r:0});B[k].r+=p.pTL});
  h+=card('Kuruma göre',Object.entries(B).sort((a,b)=>b[1].v-a[1].v).map(([k,o])=>kv(esc(k),`${o.n} işlem · ${D(o.v,'TRY')}${o.r?' · '+SD(o.r,'TRY'):''}`)).join(''));
  const MO={};P.forEach(p=>{const k=p.date.slice(0,7);MO[k]=(MO[k]||0)+p.pTL});const mk12=Object.keys(MO).sort().slice(-12);
@@ -2208,7 +2231,7 @@ function renderStats(all){const el=$('rpA'),T=trades.filter(t=>!isCashSym(t.sym)
   else if(winRate<50&&avgW>Math.abs(avgL)*1.5)ins.push(`Kazanma oranın %${fmt(winRate)} ama ortalama kazancın zararından belirgin büyük. Kazananları taşıma disiplinin işe yarıyor.`)}
  if(W.length>=3&&L.length>=3){const hw=avg(W,'hold'),hl=avg(L,'hold');if(hl>hw*1.3)ins.push(`Zarardaki pozisyonları kazananlardan daha uzun tutuyorsun (${fmt(hl)} gün / ${fmt(hw)} gün).`);else if(hw>hl*1.3)ins.push(`Kazananları zararlılardan daha uzun tutuyorsun (${fmt(hw)} / ${fmt(hl)} gün).`)}
  if(top1>=30)ins.push(`Portföyünün %${fmt(top1)}'i tek bir hissede (${esc(vals[0].sym)}). Tek hisse riski yüksek.`);
- const mt={};vals.forEach(x=>mt[x.m]=(mt[x.m]||0)+x.v);const tm=Object.entries(mt).sort((a,b)=>b[1]-a[1])[0];if(tm&&valTL&&tm[1]/valTL>0.8)ins.push(`Portföyün %${fmt(tm[1]/valTL*100)}'i ${tm[0]} pazarında.`);
+ const mt={};vals.forEach(x=>mt[x.m]=(mt[x.m]||0)+x.v);const tm=Object.entries(mt).sort((a,b)=>b[1]-a[1])[0];if(tm&&valTL&&tm[1]/valTL>0.8)ins.push(`Portföyün %${fmt(tm[1]/valTL*100)}'i ${mkl(tm[0])} pazarında.`);
  if(vol(T.filter(isTrd))&&comm/vol(T.filter(isTrd))>0.003)ins.push(`Toplam komisyonun ${D(comm,'TRY')}; işlem hacminin %${fmt(comm/vol(T.filter(isTrd))*100)}'i. Sık işlem maliyeti artırıyor.`);
  if(sorted[0]&&sorted[0].total*sorted[0].f>0)ins.push(`En çok katkı veren: ${esc(sorted[0].sym)} (${SD(sorted[0].total,sorted[0].cur)}).`);
  if(sorted.length>1){const w=sorted[sorted.length-1];if(w.total*w.f<0)ins.push(`En çok kaybettiren: ${esc(w.sym)} (${SD(w.total,w.cur)}).`)}
@@ -2405,7 +2428,7 @@ async function saveYt(inp){const card=inp.closest('.card[data-card]');if(!card)r
   delete HIST[sym];try{localStorage.setItem('portfoy_hist',JSON.stringify(HIST))}catch(e){}
   msg('Kod kaydedildi ✓ geçmiş yenileniyor');setTimeout(()=>refresh(),400)}catch(e){msg('Kaydedilemedi',1)}}
 async function saveSector(box){const sym=box.dataset.box,v=box.querySelector('.sec').value.trim();try{if(v)await S.set('m_'+sym,{...(meta[sym]||{}),kind:'meta',sym,sec:v});else{const nm={...(meta[sym]||{})};delete nm.sec;const hasOther=Object.keys(nm).some(k=>k!=='kind'&&k!=='sym'&&k!=='upd');if(hasOther)await S.set('m_'+sym,{...nm,upd:Date.now()});else await S.del('m_'+sym)}msg('Sektör kaydedildi ✓');render()}catch(e){msg('Kaydedilemedi',1)}}
-function quick(side,sym){const s=calc(trades)[sym];if(!s)return;resetForm();$('side').value=side;$('mkt2').value=mk(s);$('cur').value=s.cur;sideUI();mktUI();if(mk(s)!=='Nakit')$('sym').value=sym;const p=priceOf(s);if(mk(s)!=='Nakit')$('prc').value=p??'';upTot();go('add')}
+function quick(side,sym){const s=calc(trades)[sym];if(!s)return;resetForm();$('side').value=side;$('mkt2').value=mk(s);$('cur').value=s.cur;if(mk(s)!=='Nakit')$('sym').value=sym;sideUI();const p=priceOf(s);if(mk(s)!=='Nakit')$('prc').value=p??'';sideUI();upTot();go('add')}
 /* ---------- PIN ve tema ---------- */
 const PK='portfoy_pin',V=window.__V,BIOSRV='portfoy.local';let recMode=false,secUntil=0,secTmr=null;
 async function hashPin(p,salt){const d=salt+':'+p;try{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(d));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}let h=5381;for(const c of d)h=((h<<5)+h+c.charCodeAt(0))|0;return'x'+h}
@@ -2459,13 +2482,14 @@ function setTheme(v){_ss('portfoy_theme',v||null);v?document.documentElement.set
 /* ---------- olaylar ---------- */
 $('nav').addEventListener('click',e=>{const b=e.target.closest?e.target.closest('button'):e.target;if(b&&b.dataset.tab){closeWin();go(b.dataset.tab);if(b.dataset.tab==='kap')kapOpen()}});
 $('sort').addEventListener('change',render);$('hs').addEventListener('change',renderHist);$('hside').addEventListener('change',renderHist);$('hq').addEventListener('input',renderHist);
-['qty','prc'].forEach(i=>$(i).addEventListener('input',upTot));$('rate').addEventListener('input',()=>capCalc(true));$('sym').addEventListener('input',()=>{capCalc(false);qtyHintUI();heldUI()});$('dt').addEventListener('change',()=>capCalc(false));$('cur').addEventListener('change',()=>{if($('mkt2').value==='Nakit')mktUI();else cashFlagUI();qtyHintUI();upTot()});
-$('side').addEventListener('change',()=>{const sd=$('side').value;if(sd==='cdep'||sd==='cwd'){$('mkt2').value='Nakit';if(!$('cur').value)$('cur').value='TRY'}sideUI();mktUI();upTot()});$('mkt2').addEventListener('change',()=>{const sd=$('side').value;if($('mkt2').value!=='Nakit'&&(sd==='cdep'||sd==='cwd'))$('side').value='buy';$('cur').value=MKCUR[$('mkt2').value];mktUI();upTot()});
-['qty','prc','comm'].forEach(i=>$(i).addEventListener('input',()=>{cashOpUI();cashFlagUI();qtyHintUI()}));$('cashFlag').addEventListener('change',()=>{cashFlagUI();qtyHintUI()});$('dt').addEventListener('change',()=>{cashOpUI();cashFlagUI();qtyHintUI()});$('sym').addEventListener('input',()=>{qtyHintUI();heldUI()});
-$('heldBtn').addEventListener('click',()=>{const m=$('mkt2').value,held=Object.values(calc(trades)).filter(s2=>s2.qty>1e-9&&!isCashSym(s2.sym)&&mk(s2)===m);
- if(!held.length)return msg('Bu pazarda elinde pozisyon yok',1);
- openWin('Elindekiler — '+MAD(m),held.map(s2=>'<button class="s" data-pick="'+esc(s2.sym)+'" data-cur="'+esc(s2.cur)+'" style="width:100%;text-align:left;margin-bottom:6px">'+esc(s2.sym)+' · '+qf(s2.qty)+' adet · '+cs(s2.cur)+'</button>').join(''))});
-document.getElementById('wb').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pick]');if(!b)return;$('sym').value=b.dataset.pick;if(b.dataset.cur)$('cur').value=b.dataset.cur;closeWin();mktUI();upTot()});
+['qty','prc','comm','convQty'].forEach(i=>$(i).addEventListener('input',()=>{upTot();notesUI()}));
+$('rate').addEventListener('input',()=>{capCalc(true);notesUI()});
+$('sym').addEventListener('input',()=>{const v=normSym($('sym').value),p=v&&trades.find(t=>t.sym===v&&!isCashSym(t.sym));if(p){const mm=marketOf(p.sym,p.cur||'TRY');if(MKALL[$('side').value]&&MKALL[$('side').value].includes(mm)){$('mkt2').value=mm;$('cur').value=p.cur||'TRY'}}formUI();capCalc(false)});
+$('symSel').addEventListener('change',()=>{$('sym').value=$('symSel').value;formUI();upTot()});
+$('dt').addEventListener('change',()=>{formUI();capCalc(false)});
+$('cur').addEventListener('change',()=>{formUI();upTot()});$('convTo').addEventListener('change',notesUI);$('cashFlag').addEventListener('change',notesUI);
+$('side').addEventListener('change',()=>{formUI();upTot()});
+$('mkt2').addEventListener('change',()=>{const sd=$('side').value;if(sd==='sell'||sd==='div'||sd==='bonus'||sd==='rights'||$('mkt2').value==='Döviz')$('sym').value='';$('cur').value=curRule($('mkt2').value)[0];formUI();upTot()});
 $('add').addEventListener('click',saveTrade);$('cancel').addEventListener('click',()=>{resetForm();go('his')});
 const onPx=async e=>{
  const sym=e.target.dataset&&e.target.dataset.sym;if(!sym)return;const v=parseFloat(e.target.value);
@@ -2499,7 +2523,7 @@ $('hist').addEventListener('click',async e=>{
   if(sym&&calc(next)[sym]?.over)return msg('Bu alış silinirse sonraki satışlar tutmaz; önce satışı sil.',1);
   try{const old=trades.find(t=>t.id===d.del),{id:_i,upd:_u,...o}=old;await S.del(d.del);msgUndo('Silindi.',()=>S.set(d.del,o))}catch(x){msg('Silinemedi',1)}}
  if(d.edit){const t=trades.find(x=>x.id===d.edit);if(!t)return;editing=t.id;
-  $('side').value=isCashSym(t.sym)?(t.side==='sell'?'cwd':'cdep'):t.side;$('cashFlag').checked=!!t.cash;$('mkt2').value=marketOf(t.sym,t.cur||'TRY');$('cur').value=t.cur||'TRY';$('dt').value=t.date;$('sym').value=t.sym;$('qty').value=t.qty;$('rate').value=t.rate||'';$('prc').value=t.price;$('comm').value=t.comm||'';$('brk').value=t.brk||'';$('note').value=t.note||'';
+  $('side').value=isCashSym(t.sym)?(t.conv?'cconv':t.side==='sell'?'cwd':'cdep'):t.side;if(t.conv){$('convTo').value=t.conv.cur;$('convQty').value=t.conv.qty}else $('convQty').value='';$('cashFlag').checked=!!t.cash;$('mkt2').value=marketOf(t.sym,t.cur||'TRY');$('cur').value=t.cur||'TRY';$('dt').value=t.date;$('sym').value=t.sym;$('qty').value=t.qty;$('rate').value=t.rate||'';$('prc').value=t.price;$('comm').value=t.comm||'';$('brk').value=t.brk||'';$('note').value=t.note||'';
   sideUI();mktUI();$('formTitle').textContent='İşlemi düzenle';$('add').textContent='Güncelle';$('cancel').style.display='block';upTot();go('add')}
 });
 $('seg').addEventListener('click',e=>{const v=e.target.dataset&&e.target.dataset.v;if(!v)return;document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.querySelectorAll('.sv').forEach(x=>x.classList.toggle('on',x.id===v));if(v==='mpv')try{renderMap()}catch(e){};if(v==='rkv')try{renderRisk()}catch(e){}});
