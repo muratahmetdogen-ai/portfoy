@@ -264,7 +264,7 @@ body.print-rp h3{color:#555}}
 </section>
 
 <section class="tab" id="t-bak">
- <h3>Görünüm</h3>
+ <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0">Görünüm</h3><span id="appVer" class="mut sm">v65</span></div>
  <div class="card set"><div class="sl"><span>Tema</span><div class="chp" id="themeSeg"><button data-t="light">Açık</button><button data-t="dark">Koyu</button><button data-t="" class="on">Otomatik</button></div></div></div>
  <h3>Güvenlik</h3>
  <div class="card set">
@@ -279,10 +279,6 @@ body.print-rp h3{color:#555}}
  <div><button class="s" id="secClose">🔒 Ayarları kapat</button></div>
   </div>
  </div>
- <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v64</b></div>
- <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
- <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
  <div class="card">
   <ol class="sm mut" style="padding-left:18px;margin:0 0 10px">
@@ -1549,7 +1545,7 @@ function anBg(){const v=(document.querySelector('#t-kz .sv.on')||{}).id;try{
  if(v==='tav'||v==='smv'){if(taOn)bgHist(true)}
  else if(v==='rkv'){Promise.all([benchEnsure().catch(()=>false),fxhEnsure().catch(()=>false)]).then(()=>{if($('rkv').classList.contains('on'))renderRisk()}).catch(()=>{})}
  else if(v==='chv')renderChart()}catch(e){}}
-/* ---------- tarama + simülasyon (v64) ---------- */
+/* ---------- tarama + simülasyon (v65) ---------- */
 let SIMC=(()=>{try{return Object.assign({H:20,K:2,R:2},JSON.parse(localStorage.getItem('portfoy_simc')||'{}'))}catch(e){return{H:20,K:2,R:2}}})(),SIMSEL='';
 function mul32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function seedOf(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -1597,12 +1593,13 @@ function fanSvg(q){const w=320,h=150,pl=4,pr=4,pt=8,pb=16,H=q[0].length-1,mn=Mat
 function renderSim(){const el=$('smv');if(!el)return;
  if(!taOn){el.innerHTML='<div class="card empty">Teknik analiz kapalı.<br>Ayarlar’dan açabilirsin.</div>';return}
  const rows=[];for(const s of Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!isCashSym(s.sym))){const H=HIST[s.sym],p=priceOf(s);if(H&&H.c&&H.c.length>=35&&p>0)rows.push({s,H,p})}
- if(!rows.length){el.innerHTML='<div class="card empty">Geçmiş veri yok. Aşağı çekip yenile; teknik geçmiş inince burada görünür.</div>';return}
+ if(!rows.length){el.innerHTML=msHTML()+'<div class="card empty">Elinde taranacak geçmişi inmiş hisse yok.</div>';msBind(el);return}
+ if(0){el.innerHTML='<div class="card empty">Geçmiş veri yok. Aşağı çekip yenile; teknik geçmiş inince burada görünür.</div>';return}
  const day=today(),opt=(a,v)=>a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join(''),
  chip=t=>`<span style="display:inline-block;margin:2px 4px 0 0;padding:2px 8px;border-radius:99px;background:var(--bd);font-size:11.5px">${esc(t)}</span>`;
  let sc='';for(const r of rows){const tags=scanSym(r.H.c),pv=prices[r.s.sym]&&prices[r.s.sym].prev,mv=pv>0?r.p/pv-1:0;if(Math.abs(mv)>=0.03)tags.push('HAREKETLİ '+pct(mv*100));
  if(tags.length)sc+=`<div style="padding:6px 0;border-top:1px solid var(--bd)"><b>${esc(r.s.sym)}</b> <span class="mut sm">${esc(mk(r.s))}</span><div>${tags.map(chip).join('')}</div></div>`}
- let h=`<div class="card"><b>🔎 Otomatik tarama</b> <span class="mut sm">(portföydeki ${rows.length} hisse · BIST/ABD/Avrupa)</span>${sc||'<div class="mut sm" style="margin-top:6px">Şu an bir setup yok.</div>'}</div>`;
+ let h=msHTML()+`<div class="card"><b>🔎 Elimdekiler</b> <span class="mut sm">(portföydeki ${rows.length} hisse · BIST/ABD/Avrupa)</span>${sc||'<div class="mut sm" style="margin-top:6px">Şu an bir setup yok.</div>'}</div>`;
  const out=rows.map(r=>({r,m:simSym(r.H,r.p,SIMC,seedOf(r.s.sym+day)),b:backSym(r.H,SIMC)})).filter(x=>x.m);
  if(!SIMSEL||!out.some(x=>x.r.s.sym===SIMSEL))SIMSEL=out.length?out[0].r.s.sym:'';
  h+=`<div class="card"><b>🎲 Simülasyon ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <select data-k="H">${opt([10,20,40],SIMC.H)}</select></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5,2,3],SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1.5,2,3],SIMC.R)}</select></label></div><div class="mut sm" style="margin-top:6px">Geçmiş 1 yıllık günlük hareketlerden 1000 rastgele senaryo. Her gün önce stop, sonra hedef kontrol edilir.</div></div>`;
@@ -1614,8 +1611,53 @@ function renderSim(){const el=$('smv');if(!el)return;
   h+=`<div class="card"><div class="row"><b>📈 Kapanış aralığı (fan)</b><select id="simSel">${out.map(x=>`<option${x.r.s.sym===SIMSEL?' selected':''}>${esc(x.r.s.sym)}</option>`).join('')}</select></div>${fanSvg(f.fq)}<div class="mut sm">Koyu bant 25–75%, açık bant 5–95%, çizgi medyan.</div></div>`}
  h+=`<div class="card"><b>🎯 Hedef / stop olasılığı ve geri-test</b>`+out.map(({r,m,b})=>{const P=x=>pct((x/r.p-1)*100);
   return`<div style="padding:7px 0;border-top:1px solid var(--bd)"><b>${esc(r.s.sym)}</b> <span class="mut sm">stop ${fmt(m.stop)} · hedef ${fmt(m.tgt)}</span><div class="sm">🎯 %${fmt(m.pT*100)} · 🛑 %${fmt(m.pS*100)} · ⏳ %${fmt(m.pN*100)} · ort. R ${sg(m.avgR)}</div><div class="mut sm">Kapanış 5–95%: ${P(m.q5)} … ${P(m.q95)}</div><div class="mut sm">${b?`Geri-test (${b.m} deneme): 🎯 %${fmt(b.w*100)} · 🛑 %${fmt(b.s*100)} · ort. R ${sg(b.avgR)}`:'Geri-test için yeterli veri yok'}</div></div>`}).join('')+`<div class="mut sm" style="margin-top:6px">Bootstrap senaryosudur, tahmin değildir; haber, bilanço ve gap modellenmez.</div></div>`;
- el.innerHTML=h;
+ el.innerHTML=h;msBind(el);
  el.onchange=e=>{const t=e.target;if(t.dataset&&t.dataset.k){SIMC[t.dataset.k]=+t.value;try{localStorage.setItem('portfoy_simc',JSON.stringify(SIMC))}catch(x){}renderSim()}else if(t.id==='simSel'){SIMSEL=t.value;renderSim()}}}
+/* ---------- piyasa taraması (v65) ---------- */
+const MS_BIST=('AKBNK GARAN ISCTR YKBNK HALKB VAKBN TSKB SKBNK ALBRK QNBTR THYAO PGSUS TAVHL TUPRS PETKM AKSEN ENJSA ZOREN ODAS AYDEM AKENR EUPWR GWIND ASTOR KONTR SMRTG CWENE ALFAS YEOTK EREGL KRDMD ISDMR SASA HEKTS KORDS BRISA GOODY TTRAK FROTO TOASO ARCLK VESTL VESBE OTKAR KARSN DOAS ASELS ALTNY SDTTR BIMAS MGROS SOKM CCOLA AEFES ULKER TATGD PNSUT PETUN BANVT KCHOL SAHOL DOHOL ECILC TKFEN ENKAI TCELL TTKOM TURSG AKGRT ANSGR AGESA SISE TRKCM ANACM CIMSA OYAKC AKCNS BTCIM NUHCM GUBRF KLSER EKGYO ISGYO TRGYO ALGYO OZKGY HLGYO SNGYO ASUZU AGHOL ADEL AKFGY AKSA ALARK ALKIM ARDYZ ARENA AYGAZ BAGFS BERA BIENY BIOEN BJKAS BOBET BRSAN BRYAT BUCIM CANTE CEMTS CLEBI CMENT DEVA DGNMO DOCO ECZYT EGEEN EGGUB ENERY ERBOS FENER FLAP GENIL GENTS GESAN GLYHO GSDHO GSRAY HATEK IHLAS IMASM INDES INFO INVEO ISGSY ISMEN IZMDC JANTS KAREL KARTN KATMR KAYSE KCAER KERVT KMPUR KNFRT KONYA KOZAL KOZAA KRSTL KUTPO LIDER LINK LOGO MAVI MEDTR MIATK MPARK NATEN NETAS NTHOL ORGE OYLUM PAPIL PARSN PENGD PRKME QUAGR REEDR RGYAS RYGYO SANEL SARKY SAYAS SELEC SELVA SKTAS SMART SNICA SOKE TATEN TBORG TEZOL TKNSA TMSN TRILC TSGYO TUKAS TURGG ULUUN UNLU USAK VAKKO VERUS YATAS YYLGD ZEDUR').split(' ').map(x=>x+'.IS');
+const MS_EU='SAP.DE SIE.DE ALV.DE DTE.DE AIR.DE MBG.DE BMW.DE VOW3.DE BAS.DE BAYN.DE ADS.DE MUV2.DE DBK.DE IFX.DE DHL.DE RWE.DE EOAN.DE HEN3.DE CON.DE FRE.DE HEI.DE MRK.DE SHL.DE ZAL.DE PUM.DE RHM.DE ENR.DE VNA.DE BEI.DE QIA.DE DB1.DE P911.DE SY1.DE MC.PA OR.PA TTE.PA SAN.PA SU.PA AI.PA BNP.PA CS.PA EL.PA RMS.PA KER.PA DG.PA SGO.PA GLE.PA ACA.PA CAP.PA ORA.PA STLAP.PA RI.PA SAF.PA DSY.PA VIE.PA ENGI.PA LR.PA PUB.PA ML.PA HO.PA ASML.AS PRX.AS INGA.AS AD.AS HEIA.AS PHIA.AS WKL.AS ADYEN.AS NN.AS ASM.AS KPN.AS REN.AS AKZA.AS DSFIR.AS IMCD.AS BESI.AS MT.AS SAN.MC BBVA.MC ITX.MC IBE.MC TEF.MC REP.MC CABK.MC AMS.MC FER.MC ELE.MC GRF.MC ENEL.MI ISP.MI UCG.MI ENI.MI STLAM.MI G.MI RACE.MI PRY.MI MONC.MI LDO.MI TRN.MI SRG.MI AMP.MI BAMI.MI NESN.SW ROG.SW NOVN.SW UBSG.SW ZURN.SW ABBN.SW CFR.SW SREN.SW LONN.SW GIVN.SW SIKA.SW HOLN.SW SHEL.L AZN.L HSBA.L ULVR.L BP.L GSK.L RIO.L DGE.L BATS.L LSEG.L REL.L BARC.L LLOY.L NWG.L VOD.L GLEN.L BA.L RR.L TSCO.L STAN.L AAL.L NOVO-B.CO VOLV-B.ST ERIC-B.ST ATCO-A.ST EQNR.OL KBC.BR UCB.BR ABI.BR'.split(' ');
+let MS=(()=>{let r=null;try{r=JSON.parse(localStorage.getItem('portfoy_mscan')||'null')}catch(e){}return{run:false,stop:false,txt:'',res:(r&&r.res)||[],at:(r&&r.at)||0,sel:Object.assign({BIST:1,ABD:1,AVR:1},(r&&r.sel)||{})}})();
+const msTag=s=>/\.IS$/.test(s)?'BIST':s.includes('.')?'Avrupa':'ABD';
+function msSave(){try{localStorage.setItem('portfoy_mscan',JSON.stringify({at:MS.at,res:MS.res,sel:MS.sel}))}catch(e){}}
+function msUpd(){const e=$('msP');if(e)e.textContent=MS.txt}
+async function msUS(){let u=null;try{u=JSON.parse(localStorage.getItem('portfoy_usuni')||'null')}catch(e){}
+ if(u&&Date.now()-u.t<7*864e5&&u.s.length>500)return u.s;
+ const out=new Set(),bad=/\b(warrants?|units?|rights?|notes?|preferred|debentures?|etn)\b|%/i,ok=/common stock|ordinary shares|\bads\b|\badr\b|american depositary|beneficial interest/i;
+ for(const f of['nasdaqlisted.txt','otherlisted.txt']){let txt=null;
+  for(const ti of[HPX,0,1,2,3,4].filter((v,i,a)=>a.indexOf(v)===i)){try{const t=await getText(YTR[ti]('https://www.nasdaqtrader.com/dynamic/SymDir/'+f),30000);if(t&&t.includes('|')){txt=t;break}}catch(e){}}
+  if(!txt)continue;const L=txt.split(/\r?\n/),hd=L.find(x=>/Security Name/.test(x));if(!hd)continue;const H=hd.split('|'),iN=H.indexOf('Security Name'),iT=H.indexOf('Test Issue'),iE=H.indexOf('ETF');
+  for(const ln of L){const p=ln.split('|');if(p.length<5||ln===hd)continue;const s=p[0];if(!/^[A-Z]{1,5}$/.test(s)||p[iT]==='Y'||p[iE]==='Y')continue;const n=p[iN]||'';if(bad.test(n)||!ok.test(n))continue;out.add(s)}}
+ const a=[...out];if(a.length>500)try{localStorage.setItem('portfoy_usuni',JSON.stringify({t:Date.now(),s:a}))}catch(e){}return a}
+async function msSpark(b){const j=await yJSON('https://query1.finance.yahoo.com/v7/finance/spark?symbols='+b.join(',')+'&range=6mo&interval=1d'),out={};
+ for(const it of(j.spark&&j.spark.result)||[]){const r=(it.response||[])[0];if(!r)continue;const q=((r.indicators||{}).quote||[{}])[0]||{},c=(q.close||[]).filter(x=>x>0);if(c.length>=35)out[it.symbol]={c,m:r.meta||{}}}return out}
+async function msRun(){if(MS.run)return;MS.run=true;MS.stop=false;MS.txt='Evren hazırlanıyor…';renderSim();
+ try{const syms=[];if(MS.sel.BIST)syms.push(...new Set([...MS_BIST,...Object.keys(SYMAP).filter(k=>/^[A-Z0-9]{3,6}$/.test(k)).map(k=>k+'.IS')]));if(MS.sel.AVR)syms.push(...MS_EU);
+  if(MS.sel.ABD){try{syms.push(...await msUS())}catch(e){}}
+  if(!syms.length)throw new Error('evren listesi alınamadı');
+  const bt=[];for(let i=0;i<syms.length;i+=20)bt.push(syms.slice(i,i+20));let k=0,fail=0,hits=[];
+  const w1=async()=>{while(!MS.stop){const b=bt[k++];if(!b)break;
+   try{const d=await msSpark(b);for(const s in d){const x=d[s],c=x.c,L=c.length-1,pr=x.m.regularMarketPrice||c[L],tg=msTag(s),vol=x.m.regularMarketVolume||0;
+    if(tg==='ABD'&&(pr<5||vol<1e6))continue;const sig=scanSym(c);if(!sig.length)continue;const m50=maAt(c,L,50);
+    hits.push({s,tg,sg:sig,sc:sig.length*2+(m50&&c[L]>m50?1:0),pr,chg:(c[L]/c[L-1]-1)*100,dv:pr*vol})}}catch(e){fail++}
+   MS.txt='Taranıyor '+Math.min(k,bt.length)+'/'+bt.length+' · '+hits.length+' sinyal';msUpd()}};
+  await Promise.all([1,2,3,4].map(w1));
+  if(fail>=bt.length)throw new Error('Yahoo kaynağına ulaşılamadı');
+  hits.sort((a,b)=>b.sc-a.sc||b.dv-a.dv);const top=hits.slice(0,30),day=today();let j=0,n2=0;
+  const w2=async()=>{while(!MS.stop){const r=top[j++];if(!r)break;
+   try{const H=await _histFetch(r.s);if(H){r.m=simSym(H,r.pr,SIMC,seedOf(r.s+day));r.b=backSym(H,SIMC);if(r.m)r.m.fq=null}}catch(e){}
+   n2++;MS.txt='Analiz ediliyor '+n2+'/'+top.length;msUpd()}};
+  await Promise.all([1,2,3].map(w2));
+  top.forEach(r=>{r.puan=r.sc+(r.m?2*r.m.avgR:0)+(r.b?r.b.avgR:0)});top.sort((a,b)=>b.puan-a.puan);
+  MS.res=top;MS.at=Date.now();msSave();MS.txt=(MS.stop?'Durduruldu · ':'')+hits.length+' sinyal bulundu, en iyi '+top.length+' gösteriliyor'}
+ catch(e){MS.txt='Tarama başarısız: '+(e.message||e)}
+ MS.run=false;renderSim()}
+function msHTML(){const chip=t=>`<span style="display:inline-block;margin:2px 4px 0 0;padding:2px 8px;border-radius:99px;background:var(--bd);font-size:11.5px">${esc(t)}</span>`;
+ const sel=['BIST','ABD','AVR'].map(k=>`<button data-ms="${k}" class="${MS.sel[k]?'on':''}">${k==='AVR'?'Avrupa':k}</button>`).join('');
+ const list=MS.res.map(r=>`<div style="padding:7px 0;border-top:1px solid var(--bd)"><div class="row"><b>${esc(r.s.replace('.IS',''))}</b><span class="mut sm">${r.tg} · ${fmt(r.pr)} · ${pct(r.chg)}</span></div><div>${r.sg.map(chip).join('')}</div>${r.m?`<div class="sm">🎯 %${fmt(r.m.pT*100)} · 🛑 %${fmt(r.m.pS*100)} · ort. R ${sg(r.m.avgR)} · stop ${fmt(r.m.stop)} · hedef ${fmt(r.m.tgt)}</div>`:''}<div class="mut sm">${r.b?`Geri-test (${r.b.m} deneme): 🎯 %${fmt(r.b.w*100)} · 🛑 %${fmt(r.b.s*100)} · ort. R ${sg(r.b.avgR)}`:'Geri-test için yeterli veri yok'}</div></div>`).join('');
+ return`<div class="card"><b>🌍 Piyasa taraması</b><div class="seg" style="margin-top:8px">${sel}</div><div class="btns"><button class="s" data-msrun="1">${MS.run?'■ Durdur':'▶ Tüm piyasayı tara'}</button></div><div class="mut sm" id="msP" style="margin-top:6px">${esc(MS.txt||(MS.at?'Son tarama '+dts(MS.at):'Henüz taranmadı. ABD ~1500 hisse, BIST ~250, Avrupa ~140; birkaç dakika sürebilir.'))}</div>${list}${MS.res.length?'<div class="mut sm" style="margin-top:6px">Puan = setup sayısı + trend + simülasyon/geri-test ort. R. Gün içinde çalıştırırsan son bar anlıktır; kesin sinyal için kapanıştan sonra tara.</div>':''}</div>`}
+function msBind(el){el.onclick=e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;
+ if(b.dataset.ms){MS.sel[b.dataset.ms]=MS.sel[b.dataset.ms]?0:1;msSave();renderSim()}
+ else if(b.dataset.msrun){if(MS.run){MS.stop=true;MS.txt='Durduruluyor…';msUpd()}else msRun()}}}
 /* ---------- teknik analiz motoru ---------- */
 function histAdjust(){let ch=false;
  for(const sym of Object.keys(HIST)){const H=HIST[sym],p=prices[sym];
@@ -2672,13 +2714,6 @@ $('secOpen').addEventListener('click',secOpen);$('secClose').addEventListener('c
 $('lwipe').addEventListener('click',async()=>{if(prompt('Telefondaki TÜM veri silinecek (GitHub yedeği silinmez). Onaylamak için SIL yaz:')==='SIL'){try{const p=bioPlugin();if(p)await p.deleteCredentials({server:BIOSRV})}catch(e){}V.wipe();location.reload()}});
 $('lforgot').addEventListener('click',()=>{if(V.on()){recMode=!recMode;recUI();return}if(prompt('Kilidi kaldırmak için SIFIRLA yaz (veriler silinmez):')==='SIFIRLA'){try{localStorage.removeItem(PK)}catch(e){}document.documentElement.classList.remove('locked');updatePinUI();afterUnlock()}});
 $('themeSeg').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.t!=null)setTheme(e.target.dataset.t)});
-$('updBtn').addEventListener('click',async()=>{const r=window.__swReg;
- if(IS_NATIVE)return msg('Uygulama güncellemesi yeni APK ile gelir (GitHub → Releases).');
- if(!r)return msg('Güncelleme kontrolü bu açılış modunda yok.',1);
- msg('Kontrol ediliyor…');window.__updFound=false;
- try{await r.update()}catch(e){}
- setTimeout(()=>{if(window.__updFound||window.__reloaded)msg('Yeni sürüm indirildi — sayfa yenileniyor...');
-  else msg('Uygulama güncel ✓ (GitHub tarafı 1-10 dk gecikebilir; birkaç dakika sonra tekrar dene)')},2500)});
 $('taTgl').addEventListener('click',()=>{taOn=!taOn;_ss('portfoy_ta',taOn?'1':'0');taSettingsUI();SIGS=[];render();msg(taOn?'Teknik analiz açık ✓':'Teknik analiz kapatıldı')});
 ['taHi','taLo','taVol'].forEach(id=>$(id).addEventListener('change',()=>{const v=parseFloat($(id).value);if(!(v>0))return;TA_CONF[id==='taHi'?'rsiHi':id==='taLo'?'rsiLo':'vol']=v;_ss('portfoy_tac',JSON.stringify(TA_CONF));render()}));
 $('taRef').addEventListener('click',async()=>{const b=$('taRef');if(b.disabled)return;if(!navigator.onLine)return msg('Çevrimdışısınız — geçmiş yenilenemedi.',1);
