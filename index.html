@@ -264,7 +264,7 @@ body.print-rp h3{color:#555}}
 </section>
 
 <section class="tab" id="t-bak">
- <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0">Görünüm</h3><span id="appVer" class="mut sm">v65</span></div>
+ <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0">Görünüm</h3><span id="appVer" class="mut sm">v66</span></div>
  <div class="card set"><div class="sl"><span>Tema</span><div class="chp" id="themeSeg"><button data-t="light">Açık</button><button data-t="dark">Koyu</button><button data-t="" class="on">Otomatik</button></div></div></div>
  <h3>Güvenlik</h3>
  <div class="card set">
@@ -1545,8 +1545,8 @@ function anBg(){const v=(document.querySelector('#t-kz .sv.on')||{}).id;try{
  if(v==='tav'||v==='smv'){if(taOn)bgHist(true)}
  else if(v==='rkv'){Promise.all([benchEnsure().catch(()=>false),fxhEnsure().catch(()=>false)]).then(()=>{if($('rkv').classList.contains('on'))renderRisk()}).catch(()=>{})}
  else if(v==='chv')renderChart()}catch(e){}}
-/* ---------- tarama + simülasyon (v65) ---------- */
-let SIMC=(()=>{try{return Object.assign({H:20,K:2,R:2},JSON.parse(localStorage.getItem('portfoy_simc')||'{}'))}catch(e){return{H:20,K:2,R:2}}})(),SIMSEL='';
+/* ---------- tarama + simülasyon (v66) ---------- */
+let SIMC=(()=>{try{return Object.assign({H:20,K:2,R:1.5},JSON.parse(localStorage.getItem('portfoy_simc2')||'{}'))}catch(e){return{H:20,K:2,R:1.5}}})(),SIMSEL='';
 function mul32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function seedOf(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function hlOf(H){const c=H.c;return{h:(H.h||c).map((x,i)=>x>0?x:c[i]),l:(H.l||c).map((x,i)=>x>0?x:c[i])}}
@@ -1590,34 +1590,39 @@ function fanSvg(q){const w=320,h=150,pl=4,pr=4,pt=8,pb=16,H=q[0].length-1,mn=Mat
  poly=(a,b)=>{let p='';for(let i=0;i<=H;i++)p+=(i?'L':'M')+X(i).toFixed(1)+','+Y(a[i]).toFixed(1);for(let i=H;i>=0;i--)p+='L'+X(i).toFixed(1)+','+Y(b[i]).toFixed(1);return p+'Z'},
  line=a=>a.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(''),tx=(x,y,t,an)=>`<text x="${x}" y="${y}" font-size="10" fill="var(--mut)"${an?' text-anchor="end"':''}>${t}</text>`;
  return`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto"><path d="${poly(q[0],q[4])}" fill="var(--ac)" opacity=".15"/><path d="${poly(q[1],q[3])}" fill="var(--ac)" opacity=".28"/><path d="${line(q[2])}" fill="none" stroke="var(--ac)" stroke-width="2"/>${tx(pl,pt+8,fmt(mx))}${tx(pl,h-pb-3,fmt(mn))}${tx(pl,h-3,'bugün')}${tx(w-pr,h-3,H+'. gün',1)}</svg>`}
+function backSig(H,cfg,names){const c=H.c,n=c.length,{h,l}=hlOf(H);let w=0,s=0,t=0,sr=0;
+ for(let i=35;i+cfg.H<n;i++){if(!scanSym(c.slice(0,i+1)).some(x=>names.includes(x)))continue;const a=atrAt(h,l,c,i);if(!(a>0))continue;const e=c[i],st=e-cfg.K*a,tg=e+cfg.R*cfg.K*a;let r=null;
+  for(let j=i+1;j<=i+cfg.H;j++){if(l[j]<=st){r=-1;s++;break}if(h[j]>=tg){r=cfg.R;w++;break}}
+  if(r==null){t++;r=(c[i+cfg.H]-e)/(cfg.K*a)}sr+=r}
+ const m=w+s+t;return m>=3?{w:w/m,s:s/m,t:t/m,avgR:sr/m,m}:null}
+function simCfgHTML(){const opt=(a,v)=>a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
+ return`<div class="card"><b>⚙️ Analiz ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <select data-k="H">${opt([10,20,40],SIMC.H)}</select></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5,2,3],SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1,1.5,2,3],SIMC.R)}</select></label></div><div class="mut sm" style="margin-top:6px">Stop = fiyat − günlük oynaklık×katsayı. Hedef = stop mesafesinin R katı. Ayarı değiştirince taramayı yeniden çalıştır.</div></div>`}
+function msCard(r){const m=r.m,b=r.b,P=x=>pct((x/r.pr-1)*100),ex=(m.q50/r.pr-1)*100,o=MS.open===r.s,nm=esc(r.s.replace(/\.IS$/,'').replace(/-USD$/,''));
+ return`<div class="card msc" data-k="${esc(r.s)}" style="padding:10px 12px;cursor:pointer"><div class="row"><div><b>${nm}</b> <b>${esc(r.tg)}</b> <b>${fmt(r.pr)}</b> <b>${pct(r.chg)}</b></div><b style="color:#10b981">%${Math.round(m.pT*100)}</b></div>
+<div class="msd" style="display:${o?'block':'none'};margin-top:8px;font-size:14px;line-height:1.65">
+<div>Hedef fiyata varma oranı: <b>%${Math.round(m.pT*100)}</b></div><div>Önce stopa değme oranı: <b>%${Math.round(m.pS*100)}</b></div><div>İkisine de varmadan vade bitme ihtimali: <b>%${Math.round(m.pN*100)}</b></div>
+<div>Tahmin: <b>${pct(ex)} ${ex>=0?'yükselme':'düşüş'} beklentisi</b> (${SIMC.H} gün)</div>
+<div>Geri test: ${b?`bu sinyal geçmişte ${b.m} kez çıkmış, %${Math.round(b.w*100)} hedefe, %${Math.round(b.s*100)} stopa varmış`:(r.sg.length?'yeterli geçmiş sinyal yok':'şu an sinyal yok')}</div>
+<div class="mut sm" style="margin-top:4px">Sinyal: ${r.sg.length?esc(r.sg.join(', ')):'yok'} · Stop ${fmt(m.stop)} · Hedef ${fmt(m.tgt)} · Ort. R ${sg(m.avgR)} · Vade sonu 5–95%: ${P(m.q5)} … ${P(m.q95)}</div></div></div>`}
 function renderSim(){const el=$('smv');if(!el)return;
  if(!taOn){el.innerHTML='<div class="card empty">Teknik analiz kapalı.<br>Ayarlar’dan açabilirsin.</div>';return}
  const rows=[];for(const s of Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!isCashSym(s.sym))){const H=HIST[s.sym],p=priceOf(s);if(H&&H.c&&H.c.length>=35&&p>0)rows.push({s,H,p})}
- if(!rows.length){el.innerHTML=msHTML()+'<div class="card empty">Elinde taranacak geçmişi inmiş hisse yok.</div>';msBind(el);return}
- if(0){el.innerHTML='<div class="card empty">Geçmiş veri yok. Aşağı çekip yenile; teknik geçmiş inince burada görünür.</div>';return}
- const day=today(),opt=(a,v)=>a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join(''),
- chip=t=>`<span style="display:inline-block;margin:2px 4px 0 0;padding:2px 8px;border-radius:99px;background:var(--bd);font-size:11.5px">${esc(t)}</span>`;
- let sc='';for(const r of rows){const tags=scanSym(r.H.c),pv=prices[r.s.sym]&&prices[r.s.sym].prev,mv=pv>0?r.p/pv-1:0;if(Math.abs(mv)>=0.03)tags.push('HAREKETLİ '+pct(mv*100));
- if(tags.length)sc+=`<div style="padding:6px 0;border-top:1px solid var(--bd)"><b>${esc(r.s.sym)}</b> <span class="mut sm">${esc(mk(r.s))}</span><div>${tags.map(chip).join('')}</div></div>`}
- let h=msHTML()+`<div class="card"><b>🔎 Elimdekiler</b> <span class="mut sm">(portföydeki ${rows.length} hisse · BIST/ABD/Avrupa)</span>${sc||'<div class="mut sm" style="margin-top:6px">Şu an bir setup yok.</div>'}</div>`;
- const out=rows.map(r=>({r,m:simSym(r.H,r.p,SIMC,seedOf(r.s.sym+day)),b:backSym(r.H,SIMC)})).filter(x=>x.m);
- if(!SIMSEL||!out.some(x=>x.r.s.sym===SIMSEL))SIMSEL=out.length?out[0].r.s.sym:'';
- h+=`<div class="card"><b>🎲 Simülasyon ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <select data-k="H">${opt([10,20,40],SIMC.H)}</select></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5,2,3],SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1.5,2,3],SIMC.R)}</select></label></div><div class="mut sm" style="margin-top:6px">Geçmiş 1 yıllık günlük hareketlerden 1000 rastgele senaryo. Her gün önce stop, sonra hedef kontrol edilir.</div></div>`;
+ const day=today(),mine=[];
+ for(const r of rows){const m=simSym(r.H,r.p,SIMC,seedOf(r.s.sym+day));if(!m)continue;const tags=scanSym(r.H.c),pv=prices[r.s.sym]&&prices[r.s.sym].prev;
+  mine.push({s:r.s.sym,tg:mk(r.s),sg:tags,pr:r.p,chg:pv>0?(r.p/pv-1)*100:0,m,b:tags.length?backSig(r.H,SIMC,tags):null})}
+ mine.sort((a,b)=>b.m.pT-a.m.pT);
+ let h=msHTML();
+ h+=mine.length?`<div class="card"><b>📂 Elimdekiler</b><div class="mut sm">Aynı hesap, portföyündeki hisseler için (hedefe varma oranına göre).</div></div>`+mine.map(msCard).join(''):'<div class="card empty">Elindeki hisseler için geçmiş veri henüz inmedi.</div>';
  const ps=portSim(rows,SIMC,seedOf('PORT'+day));
- if(ps){const[a,b,c,d,e]=ps.fq.map(x=>x[x.length-1]),pc=v=>pct((v/ps.V0-1)*100);
-  h+=`<div class="card"><b>💼 Tüm portföy · ${SIMC.H} gün sonra</b><div class="sm" style="margin-top:4px">Medyan ${fmt(c)} ₺ (${pc(c)}) · 5–95%: ${pc(a)} … ${pc(e)}</div><div class="sm">Zarar olasılığı %${fmt(ps.pL*100)} · %10’dan fazla kayıp %${fmt(ps.pL10*100)}</div>${fanSvg(ps.fq)}<div class="mut sm">Günlük hareketler ortak tarihlerden çekilir (korelasyon korunur). Kur etkisi dahil değil.</div></div>`}
- const sel=out.find(x=>x.r.s.sym===SIMSEL);
- if(sel){const f=simSym(sel.r.H,sel.r.p,SIMC,seedOf(sel.r.s.sym+day),true);
-  h+=`<div class="card"><div class="row"><b>📈 Kapanış aralığı (fan)</b><select id="simSel">${out.map(x=>`<option${x.r.s.sym===SIMSEL?' selected':''}>${esc(x.r.s.sym)}</option>`).join('')}</select></div>${fanSvg(f.fq)}<div class="mut sm">Koyu bant 25–75%, açık bant 5–95%, çizgi medyan.</div></div>`}
- h+=`<div class="card"><b>🎯 Hedef / stop olasılığı ve geri-test</b>`+out.map(({r,m,b})=>{const P=x=>pct((x/r.p-1)*100);
-  return`<div style="padding:7px 0;border-top:1px solid var(--bd)"><b>${esc(r.s.sym)}</b> <span class="mut sm">stop ${fmt(m.stop)} · hedef ${fmt(m.tgt)}</span><div class="sm">🎯 %${fmt(m.pT*100)} · 🛑 %${fmt(m.pS*100)} · ⏳ %${fmt(m.pN*100)} · ort. R ${sg(m.avgR)}</div><div class="mut sm">Kapanış 5–95%: ${P(m.q5)} … ${P(m.q95)}</div><div class="mut sm">${b?`Geri-test (${b.m} deneme): 🎯 %${fmt(b.w*100)} · 🛑 %${fmt(b.s*100)} · ort. R ${sg(b.avgR)}`:'Geri-test için yeterli veri yok'}</div></div>`}).join('')+`<div class="mut sm" style="margin-top:6px">Bootstrap senaryosudur, tahmin değildir; haber, bilanço ve gap modellenmez.</div></div>`;
- el.innerHTML=h;msBind(el);
- el.onchange=e=>{const t=e.target;if(t.dataset&&t.dataset.k){SIMC[t.dataset.k]=+t.value;try{localStorage.setItem('portfoy_simc',JSON.stringify(SIMC))}catch(x){}renderSim()}else if(t.id==='simSel'){SIMSEL=t.value;renderSim()}}}
-/* ---------- piyasa taraması (v65) ---------- */
+ if(ps){const[a,,c,,e]=ps.fq.map(x=>x[x.length-1]),pc=v=>pct((v/ps.V0-1)*100);
+  h+=`<div class="card"><b>💼 Tüm portföy · ${SIMC.H} gün sonra</b><div class="sm" style="margin-top:4px">Tahmin: medyan ${pc(c)} (olası aralık ${pc(a)} … ${pc(e)})</div><div class="sm">Zarar ihtimali: %${Math.round(ps.pL*100)}</div>${fanSvg(ps.fq)}<div class="mut sm">Kur etkisi dahil değil.</div></div>`}
+ el.innerHTML=h;msBind(el)}
+/* ---------- piyasa taraması (v66) ---------- */
 const MS_BIST=('AKBNK GARAN ISCTR YKBNK HALKB VAKBN TSKB SKBNK ALBRK QNBTR THYAO PGSUS TAVHL TUPRS PETKM AKSEN ENJSA ZOREN ODAS AYDEM AKENR EUPWR GWIND ASTOR KONTR SMRTG CWENE ALFAS YEOTK EREGL KRDMD ISDMR SASA HEKTS KORDS BRISA GOODY TTRAK FROTO TOASO ARCLK VESTL VESBE OTKAR KARSN DOAS ASELS ALTNY SDTTR BIMAS MGROS SOKM CCOLA AEFES ULKER TATGD PNSUT PETUN BANVT KCHOL SAHOL DOHOL ECILC TKFEN ENKAI TCELL TTKOM TURSG AKGRT ANSGR AGESA SISE TRKCM ANACM CIMSA OYAKC AKCNS BTCIM NUHCM GUBRF KLSER EKGYO ISGYO TRGYO ALGYO OZKGY HLGYO SNGYO ASUZU AGHOL ADEL AKFGY AKSA ALARK ALKIM ARDYZ ARENA AYGAZ BAGFS BERA BIENY BIOEN BJKAS BOBET BRSAN BRYAT BUCIM CANTE CEMTS CLEBI CMENT DEVA DGNMO DOCO ECZYT EGEEN EGGUB ENERY ERBOS FENER FLAP GENIL GENTS GESAN GLYHO GSDHO GSRAY HATEK IHLAS IMASM INDES INFO INVEO ISGSY ISMEN IZMDC JANTS KAREL KARTN KATMR KAYSE KCAER KERVT KMPUR KNFRT KONYA KOZAL KOZAA KRSTL KUTPO LIDER LINK LOGO MAVI MEDTR MIATK MPARK NATEN NETAS NTHOL ORGE OYLUM PAPIL PARSN PENGD PRKME QUAGR REEDR RGYAS RYGYO SANEL SARKY SAYAS SELEC SELVA SKTAS SMART SNICA SOKE TATEN TBORG TEZOL TKNSA TMSN TRILC TSGYO TUKAS TURGG ULUUN UNLU USAK VAKKO VERUS YATAS YYLGD ZEDUR').split(' ').map(x=>x+'.IS');
 const MS_EU='SAP.DE SIE.DE ALV.DE DTE.DE AIR.DE MBG.DE BMW.DE VOW3.DE BAS.DE BAYN.DE ADS.DE MUV2.DE DBK.DE IFX.DE DHL.DE RWE.DE EOAN.DE HEN3.DE CON.DE FRE.DE HEI.DE MRK.DE SHL.DE ZAL.DE PUM.DE RHM.DE ENR.DE VNA.DE BEI.DE QIA.DE DB1.DE P911.DE SY1.DE MC.PA OR.PA TTE.PA SAN.PA SU.PA AI.PA BNP.PA CS.PA EL.PA RMS.PA KER.PA DG.PA SGO.PA GLE.PA ACA.PA CAP.PA ORA.PA STLAP.PA RI.PA SAF.PA DSY.PA VIE.PA ENGI.PA LR.PA PUB.PA ML.PA HO.PA ASML.AS PRX.AS INGA.AS AD.AS HEIA.AS PHIA.AS WKL.AS ADYEN.AS NN.AS ASM.AS KPN.AS REN.AS AKZA.AS DSFIR.AS IMCD.AS BESI.AS MT.AS SAN.MC BBVA.MC ITX.MC IBE.MC TEF.MC REP.MC CABK.MC AMS.MC FER.MC ELE.MC GRF.MC ENEL.MI ISP.MI UCG.MI ENI.MI STLAM.MI G.MI RACE.MI PRY.MI MONC.MI LDO.MI TRN.MI SRG.MI AMP.MI BAMI.MI NESN.SW ROG.SW NOVN.SW UBSG.SW ZURN.SW ABBN.SW CFR.SW SREN.SW LONN.SW GIVN.SW SIKA.SW HOLN.SW SHEL.L AZN.L HSBA.L ULVR.L BP.L GSK.L RIO.L DGE.L BATS.L LSEG.L REL.L BARC.L LLOY.L NWG.L VOD.L GLEN.L BA.L RR.L TSCO.L STAN.L AAL.L NOVO-B.CO VOLV-B.ST ERIC-B.ST ATCO-A.ST EQNR.OL KBC.BR UCB.BR ABI.BR'.split(' ');
-let MS=(()=>{let r=null;try{r=JSON.parse(localStorage.getItem('portfoy_mscan')||'null')}catch(e){}return{run:false,stop:false,txt:'',res:(r&&r.res)||[],at:(r&&r.at)||0,sel:Object.assign({BIST:1,ABD:1,AVR:1},(r&&r.sel)||{})}})();
-const msTag=s=>/\.IS$/.test(s)?'BIST':s.includes('.')?'Avrupa':'ABD';
+let MS=(()=>{let r=null;try{r=JSON.parse(localStorage.getItem('portfoy_mscan')||'null')}catch(e){}return{run:false,stop:false,txt:'',res:(r&&r.res)||[],at:(r&&r.at)||0,sel:Object.assign({BIST:1,ABD:1,AVR:1,KRIPTO:1},(r&&r.sel)||{})}})();
+const MS_CR=('BTC ETH BNB XRP SOL ADA DOGE TRX AVAX LINK DOT LTC BCH ATOM XLM ETC NEAR UNI APT ARB OP INJ SUI HBAR FIL ICP AAVE ALGO VET SAND MANA GRT RUNE IMX STX TIA SEI TON XMR EOS FTM THETA AXS FLOW CHZ KAS PEPE SHIB').split(' ').map(x=>x+'-USD');
+const msTag=s=>/-USD$/.test(s)?'Kripto':/\.IS$/.test(s)?'BIST':s.includes('.')?'Avrupa':'ABD';
 function msSave(){try{localStorage.setItem('portfoy_mscan',JSON.stringify({at:MS.at,res:MS.res,sel:MS.sel}))}catch(e){}}
 function msUpd(){const e=$('msP');if(e)e.textContent=MS.txt}
 async function msUS(){let u=null;try{u=JSON.parse(localStorage.getItem('portfoy_usuni')||'null')}catch(e){}
@@ -1631,7 +1636,7 @@ async function msUS(){let u=null;try{u=JSON.parse(localStorage.getItem('portfoy_
 async function msSpark(b){const j=await yJSON('https://query1.finance.yahoo.com/v7/finance/spark?symbols='+b.join(',')+'&range=6mo&interval=1d'),out={};
  for(const it of(j.spark&&j.spark.result)||[]){const r=(it.response||[])[0];if(!r)continue;const q=((r.indicators||{}).quote||[{}])[0]||{},c=(q.close||[]).filter(x=>x>0);if(c.length>=35)out[it.symbol]={c,m:r.meta||{}}}return out}
 async function msRun(){if(MS.run)return;MS.run=true;MS.stop=false;MS.txt='Evren hazırlanıyor…';renderSim();
- try{const syms=[];if(MS.sel.BIST)syms.push(...new Set([...MS_BIST,...Object.keys(SYMAP).filter(k=>/^[A-Z0-9]{3,6}$/.test(k)).map(k=>k+'.IS')]));if(MS.sel.AVR)syms.push(...MS_EU);
+ try{const syms=[];if(MS.sel.BIST)syms.push(...new Set([...MS_BIST,...Object.keys(SYMAP).filter(k=>/^[A-Z0-9]{3,6}$/.test(k)).map(k=>k+'.IS')]));if(MS.sel.AVR)syms.push(...MS_EU);if(MS.sel.KRIPTO)syms.push(...MS_CR);
   if(MS.sel.ABD){try{syms.push(...await msUS())}catch(e){}}
   if(!syms.length)throw new Error('evren listesi alınamadı');
   const bt=[];for(let i=0;i<syms.length;i+=20)bt.push(syms.slice(i,i+20));let k=0,fail=0,hits=[];
@@ -1642,20 +1647,19 @@ async function msRun(){if(MS.run)return;MS.run=true;MS.stop=false;MS.txt='Evren 
    MS.txt='Taranıyor '+Math.min(k,bt.length)+'/'+bt.length+' · '+hits.length+' sinyal';msUpd()}};
   await Promise.all([1,2,3,4].map(w1));
   if(fail>=bt.length)throw new Error('Yahoo kaynağına ulaşılamadı');
-  hits.sort((a,b)=>b.sc-a.sc||b.dv-a.dv);const top=hits.slice(0,30),day=today();let j=0,n2=0;
+  hits.sort((a,b)=>b.sc-a.sc||b.dv-a.dv);const top=hits.slice(0,40),day=today();let j=0,n2=0;
   const w2=async()=>{while(!MS.stop){const r=top[j++];if(!r)break;
-   try{const H=await _histFetch(r.s);if(H){r.m=simSym(H,r.pr,SIMC,seedOf(r.s+day));r.b=backSym(H,SIMC);if(r.m)r.m.fq=null}}catch(e){}
+   try{const H=await _histFetch(r.s);if(H){r.m=simSym(H,r.pr,SIMC,seedOf(r.s+day));r.b=backSig(H,SIMC,r.sg);if(r.m)r.m.fq=null}}catch(e){}
    n2++;MS.txt='Analiz ediliyor '+n2+'/'+top.length;msUpd()}};
   await Promise.all([1,2,3].map(w2));
-  top.forEach(r=>{r.puan=r.sc+(r.m?2*r.m.avgR:0)+(r.b?r.b.avgR:0)});top.sort((a,b)=>b.puan-a.puan);
-  MS.res=top;MS.at=Date.now();msSave();MS.txt=(MS.stop?'Durduruldu · ':'')+hits.length+' sinyal bulundu, en iyi '+top.length+' gösteriliyor'}
+  const keep=top.filter(r=>r.m&&r.m.avgR>0).sort((a,b)=>b.m.pT-a.m.pT);
+  MS.res=keep;MS.at=Date.now();msSave();MS.txt=(MS.stop?'Durduruldu · ':'')+hits.length+' sinyal, '+keep.length+' tanesi +R (artı beklentili)'}
  catch(e){MS.txt='Tarama başarısız: '+(e.message||e)}
  MS.run=false;renderSim()}
-function msHTML(){const chip=t=>`<span style="display:inline-block;margin:2px 4px 0 0;padding:2px 8px;border-radius:99px;background:var(--bd);font-size:11.5px">${esc(t)}</span>`;
- const sel=['BIST','ABD','AVR'].map(k=>`<button data-ms="${k}" class="${MS.sel[k]?'on':''}">${k==='AVR'?'Avrupa':k}</button>`).join('');
- const list=MS.res.map(r=>`<div style="padding:7px 0;border-top:1px solid var(--bd)"><div class="row"><b>${esc(r.s.replace('.IS',''))}</b><span class="mut sm">${r.tg} · ${fmt(r.pr)} · ${pct(r.chg)}</span></div><div>${r.sg.map(chip).join('')}</div>${r.m?`<div class="sm">🎯 %${fmt(r.m.pT*100)} · 🛑 %${fmt(r.m.pS*100)} · ort. R ${sg(r.m.avgR)} · stop ${fmt(r.m.stop)} · hedef ${fmt(r.m.tgt)}</div>`:''}<div class="mut sm">${r.b?`Geri-test (${r.b.m} deneme): 🎯 %${fmt(r.b.w*100)} · 🛑 %${fmt(r.b.s*100)} · ort. R ${sg(r.b.avgR)}`:'Geri-test için yeterli veri yok'}</div></div>`).join('');
- return`<div class="card"><b>🌍 Piyasa taraması</b><div class="seg" style="margin-top:8px">${sel}</div><div class="btns"><button class="s" data-msrun="1">${MS.run?'■ Durdur':'▶ Tüm piyasayı tara'}</button></div><div class="mut sm" id="msP" style="margin-top:6px">${esc(MS.txt||(MS.at?'Son tarama '+dts(MS.at):'Henüz taranmadı. ABD ~1500 hisse, BIST ~250, Avrupa ~140; birkaç dakika sürebilir.'))}</div>${list}${MS.res.length?'<div class="mut sm" style="margin-top:6px">Puan = setup sayısı + trend + simülasyon/geri-test ort. R. Gün içinde çalıştırırsan son bar anlıktır; kesin sinyal için kapanıştan sonra tara.</div>':''}</div>`}
-function msBind(el){el.onclick=e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;
+function msHTML(){const sel=['BIST','ABD','AVR','KRIPTO'].map(k=>`<button data-ms="${k}" class="${MS.sel[k]?'on':''}">${k==='AVR'?'Avrupa':k==='KRIPTO'?'Kripto':k}</button>`).join('');
+ return simCfgHTML()+`<div class="card"><b>🌍 Piyasa taraması</b><div class="seg" style="margin-top:8px">${sel}</div><div class="btns"><button class="s" data-msrun="1">${MS.run?'■ Durdur':'▶ Tüm piyasayı tara'}</button></div><div class="mut sm" id="msP" style="margin-top:6px">${esc(MS.txt||(MS.at?'Son tarama '+dts(MS.at):'Henüz taranmadı. Birkaç dakika sürebilir.'))}</div><div class="mut sm" style="margin-top:4px">Sadece artı beklentili (+R) sinyaller, hedefe varma oranı yüksekten düşüğe sıralı. Karta dokununca ayrıntı açılır. Gün içinde son bar anlıktır; kesin sinyal için kapanıştan sonra tara.</div></div>`+MS.res.map(msCard).join('')}
+function msBind(el){el.onchange=e=>{const t=e.target;if(t.dataset&&t.dataset.k){SIMC[t.dataset.k]=+t.value;try{localStorage.setItem('portfoy_simc2',JSON.stringify(SIMC))}catch(x){}renderSim()}};
+ el.onclick=e=>{const cd=e.target.closest&&e.target.closest('.msc');if(cd){const d=cd.querySelector('.msd'),o=d.style.display==='none';d.style.display=o?'block':'none';MS.open=o?cd.dataset.k:'';return}const b=e.target.closest&&e.target.closest('button');if(!b)return;
  if(b.dataset.ms){MS.sel[b.dataset.ms]=MS.sel[b.dataset.ms]?0:1;msSave();renderSim()}
  else if(b.dataset.msrun){if(MS.run){MS.stop=true;MS.txt='Durduruluyor…';msUpd()}else msRun()}}}
 /* ---------- teknik analiz motoru ---------- */
