@@ -239,7 +239,7 @@ body.print-rp h3{color:#555}}
 <section class="tab" id="t-add">
  <h3 id="formTitle">Yeni işlem</h3>
  <div class="card"><div class="g2">
-  <div><label>İşlem</label><select id="side"><option value="buy">Alış</option><option value="sell">Satış</option><option value="div">Temettü</option><option value="bonus">Bedelsiz sermaye artırımı</option><option value="rights">Bedelli sermaye artırımı</option><option value="cdep">Nakit yatır (bankadan → hesaba)</option><option value="cwd">Nakit çek (hesaptan → bankaya)</option><option value="cconv">Nakit çevir (ör. TL → Dolar)</option></select></div>
+  <div><label>İşlem</label><select id="side"><option value="buy">Alış</option><option value="sell">Satış</option><option value="div">Temettü</option><option value="bonus">Bedelsiz sermaye artırımı</option><option value="rights">Bedelli sermaye artırımı</option><option value="cdep">Nakit yatır (bankadan → hesaba)</option><option value="cwd">Nakit çek (hesaptan → bankaya)</option></select></div>
   <div><label>Tarih</label><input id="dt" type="date"></div>
   <div class="full"><label>Pazar</label><select id="mkt2"><option value="BIST">BIST</option><option value="ABD">ABD Borsası</option><option value="Avrupa">Avrupa Borsası</option><option value="Fon">Fon</option><option value="Döviz">Döviz</option><option value="Nakit" hidden>Nakit</option></select></div>
   <div><label id="symL">Hisse Kodu</label><input id="sym" list="heldList" placeholder="HISSE" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"><select id="symSel" style="display:none"></select><datalist id="heldList"></datalist></div>
@@ -252,7 +252,7 @@ body.print-rp h3{color:#555}}
   <div><label>Komisyon</label><input id="comm" type="number" inputmode="decimal" step="any" placeholder="0"></div>
   <div><label>Aracı Kurum</label><input id="brk" placeholder="Midas"></div>
   <div class="full"><label>Not</label><input id="note" placeholder="İsteğe bağlı"></div>
-  <div class="full" id="cashRow" style="display:none"><label style="display:flex;gap:8px;align-items:center;color:var(--tx);font-size:14px;margin:0"><input type="checkbox" id="cashFlag" checked style="width:auto;flex:none"><span id="cashFlagL">Nakitten düş</span></label><div class="mut sm" id="cashNote" style="margin-top:4px"></div></div>
+  <div class="full" id="cashRow" style="display:none"><label style="display:none"><input type="checkbox" id="cashFlag" checked style="width:auto;flex:none"><span id="cashFlagL">Nakitten düş</span></label><div class="mut sm" id="cashNote" style="margin-top:4px"></div></div>
  </div>
  <div class="row" style="margin-top:12px"><span class="mut">Toplam Tutar</span><b id="tot">0,00 ₺</b></div>
  <div class="btns"><button id="add">Kaydet</button><button class="s" id="cancel" style="display:none">Vazgeç</button></div></div>
@@ -280,7 +280,7 @@ body.print-rp h3{color:#555}}
   </div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v61</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v62</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -398,7 +398,7 @@ function apply(m){
  Object.entries(m).forEach(([id,x])=>{if(!x)return;
   if(x.kind==='trade')trades.push({...x,id});else if(x.kind==='price'&&x.price!=null)prices[x.sym]=x;
   else if(x.kind==='snap')snaps.push(x);else if(x.kind==='meta')meta[x.sym]=x;else if(x.kind==='goal')goals[x.sym]=x});
- snaps.sort((a,b)=>a.date.localeCompare(b.date));render();
+ snaps.sort((a,b)=>a.date.localeCompare(b.date));if(RH>0){RP=true;return}render();
 }
 let mt;function msg(t,bad){const m=$('msg');m.textContent=t||'';m.className=bad?'err':'ok';m.style.display=t?'block':'none';clearTimeout(mt);if(t)mt=setTimeout(()=>{m.style.display='none'},bad?9000:5000)}
 
@@ -448,7 +448,7 @@ function render(){
  ${sm.missing?`<div style="font-size:12px;opacity:.85;margin-top:10px">⚠ ${sm.missing} pozisyonda güncel fiyat yok, maliyet değeriyle sayıldı.</div>`:''}${sm.nofx.size?`<div style="font-size:12px;opacity:.85;margin-top:6px">⚠ ${[...sm.nofx].map(c=>c==='USD'?'Dolar':'Euro').join(' ve ')} kuru yok, o pozisyonlar toplama katılmadı.</div>`:''}
  <div class="hnote">NOT: Fiyatlar 15 dakika gecikmeli gelmektedir.</div>${HLH}${heroErr()}`;
  document.querySelectorAll('#kmode button').forEach(b=>b.classList.toggle('on',b.dataset.m===kmode));
- renderMkt();renderKz(all);renderChart();renderDist(open);renderTa(open);renderReport(all);renderStats(all);renderKap();
+ renderMkt();renderKz(all);if(chartVisible())renderChart();else CHART_DIRTY=true;renderDist(open);renderTa(open);renderReport(all);renderStats(all);renderKap();
   try{const d=today(),log=(()=>{try{return JSON.parse(localStorage.getItem('portfoy_siglog')||'[]')}catch(e){return[]}})();
   const rec={d,s:SIGS.map(x=>({sym:x.sym,sev:x.sev,txt:x.txt}))},ix=log.findIndex(x=>x.d===d);
   if(ix>=0)log[ix]=rec;else{log.push(rec);while(log.length>7)log.shift()}
@@ -561,6 +561,8 @@ const MKLAB={BIST:'BIST',ABD:'ABD Borsası',Avrupa:'Avrupa Borsası',Fon:'Fon',D
 const MKALL={buy:['BIST','ABD','Avrupa','Fon','Döviz'],sell:['BIST','ABD','Avrupa','Fon','Döviz'],div:['BIST','ABD','Avrupa'],bonus:['BIST','ABD','Avrupa'],rights:['BIST','ABD','Avrupa']};
 function curRule(m){return m==='ABD'?['USD']:m==='Avrupa'?['EUR']:m==='Fon'?['TRY','USD','EUR']:['TRY']}
 function heldList(m){return Object.values(calc(trades.filter(t=>t.id!==editing))).filter(s=>s.qty>1e-9&&!isCashSym(s.sym)&&mk(s)===m).sort((a,b)=>a.sym.localeCompare(b.sym))}
+function cashStart(){let m=null;for(const t of trades){if(!isCashSym(t.sym)||t.id===editing)continue;if(m==null||t.date<m)m=t.date}return m||today()}
+const cashOn=d=>!!d&&d>=cashStart();
 const normSym=v=>String(v||'').trim().toLocaleUpperCase('en').replace(/\s/g,'');
 let FUI=false;
 function formUI(){if(FUI)return;FUI=true;try{_formUI()}catch(e){try{console.error(e)}catch(x){}}FUI=false}
@@ -575,13 +577,13 @@ function _formUI(){
  if(!cashOp&&isCashSym($('sym').value))$('sym').value='';
  if(sm){let opts;
   if(m==='Döviz')opts=[['USD','USD · Dolar'],['EUR','EUR · Euro']];
-  else{opts=heldList(m).map(s=>[s.sym,s.sym+' · '+qf(s.qty)+(m==='Fon'?' adet':' lot')]);if(old&&!isCashSym(old.sym)&&!opts.some(o=>o[0]===old.sym)&&marketOf(old.sym,old.cur||'TRY')===m)opts.push([old.sym,old.sym])}
+  else{opts=heldList(m).map(s=>[s.sym,s.sym]);if(old&&!isCashSym(old.sym)&&!opts.some(o=>o[0]===old.sym)&&marketOf(old.sym,old.cur||'TRY')===m)opts.push([old.sym,old.sym])}
   ss.innerHTML=opts.length?opts.map(o=>`<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(''):'<option value="">(bu pazarda elinde yok)</option>';
   const want=normSym($('sym').value);ss.value=opts.some(o=>o[0]===want)?want:(opts[0]?opts[0][0]:'');
   $('sym').value=ss.value;ss.style.display='';$('sym').style.display='none'}
  else{ss.style.display='none';$('sym').style.display='';$('sym').readOnly=false;
   $('heldList').innerHTML=Object.values(calc(trades)).filter(s=>s.qty>1e-9&&!isCashSym(s.sym)).map(s=>`<option value="${esc(s.sym)}">`).join('')}
- $('symL').textContent=m==='Döviz'&&!cashOp?'Döviz cinsi':sm?'Hisse Kodu (seç)':'Hisse Kodu';
+ $('symL').textContent=m==='Döviz'&&!cashOp?'Döviz cinsi':'Hisse Kodu';
  /* para birimi */
  const symNow=cashOp?'':normSym($('sym').value);
  let ac=cashOp?['TRY','USD','EUR']:curRule(m);
@@ -607,7 +609,8 @@ function _formUI(){
 function notesUI(){
  const sd=$('side').value,cashOp=sd==='cdep'||sd==='cwd'||sd==='cconv',m=$('mkt2').value,cur=$('cur').value,dt=$('dt').value,sym=normSym($('sym').value);
  const bal=c=>{const a=calc(trades.filter(t=>t.id!==editing&&(!dt||t.date<=dt)))[cashSymOf(c)];return a?a.qty:0};
- const q=parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0,cm=parseFloat($('comm').value)||0,chk=$('cashFlag').checked,cn=$('capNote'),mx=$('qtyMax');
+ const q=parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0,cm=parseFloat($('comm').value)||0,chk=editing?$('cashFlag').checked:cashOn(dt),cn=$('capNote'),mx=$('qtyMax');
+ if(!editing)$('cashFlag').checked=chk;
  mx.textContent='';
  if(cashOp){cn.style.display='';const b=bal(cur);
   if(sd==='cconv'){const to=$('convTo').value,tq=parseFloat($('convQty').value)||0,bt=bal(to);
@@ -619,16 +622,15 @@ function notesUI(){
  if(sd==='bonus'||sd==='rights'){cn.style.display='';capCalc(false)}else cn.style.display='none';
  if(!(sd==='buy'||sd==='sell'||sd==='div'||sd==='rights'))return;
  const buy=sd==='buy'||sd==='rights',amt=sd==='div'?p-cm:buy?q*p+cm:q*p-cm,b=bal(cur),unit=m==='Döviz'?(sym||'adet'):m==='Fon'?'adet':'Lot';
- $('cashFlagL').textContent=(buy?'Nakitten düş':'Nakite ekle')+' ('+cs(cur)+' nakit hesabı)';
- let t='Mevcut '+cs(cur)+' nakit: '+fmt(b);
+  let t='Mevcut '+cs(cur)+' nakit: '+fmt(b);
  if(chk&&amt>0){const after=buy?b-amt:b+amt;t+=' → '+fmt(Math.max(0,after));if(after<-1e-9)t+=' ⚠ nakit yetmiyor (eksik '+fmt(-after)+' '+cs(cur)+'); işlem kaydedilmez'}
- if(!chk)t+=' · kutu kapalı: nakit hesabı etkilenmez (eski kayıtlar için)';
+ if(!chk)t='Bu işlem nakit hesabına işlenmez (nakit takibinden önceki kayıt).';
  $('cashNote').textContent=t;
  if(sd==='sell'&&sym)mx.textContent='Max: '+qf(heldAt(sym,dt))+' '+unit;
- else if(sd==='buy'&&chk){if(p>0){const raw=Math.max(0,(b-cm)/p),mq=(m==='Fon'||m==='Döviz')?Math.floor(raw*1e4+1e-9)/1e4:Math.floor(raw+1e-9);mx.textContent='Alınabilir Max: '+qf(mq)+' '+unit+' ('+fmt(b)+' '+cs(cur)+' nakitle)'}else mx.textContent='Nakit: '+fmt(b)+' '+cs(cur)+' · fiyatı yazınca alınabilir Max adet görünür'}}
+ else if(sd==='buy'&&chk){if(p>0){const raw=Math.max(0,(b-cm)/p),mq=(m==='Fon'||m==='Döviz')?Math.floor(raw*1e4+1e-9)/1e4:Math.floor(raw+1e-9);mx.textContent='Alınabilir Max: '+qf(mq)+' '+unit}}}
 function upTot(){const sd=$('side').value,q=parseFloat($('qty').value)||0,p=parseFloat($('prc').value)||0,cashOp=sd==='cdep'||sd==='cwd'||sd==='cconv';
  const v=cashOp?q:sd==='div'?p:sd==='bonus'?0:q*p;$('tot').textContent=fmt(v)+' '+cs($('cur').value)}
-function resetForm(){editing=null;['qty','prc','comm','note','rate','convQty','sym'].forEach(i=>$(i).value='');$('formTitle').textContent='Yeni işlem';$('cashFlag').checked=true;$('add').textContent='Kaydet';$('cancel').style.display='none';formUI();upTot()}
+function resetForm(){editing=null;['qty','prc','comm','note','rate','convQty','sym'].forEach(i=>$(i).value='');$('formTitle').textContent='Yeni işlem';$('add').textContent='Kaydet';$('cancel').style.display='none';formUI();upTot()}
 async function saveTrade(){
  const sd0=$('side').value,cashOp=sd0==='cdep'||sd0==='cwd'||sd0==='cconv',mkv=cashOp?'Nakit':$('mkt2').value,sdv=sd0==='cdep'?'buy':(sd0==='cwd'||sd0==='cconv')?'sell':sd0,isDiv=sdv==='div'&&!cashOp,isBo=sdv==='bonus',isRi=sdv==='rights';
  const cur=$('cur').value;let sym=normSym($('sym').value),qty=isDiv?1:parseFloat($('qty').value),price=parseFloat($('prc').value),comm=parseFloat($('comm').value)||0;const date=$('dt').value;
@@ -1341,7 +1343,8 @@ function evImpact(ti){const t=(ti||'').toLowerCase();
  if(/petrol|crude|stok/.test(t))return'Enerji fiyatlarını etkiler; enflasyon zinciri üzerinden piyasaya taşınır.';
  if(/güven|confidence|sentiment/.test(t))return'Güven göstergesi risk iştahının habercisidir; tek başına etkisi sınırlıdır.';
  return'Beklenti ile önceki değer arasındaki fark, kısa vadeli hareketi belirler.'}
-function trDate(d){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'}).format(d)}catch(e){return new Date(d).toISOString().slice(0,10)}}
+const TRDF=(()=>{try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul'})}catch(e){return null}})();
+function trDate(d){try{return TRDF.format(d)}catch(e){return new Date(d).toISOString().slice(0,10)}}
 function imDot(im){return im==='High'?'<span class="ndh" title="Yüksek etkili"></span>':im==='Medium'?'<span class="ndm" title="Orta etkili"></span>':'<span class="ndl" title="Düşük etkili"></span>'}
 function fnum(v){const m=String(v??'').replace(',','.').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
 function evVerdict(x){const a=fnum(x.a),f=fnum(x.f),p=fnum(x.p),b=f!=null?f:p,rf=f!=null?'beklentinin':'önceki değerin';
@@ -1516,8 +1519,9 @@ function template(){const{open}=needList(),G=(t,a)=>`=GOOGLEFINANCE("${t}";"${a}
 async function copyTpl(){const t=template();$('tpl').style.display='block';$('tpl').value=t;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){try{$('tpl').select();ok=document.execCommand('copy')}catch(x){}}
  msg(ok?'Kopyalandı ✓ Google tablonda A1 hücresine yapıştır.':'Aşağıdaki metni kopyalayıp Google tablonda A1 hücresine yapıştır.',!ok)}
 function saveSheet(){const u=$('sheet').value.trim();if(u&&!/^https:\/\/docs\.google\.com\//.test(u))return msg('Bu bir Google Sheets yayın bağlantısına benzemiyor (docs.google.com ile başlamalı).',1);try{localStorage.setItem(SK,u)}catch(e){}msg(u?'Bağlantı kaydedildi ✓ Şimdi “Güncel fiyatları çek”e bas.':'Bağlantı silindi.');}
-let busy=false,LASTERR={fail:[],dbg:[]},HERR_OPEN=false,refreshing=false,HLH='';
-async function refresh(){
+let RH=0,RP=false,busy=false,LASTERR={fail:[],dbg:[]},HERR_OPEN=false,refreshing=false,HLH='';
+async function refresh(){if(busy)return;RH++;try{return await _refresh()}finally{RH=Math.max(0,RH-1);if(RH===0&&RP){RP=false;render()}}}
+async function _refresh(){
  if(busy)return;if(!navigator.onLine)return;busy=true;refreshing=true;setHts();
  const{open}=needList(),ok=[],fail=[],got=new Set();dbg=[];
  try{
@@ -1537,7 +1541,7 @@ async function refresh(){
  try{if(ok.length)await snap()}catch(e){}
  try{if(taOn&&navigator.onLine){const hr=await histEnsure();if(hr&&hr.fail.length)dbg.push("Teknik geçmiş indirilemedi: "+hr.fail.join(", "))}}catch(e){}
  busy=false;refreshing=false;LASTERR={fail:fail.slice(),dbg:[...new Set(dbg)].slice(0,10)};
- _ss('portfoy_last',JSON.stringify({t:Date.now(),n:ok.length,f:fail.length}));showLast();render();
+ _ss('portfoy_last',JSON.stringify({t:Date.now(),n:ok.length,f:fail.length}));showLast();RP=false;render();
 }
 /* ---------- teknik analiz motoru ---------- */
 function histAdjust(){let ch=false;
@@ -2102,7 +2106,12 @@ function holdSeries(){const m={};
   if(a.length&&a[a.length-1][0]===t.date)a[a.length-1][1]=q;else a.push([t.date,q])}
  return m}
 function qtyAt(a,d){let lo=0,hi=a.length-1,r=0;while(lo<=hi){const mid=(lo+hi)>>1;if(a[mid][0]<=d){r=a[mid][1];lo=mid+1}else hi=mid-1}return r}
+let PHC={k:'',v:null};
 function portHist(){
+ const key=trades.length+'|'+(trades.length?trades.reduce((a,t)=>Math.max(a,t.upd||t.ts||0),0):0)+'|'+Object.keys(HIST).map(k=>k+(HIST[k].at||0)+HIST[k].c.length+(HIST[k].adj||'')).join(',')+'|'+fx('USD')+'|'+fx('EUR')+'|'+JSON.stringify(Object.keys(fxhLoad()).map(c=>c+(fxhLoad()[c].at||0)));
+ if(PHC.k===key)return PHC.v;
+ const v=_portHist();PHC={k:key,v};return v}
+function _portHist(){
  const hs=holdSeries(),syms=Object.keys(hs).filter(s=>HIST[s]&&HIST[s].c&&HIST[s].c.length>=20);
  if(!syms.length)return null;
  const curOf={};trades.forEach(t=>{curOf[t.sym]=t.cur||'TRY'});
@@ -2119,7 +2128,9 @@ function chxLoad(k,rr){const key=k+'|'+rr,e=CHX[key];if(e&&(e.loading||Date.now(
  CHX[key]={at:e?e.at:0,pts:e?e.pts:null,loading:true};
  chartSeries(MKCH[CHXMAP[k]],rr).then(p=>{CHX[key]={at:Date.now(),pts:p||null,loading:false};try{renderChart()}catch(x){}}).catch(()=>{CHX[key]={at:Date.now(),pts:null,loading:false}})}
 
-function renderChart(){
+let CHART_DIRTY=false;
+function chartVisible(){return $('t-kz').classList.contains('on')&&$('chv').classList.contains('on')}
+function renderChart(){CHART_DIRTY=false;
  document.querySelectorAll('#rng button').forEach(b=>b.classList.toggle('on',+b.dataset.r===rng));
  document.querySelectorAll('#cmode button').forEach(b=>b.classList.toggle('on',b.dataset.c===cmode));
  $('cht').textContent=cmode==='pct'?'Getiri karşılaştırma (%)':'Portföy değeri (₺)';
@@ -2487,9 +2498,10 @@ $('rate').addEventListener('input',()=>{capCalc(true);notesUI()});
 $('sym').addEventListener('input',()=>{const v=normSym($('sym').value),p=v&&trades.find(t=>t.sym===v&&!isCashSym(t.sym));if(p){const mm=marketOf(p.sym,p.cur||'TRY');if(MKALL[$('side').value]&&MKALL[$('side').value].includes(mm)){$('mkt2').value=mm;$('cur').value=p.cur||'TRY'}}formUI();capCalc(false)});
 $('symSel').addEventListener('change',()=>{$('sym').value=$('symSel').value;formUI();upTot()});
 $('dt').addEventListener('change',()=>{formUI();capCalc(false)});
-$('cur').addEventListener('change',()=>{formUI();upTot()});$('convTo').addEventListener('change',notesUI);$('cashFlag').addEventListener('change',notesUI);
-$('side').addEventListener('change',()=>{formUI();upTot()});
-$('mkt2').addEventListener('change',()=>{const sd=$('side').value;if(sd==='sell'||sd==='div'||sd==='bonus'||sd==='rights'||$('mkt2').value==='Döviz')$('sym').value='';$('cur').value=curRule($('mkt2').value)[0];formUI();upTot()});
+$('cur').addEventListener('change',()=>{formUI();upTot()});$('convTo').addEventListener('change',notesUI);
+const clearLower=()=>['sym','qty','prc','comm','rate','convQty'].forEach(i=>$(i).value='');
+$('side').addEventListener('change',()=>{clearLower();formUI();upTot()});
+$('mkt2').addEventListener('change',()=>{clearLower();$('cur').value=curRule($('mkt2').value)[0];formUI();upTot()});
 $('add').addEventListener('click',saveTrade);$('cancel').addEventListener('click',()=>{resetForm();go('his')});
 const onPx=async e=>{
  const sym=e.target.dataset&&e.target.dataset.sym;if(!sym)return;const v=parseFloat(e.target.value);
@@ -2526,7 +2538,7 @@ $('hist').addEventListener('click',async e=>{
   $('side').value=isCashSym(t.sym)?(t.conv?'cconv':t.side==='sell'?'cwd':'cdep'):t.side;if(t.conv){$('convTo').value=t.conv.cur;$('convQty').value=t.conv.qty}else $('convQty').value='';$('cashFlag').checked=!!t.cash;$('mkt2').value=marketOf(t.sym,t.cur||'TRY');$('cur').value=t.cur||'TRY';$('dt').value=t.date;$('sym').value=t.sym;$('qty').value=t.qty;$('rate').value=t.rate||'';$('prc').value=t.price;$('comm').value=t.comm||'';$('brk').value=t.brk||'';$('note').value=t.note||'';
   sideUI();mktUI();$('formTitle').textContent='İşlemi düzenle';$('add').textContent='Güncelle';$('cancel').style.display='block';upTot();go('add')}
 });
-$('seg').addEventListener('click',e=>{const v=e.target.dataset&&e.target.dataset.v;if(!v)return;document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.querySelectorAll('.sv').forEach(x=>x.classList.toggle('on',x.id===v));if(v==='mpv')try{renderMap()}catch(e){};if(v==='rkv')try{renderRisk()}catch(e){}});
+$('seg').addEventListener('click',e=>{const v=e.target.dataset&&e.target.dataset.v;if(!v)return;document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.querySelectorAll('.sv').forEach(x=>x.classList.toggle('on',x.id===v));if(v==='chv')try{renderChart()}catch(e){};if(v==='mpv')try{renderMap()}catch(e){};if(v==='rkv')try{renderRisk()}catch(e){}});
 $('rng').addEventListener('click',e=>{if(e.target.dataset&&e.target.dataset.r!=null){rng=+e.target.dataset.r;renderChart()}});
 $('pfq').addEventListener('input',e=>{pfq=e.target.value;render()});
 $('pff').addEventListener('click',e=>{const f=e.target.dataset&&e.target.dataset.f;if(f==null)return;pffM=f;document.querySelectorAll('#pff button').forEach(b=>b.classList.toggle('on',b.dataset.f===f));render()});
