@@ -280,7 +280,7 @@ body.print-rp h3{color:#555}}
   </div>
  </div>
  <h3>Uygulama Versiyon</h3>
- <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v62</b></div>
+ <div class="card"><div class="sl"><span>Sürüm</span><b id="appVer" class="mut">v63</b></div>
  <div class="btns"><button class="s" id="updBtn">🔄 Güncellemeleri Kontrol Et</button></div>
  <div class="mut sm" style="margin-top:8px">GitHub Pages yayını 1-10 dk gecikebilir — Bu sürede “güncel” görünse bile gerçek dosya henüz yayımlanmamış olabilir.</div></div>
  <h3>Fiyat kaynağı (Google tablo)</h3>
@@ -1539,10 +1539,16 @@ async function _refresh(){
  try{if(prices.MK_GRAM&&!(prices.MK_GRAM.prev>0)&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const gp=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(gp>0){prices.MK_GRAM={...prices.MK_GRAM,prev:gp};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
  try{if(!prices.MK_GRAM&&prices.MK_ONS&&prices.MK_ONS.prev>0&&prices.FX_USD&&prices.FX_USD.prev>0){const g2=prices.MK_ONS.price/31.1035*prices.FX_USD.price,g2p=prices.MK_ONS.prev/31.1035*prices.FX_USD.prev;if(g2>0){prices.MK_GRAM={kind:'price',sym:'MK_GRAM',price:g2,prev:g2p,at:Date.now()};await S.set('p_MK_GRAM',{...prices.MK_GRAM,upd:Date.now()})}}}catch(e){}
  try{if(ok.length)await snap()}catch(e){}
- try{if(taOn&&navigator.onLine){const hr=await histEnsure();if(hr&&hr.fail.length)dbg.push("Teknik geçmiş indirilemedi: "+hr.fail.join(", "))}}catch(e){}
  busy=false;refreshing=false;LASTERR={fail:fail.slice(),dbg:[...new Set(dbg)].slice(0,10)};
  _ss('portfoy_last',JSON.stringify({t:Date.now(),n:ok.length,f:fail.length}));showLast();RP=false;render();
+ try{if(taOn&&navigator.onLine)bgHist()}catch(e){}
 }
+let HBG=false;
+function bgHist(force){if(HBG)return;HBG=true;histEnsure(force).then(hr=>{if(hr&&hr.fail.length){LASTERR.dbg=[...new Set([...(LASTERR.dbg||[]),'Teknik geçmiş indirilemedi: '+hr.fail.join(', ')])].slice(0,10)}if(hr&&(hr.ok.length||hr.fail.length))render()}).catch(()=>{}).finally(()=>{HBG=false})}
+function anBg(){const v=(document.querySelector('#t-kz .sv.on')||{}).id;try{
+ if(v==='tav'){if(taOn)bgHist(true)}
+ else if(v==='rkv'){Promise.all([benchEnsure().catch(()=>false),fxhEnsure().catch(()=>false)]).then(()=>{if($('rkv').classList.contains('on'))renderRisk()}).catch(()=>{})}
+ else if(v==='chv')renderChart()}catch(e){}}
 /* ---------- teknik analiz motoru ---------- */
 function histAdjust(){let ch=false;
  for(const sym of Object.keys(HIST)){const H=HIST[sym],p=prices[sym];
@@ -2634,7 +2640,7 @@ let hidAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden
  document.addEventListener('touchend',async()=>{if(y0==null)return;const ok=d>=TH&&top();y0=null;if(!ok){hide();return}
   show('⏳ Yenileniyor…',60);
   try{const tab=(document.querySelector('.tab.on')||{}).id||'';const jobs=[];
-   if(navigator.onLine){jobs.push(refresh());if(tab==='t-kap')jobs.push(kapDirect());if(tab==='t-news')jobs.push(newsLoad())}
+   if(navigator.onLine){jobs.push(refresh());if(tab==='t-kap')jobs.push(kapDirect());if(tab==='t-news')jobs.push(newsLoad());if(tab==='t-kz')anBg()}
    else{show('Çevrimdışısınız',60)}
    await Promise.all(jobs);if(navigator.onLine)show('✓ Güncellendi',60)}catch(e){show('Güncellenemedi',60)}
   setTimeout(hide,900)},{passive:true});
