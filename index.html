@@ -264,7 +264,7 @@ body.print-rp h3{color:#555}}
 </section>
 
 <section class="tab" id="t-bak">
- <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0">Görünüm</h3><span id="appVer" class="mut sm">v66</span></div>
+ <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0">Görünüm</h3><span id="appVer" class="mut sm">v67</span></div>
  <div class="card set"><div class="sl"><span>Tema</span><div class="chp" id="themeSeg"><button data-t="light">Açık</button><button data-t="dark">Koyu</button><button data-t="" class="on">Otomatik</button></div></div></div>
  <h3>Güvenlik</h3>
  <div class="card set">
@@ -1546,7 +1546,7 @@ function anBg(){const v=(document.querySelector('#t-kz .sv.on')||{}).id;try{
  else if(v==='rkv'){Promise.all([benchEnsure().catch(()=>false),fxhEnsure().catch(()=>false)]).then(()=>{if($('rkv').classList.contains('on'))renderRisk()}).catch(()=>{})}
  else if(v==='chv')renderChart()}catch(e){}}
 /* ---------- tarama + simülasyon (v66) ---------- */
-let SIMC=(()=>{try{return Object.assign({H:20,K:2,R:1.5},JSON.parse(localStorage.getItem('portfoy_simc2')||'{}'))}catch(e){return{H:20,K:2,R:1.5}}})(),SIMSEL='';
+let SIMC=(()=>{try{return Object.assign({H:20,K:2,R:1.5,N:1000},JSON.parse(localStorage.getItem('portfoy_simc2')||'{}'))}catch(e){return{H:20,K:2,R:1.5,N:1000}}})(),SIMSEL='';
 function mul32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function seedOf(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function hlOf(H){const c=H.c;return{h:(H.h||c).map((x,i)=>x>0?x:c[i]),l:(H.l||c).map((x,i)=>x>0?x:c[i])}}
@@ -1562,7 +1562,7 @@ function scanSym(c){const n=c.length,out=[];if(n<35)return out;const L=n-1;
 function simSym(H,p0,cfg,seed,fan){const c=H.c,n=c.length,{h,l}=hlOf(H),a=atrAt(h,l,c,n-1);if(!(a>0))return null;
  const risk=cfg.K*a,stop=p0-risk,tgt=p0+cfg.R*risk,pool=[];
  for(let i=1;i<n;i++)if(c[i-1]>0)pool.push([h[i]/c[i-1],l[i]/c[i-1],c[i]/c[i-1]]);
- const rnd=mul32(seed),N=1000,fin=[],cols=fan?Array.from({length:cfg.H},()=>[]):null;let nT=0,nS=0,sR=0;
+ const rnd=mul32(seed),N=cfg.N||1000,fin=[],cols=fan?Array.from({length:cfg.H},()=>[]):null;let nT=0,nS=0,sR=0;
  for(let k=0;k<N;k++){let p=p0,res=0;
   for(let d=0;d<cfg.H;d++){const x=pool[(rnd()*pool.length)|0];
    if(!res){if(p*x[1]<=stop){res=-1;nS++}else if(p*x[0]>=tgt){res=cfg.R;nT++}}
@@ -1570,6 +1570,18 @@ function simSym(H,p0,cfg,seed,fan){const c=H.c,n=c.length,{h,l}=hlOf(H),a=atrAt(
   sR+=res||(p-p0)/risk;fin.push(p)}
  fin.sort((x,y)=>x-y);const q=pp=>fin[Math.min(N-1,Math.floor(pp*N))];
  return{pT:nT/N,pS:nS/N,pN:1-(nT+nS)/N,avgR:sR/N,q5:q(.05),q50:q(.5),q95:q(.95),stop,tgt,fq:fan?fanQ(cols,p0,N):null}}
+async function simSymA(H,p0,cfg,seed,cb){const c=H.c,n=c.length,{h,l}=hlOf(H),a=atrAt(h,l,c,n-1);if(!(a>0))return null;
+ const risk=cfg.K*a,stop=p0-risk,tgt=p0+cfg.R*risk,pool=[];
+ for(let i=1;i<n;i++)if(c[i-1]>0)pool.push([h[i]/c[i-1],l[i]/c[i-1],c[i]/c[i-1]]);
+ const rnd=mul32(seed),N=cfg.N||1000,fin=[],step=Math.max(1,Math.ceil(N/25));let nT=0,nS=0,sR=0;
+ for(let k=0;k<N;k++){if(k%step===0){if(cb)cb(k+1);await new Promise(r=>setTimeout(r,0))}
+  let p=p0,res=0;
+  for(let d=0;d<cfg.H;d++){const x=pool[(rnd()*pool.length)|0];
+   if(!res){if(p*x[1]<=stop){res=-1;nS++}else if(p*x[0]>=tgt){res=cfg.R;nT++}}
+   p*=x[2]}
+  sR+=res||(p-p0)/risk;fin.push(p)}
+ if(cb)cb(N);fin.sort((x,y)=>x-y);const q=pp=>fin[Math.min(N-1,Math.floor(pp*N))];
+ return{pT:nT/N,pS:nS/N,pN:1-(nT+nS)/N,avgR:sR/N,q5:q(.05),q50:q(.5),q95:q(.95),stop,tgt,fq:null}}
 function fanQ(cols,v0,N){const P=[.05,.25,.5,.75,.95],f=P.map(()=>[v0]);cols.forEach(col=>{col.sort((x,y)=>x-y);P.forEach((pp,i)=>f[i].push(col[Math.min(N-1,Math.floor(pp*N))]))});return f}
 function backSym(H,cfg){const c=H.c,n=c.length,{h,l}=hlOf(H);let w=0,s=0,t=0,sr=0;
  for(let i=14;i+cfg.H<n;i++){const a=atrAt(h,l,c,i);if(!(a>0))continue;const e=c[i],st=e-cfg.K*a,tg=e+cfg.R*cfg.K*a;let r=null;
@@ -1596,7 +1608,7 @@ function backSig(H,cfg,names){const c=H.c,n=c.length,{h,l}=hlOf(H);let w=0,s=0,t
   if(r==null){t++;r=(c[i+cfg.H]-e)/(cfg.K*a)}sr+=r}
  const m=w+s+t;return m>=3?{w:w/m,s:s/m,t:t/m,avgR:sr/m,m}:null}
 function simCfgHTML(){const opt=(a,v)=>a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
- return`<div class="card"><b>⚙️ Analiz ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <select data-k="H">${opt([10,20,40],SIMC.H)}</select></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5,2,3],SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1,1.5,2,3],SIMC.R)}</select></label></div><div class="mut sm" style="margin-top:6px">Stop = fiyat − günlük oynaklık×katsayı. Hedef = stop mesafesinin R katı. Ayarı değiştirince taramayı yeniden çalıştır.</div></div>`}
+ return`<div class="card"><b>⚙️ Analiz ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <select data-k="H">${opt([10,20,40],SIMC.H)}</select></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5,2,3],SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1,1.5,2,3],SIMC.R)}</select></label><label class="mut sm">Deneme sayısı <select data-k="N">${opt([1000,2000,5000,10000],SIMC.N)}</select></label></div><div class="mut sm" style="margin-top:6px">Stop = fiyat − günlük oynaklık×katsayı. Hedef = stop mesafesinin R katı. Ayarı değiştirince taramayı yeniden çalıştır.</div></div>`}
 function msCard(r){const m=r.m,b=r.b,P=x=>pct((x/r.pr-1)*100),ex=(m.q50/r.pr-1)*100,o=MS.open===r.s,nm=esc(r.s.replace(/\.IS$/,'').replace(/-USD$/,''));
  return`<div class="card msc" data-k="${esc(r.s)}" style="padding:10px 12px;cursor:pointer"><div class="row"><div><b>${nm}</b> <b>${esc(r.tg)}</b> <b>${fmt(r.pr)}</b> <b>${pct(r.chg)}</b></div><b style="color:#10b981">%${Math.round(m.pT*100)}</b></div>
 <div class="msd" style="display:${o?'block':'none'};margin-top:8px;font-size:14px;line-height:1.65">
@@ -1618,10 +1630,10 @@ function renderSim(){const el=$('smv');if(!el)return;
   h+=`<div class="card"><b>💼 Tüm portföy · ${SIMC.H} gün sonra</b><div class="sm" style="margin-top:4px">Tahmin: medyan ${pc(c)} (olası aralık ${pc(a)} … ${pc(e)})</div><div class="sm">Zarar ihtimali: %${Math.round(ps.pL*100)}</div>${fanSvg(ps.fq)}<div class="mut sm">Kur etkisi dahil değil.</div></div>`}
  el.innerHTML=h;msBind(el)}
 /* ---------- piyasa taraması (v66) ---------- */
-const MS_BIST=('AKBNK GARAN ISCTR YKBNK HALKB VAKBN TSKB SKBNK ALBRK QNBTR THYAO PGSUS TAVHL TUPRS PETKM AKSEN ENJSA ZOREN ODAS AYDEM AKENR EUPWR GWIND ASTOR KONTR SMRTG CWENE ALFAS YEOTK EREGL KRDMD ISDMR SASA HEKTS KORDS BRISA GOODY TTRAK FROTO TOASO ARCLK VESTL VESBE OTKAR KARSN DOAS ASELS ALTNY SDTTR BIMAS MGROS SOKM CCOLA AEFES ULKER TATGD PNSUT PETUN BANVT KCHOL SAHOL DOHOL ECILC TKFEN ENKAI TCELL TTKOM TURSG AKGRT ANSGR AGESA SISE TRKCM ANACM CIMSA OYAKC AKCNS BTCIM NUHCM GUBRF KLSER EKGYO ISGYO TRGYO ALGYO OZKGY HLGYO SNGYO ASUZU AGHOL ADEL AKFGY AKSA ALARK ALKIM ARDYZ ARENA AYGAZ BAGFS BERA BIENY BIOEN BJKAS BOBET BRSAN BRYAT BUCIM CANTE CEMTS CLEBI CMENT DEVA DGNMO DOCO ECZYT EGEEN EGGUB ENERY ERBOS FENER FLAP GENIL GENTS GESAN GLYHO GSDHO GSRAY HATEK IHLAS IMASM INDES INFO INVEO ISGSY ISMEN IZMDC JANTS KAREL KARTN KATMR KAYSE KCAER KERVT KMPUR KNFRT KONYA KOZAL KOZAA KRSTL KUTPO LIDER LINK LOGO MAVI MEDTR MIATK MPARK NATEN NETAS NTHOL ORGE OYLUM PAPIL PARSN PENGD PRKME QUAGR REEDR RGYAS RYGYO SANEL SARKY SAYAS SELEC SELVA SKTAS SMART SNICA SOKE TATEN TBORG TEZOL TKNSA TMSN TRILC TSGYO TUKAS TURGG ULUUN UNLU USAK VAKKO VERUS YATAS YYLGD ZEDUR').split(' ').map(x=>x+'.IS');
+const MS_BIST=('AKBNK GARAN ISCTR YKBNK HALKB VAKBN TSKB SKBNK ALBRK QNBTR THYAO PGSUS TAVHL TUPRS PETKM AKSEN ENJSA ZOREN ODAS AYDEM AKENR EUPWR GWIND ASTOR KONTR SMRTG CWENE ALFAS YEOTK EREGL KRDMD ISDMR SASA HEKTS KORDS BRISA GOODY TTRAK FROTO TOASO ARCLK VESTL VESBE OTKAR KARSN DOAS ASELS ALTNY SDTTR BIMAS MGROS SOKM CCOLA AEFES ULKER TATGD PNSUT PETUN BANVT KCHOL SAHOL DOHOL ECILC TKFEN ENKAI TCELL TTKOM TURSG AKGRT ANSGR AGESA SISE TRKCM ANACM CIMSA OYAKC AKCNS BTCIM NUHCM GUBRF KLSER EKGYO ISGYO TRGYO ALGYO OZKGY HLGYO SNGYO ASUZU AGHOL ADEL AKFGY AKSA ALARK ALKIM ARDYZ ARENA AYGAZ BAGFS BERA BIENY BIOEN BJKAS BOBET BRSAN BRYAT BUCIM CANTE CEMTS CLEBI CMENT DEVA DGNMO DOCO ECZYT EGEEN EGGUB ENERY ERBOS FENER FLAP GENIL GENTS GESAN GLYHO GSDHO GSRAY HATEK IHLAS IMASM INDES INFO INVEO ISGSY ISMEN IZMDC JANTS KAREL KARTN KATMR KAYSE KCAER KERVT KMPUR KNFRT KONYA KOZAL KOZAA KRSTL KUTPO LIDER LINK LOGO MAVI MEDTR MIATK MPARK NATEN NETAS NTHOL ORGE OYLUM PAPIL PARSN PENGD PRKME QUAGR REEDR RGYAS RYGYO SANEL SARKY SAYAS SELEC SELVA SKTAS SMART SNICA SOKE TATEN TBORG TEZOL TKNSA TMSN TRILC TSGYO TUKAS TURGG ULUUN UNLU USAK VAKKO VERUS YATAS YYLGD ZEDUR CVKMD EKIM SSAAT TABGD TRALT TRCAS AKKOK KLGYO HRKET MEYSU DMRGD LKMNH AKFYE ISBTR TSPOR ACSEL ADESE AFYON AGROT AHGAZ AKMGY AKSGY AKSUE ALCAR ALCTL ALKA ALMAD ANELE ANHYT ARASE ARSAN ASGYO ATAGY ATAKP ATATP ATEKS AVGYO AVHOL AVOD AVTUR AYCES AYEN BAKAB BALAT BARMA BASCM BASGZ BAYRK BEGYO BFREN BIGCH BIGEN BIGTK BINHO BIZIM BLCYT BMSCH BMSTL BNTAS BOSSA BRKO BRKSN BRKVY BRLSM BRMEN BSOKE BURCE BURVA BVSAN BYDNR CASA CATES CELHA CEMAS CEOEM CGCAM CRDFA CRFSA CUSAN DAGHL DAGI DAPGM DARDL DENGE DERHL DERIM DESA DESPC DGATE DGGYO DITAS DMSAS DNISI DOBUR DOGUB DURDO DYOBY DZGYO EBEBK EDATA EDIP EGPRO EGSER EKIZ EKOS EKSUN ELITE EMKEL EMNIS ENSRI EPLAS ERCB ERSU ESCAR ESCOM ESEN ETILR ETYAT EUHOL EUKYO EUREN EUYO FADE FMIZP FONET FORMT FORTE FRIGO FZLGY GARFA GEDIK GEDZA GEREL GIPTA GLBMD GLCVY GLRYH GMTAS GOKNR GOLTS GRSEL GRTRK GSDDE GZNMI HATSN HDFGS HEDEF HKTM HOROZ HTTBT HUBVC HUNER HURGZ ICBCT ICUGS IDGYO IEYHO IHAAS IHEVA IHGZT IHLGM IHYAY INGRM INTEM INVES IPEKE ISATR ISBIR ISFIN ISKPL ISKUR ISSEN ITTFH IZENR IZFAS IZINV KAPLM KARYE KBORU KENT KERVN KFEIN KGYO KIMMR KLKIM KLMSN KLNMA KLRHO KLYPV KOCMT KONKA KOPOL KOTON KRDMA KRDMB KRGYO KRONT KRPLS KRTEK KRVGD KSTUR KTLEV KTSKR KUVVA KUYAS KZBGY KZGYO LIDFA LILAK LMKDC LRSHO LUKSK LYDHO LYDYE MAALT MACKO MAGEN MAKIM MAKTK MANAS MARBL MARKA MARTI MEGAP MEGMT MEKAG MEPET MERCN MERIT MERKO METRO METUR MHRGY MMCAS MNDRS MNDTR MOBTL MOGAN MRGYO MRSHL MSGYO MTRKS MTRYO MZHLD NIBAS NTGAZ OBAMS OBASE ODINE OFSYM ONCSM ONRYT ORCAY ORMA OSMEN OSTIM OTTO OYAYO OYYAT OZGYO OZRDN OZSUB PAGYO PAMEL PASEU PATEK PCILT PEGYO PEKGY PENTA PINSU PKART PKENT PLTUR PNLSN POLHO POLTK PRDGS PRKAB PRZMA PSDTC PSGYO QNBFK RALYH RAYSG RNPOL RODRG ROYAL RTALB RUBNS RYSAS SAFKR SAMAT SANFM SANKO SEGMN SEGYO SEKFK SEKUR SELGD SEYKM SILVR SKYLP SKYMD SMRVA SNKRN SONME SRVGY SUMAS SUNTK SURGY SUWEN TARKM TDGYO TEKTU TERA TETMT TGSAS TLMAN TMPOL TNZTP TUCLK TUREX UFUK ULAS ULUFA ULUSE UMPAS UZERB VAKFN VANGD VBTYZ VERTU VKGYO VKING VRGYO VSNMD YAPRK YAYLA YBTAS YESIL YGGYO YGYO YKSLN YONGA YUNSA YYAPI').split(' ').map(x=>x+'.IS');
 const MS_EU='SAP.DE SIE.DE ALV.DE DTE.DE AIR.DE MBG.DE BMW.DE VOW3.DE BAS.DE BAYN.DE ADS.DE MUV2.DE DBK.DE IFX.DE DHL.DE RWE.DE EOAN.DE HEN3.DE CON.DE FRE.DE HEI.DE MRK.DE SHL.DE ZAL.DE PUM.DE RHM.DE ENR.DE VNA.DE BEI.DE QIA.DE DB1.DE P911.DE SY1.DE MC.PA OR.PA TTE.PA SAN.PA SU.PA AI.PA BNP.PA CS.PA EL.PA RMS.PA KER.PA DG.PA SGO.PA GLE.PA ACA.PA CAP.PA ORA.PA STLAP.PA RI.PA SAF.PA DSY.PA VIE.PA ENGI.PA LR.PA PUB.PA ML.PA HO.PA ASML.AS PRX.AS INGA.AS AD.AS HEIA.AS PHIA.AS WKL.AS ADYEN.AS NN.AS ASM.AS KPN.AS REN.AS AKZA.AS DSFIR.AS IMCD.AS BESI.AS MT.AS SAN.MC BBVA.MC ITX.MC IBE.MC TEF.MC REP.MC CABK.MC AMS.MC FER.MC ELE.MC GRF.MC ENEL.MI ISP.MI UCG.MI ENI.MI STLAM.MI G.MI RACE.MI PRY.MI MONC.MI LDO.MI TRN.MI SRG.MI AMP.MI BAMI.MI NESN.SW ROG.SW NOVN.SW UBSG.SW ZURN.SW ABBN.SW CFR.SW SREN.SW LONN.SW GIVN.SW SIKA.SW HOLN.SW SHEL.L AZN.L HSBA.L ULVR.L BP.L GSK.L RIO.L DGE.L BATS.L LSEG.L REL.L BARC.L LLOY.L NWG.L VOD.L GLEN.L BA.L RR.L TSCO.L STAN.L AAL.L NOVO-B.CO VOLV-B.ST ERIC-B.ST ATCO-A.ST EQNR.OL KBC.BR UCB.BR ABI.BR'.split(' ');
 let MS=(()=>{let r=null;try{r=JSON.parse(localStorage.getItem('portfoy_mscan')||'null')}catch(e){}return{run:false,stop:false,txt:'',res:(r&&r.res)||[],at:(r&&r.at)||0,sel:Object.assign({BIST:1,ABD:1,AVR:1,KRIPTO:1},(r&&r.sel)||{})}})();
-const MS_CR=('BTC ETH BNB XRP SOL ADA DOGE TRX AVAX LINK DOT LTC BCH ATOM XLM ETC NEAR UNI APT ARB OP INJ SUI HBAR FIL ICP AAVE ALGO VET SAND MANA GRT RUNE IMX STX TIA SEI TON XMR EOS FTM THETA AXS FLOW CHZ KAS PEPE SHIB').split(' ').map(x=>x+'-USD');
+const MS_CR=('BTC ETH BNB XRP SOL ADA DOGE TRX AVAX LINK DOT LTC BCH ATOM XLM ETC NEAR UNI APT ARB OP INJ SUI HBAR FIL ICP AAVE ALGO VET SAND MANA GRT RUNE IMX STX TIA SEI TON XMR EOS FTM THETA AXS FLOW CHZ KAS PEPE SHIB HYPE CRO TAO RENDER WLD FET JUP LDO ENA PYTH ONDO BONK FLOKI JASMY QNT KAVA ZEC DASH ZIL IOTA EGLD XDC BSV XTZ NEO MKR SNX CRV COMP GALA APE DYDX CAKE PENDLE ORDI WIF AR MINA ROSE KSM CFX TWT GMX BAT ENS BLUR AKT EIGEN STRK ZRO W TRUMP PNUT VIRTUAL RVN ZEN WAVES ICX ONT QTUM OMG LRC BAND ANKR SKL STORJ CELO NEXO 1INCH SUSHI YFI BAL REN KNC UMA OCEAN AUDIO GLM LPT API3 CVX FXS RPL SSV ETHFI ALT MANTA PIXEL PORTAL AEVO TNSR OM POPCAT MEW BRETT TURBO NOT DOGS HMSTR CATI MOODENG GOAT ACT PENGU SPX MOG BOME PEOPLE MEME NEIRO WEMIX FLR S SONIC BERA IP KAITO MOVE ME USUAL PLUME').split(' ').map(x=>x+'-USD');
 const msTag=s=>/-USD$/.test(s)?'Kripto':/\.IS$/.test(s)?'BIST':s.includes('.')?'Avrupa':'ABD';
 function msSave(){try{localStorage.setItem('portfoy_mscan',JSON.stringify({at:MS.at,res:MS.res,sel:MS.sel}))}catch(e){}}
 function msUpd(){const e=$('msP');if(e)e.textContent=MS.txt}
@@ -1635,29 +1647,48 @@ async function msUS(){let u=null;try{u=JSON.parse(localStorage.getItem('portfoy_
  const a=[...out];if(a.length>500)try{localStorage.setItem('portfoy_usuni',JSON.stringify({t:Date.now(),s:a}))}catch(e){}return a}
 async function msSpark(b){const j=await yJSON('https://query1.finance.yahoo.com/v7/finance/spark?symbols='+b.join(',')+'&range=6mo&interval=1d'),out={};
  for(const it of(j.spark&&j.spark.result)||[]){const r=(it.response||[])[0];if(!r)continue;const q=((r.indicators||{}).quote||[{}])[0]||{},c=(q.close||[]).filter(x=>x>0);if(c.length>=35)out[it.symbol]={c,m:r.meta||{}}}return out}
-async function msRun(){if(MS.run)return;MS.run=true;MS.stop=false;MS.txt='Evren hazırlanıyor…';renderSim();
- try{const syms=[];if(MS.sel.BIST)syms.push(...new Set([...MS_BIST,...Object.keys(SYMAP).filter(k=>/^[A-Z0-9]{3,6}$/.test(k)).map(k=>k+'.IS')]));if(MS.sel.AVR)syms.push(...MS_EU);if(MS.sel.KRIPTO)syms.push(...MS_CR);
-  if(MS.sel.ABD){try{syms.push(...await msUS())}catch(e){}}
+async function msRun(){if(MS.run)return;MS.run=true;MS.stop=false;MS.txt='Sistem hazırlanıyor…';renderSim();
+ const tick=()=>new Promise(r=>setTimeout(r,0)),sleep=ms=>new Promise(r=>setTimeout(r,ms)),nm=s=>s.replace(/\.IS$/,'').replace(/-USD$/,'');
+ try{const syms=[];
+  if(MS.sel.BIST)syms.push(...new Set([...MS_BIST,...Object.keys(SYMAP).filter(k=>/^[A-Z0-9]{3,6}$/.test(k)).map(k=>k+'.IS')]));
+  if(MS.sel.AVR)syms.push(...MS_EU);if(MS.sel.KRIPTO)syms.push(...MS_CR);
+  if(MS.sel.ABD){MS.txt='Sistem hazırlanıyor…\nABD hisse listesi alınıyor…';msUpd();try{syms.push(...await msUS())}catch(e){}}
   if(!syms.length)throw new Error('evren listesi alınamadı');
-  const bt=[];for(let i=0;i<syms.length;i+=20)bt.push(syms.slice(i,i+20));let k=0,fail=0,hits=[];
+  const TOT=syms.length,head='Toplam '+TOT+' hisse mevcut',ST={};
+  for(const q of syms){const t=msTag(q);(ST[t]??={u:0,d:0,h:0,f:0}).u++}
+  MS.txt=head;msUpd();await sleep(500);
+  const bt=[];for(let i=0;i<syms.length;i+=20)bt.push(syms.slice(i,i+20));let k=0,fail=0,done=0,hits=[];
   const w1=async()=>{while(!MS.stop){const b=bt[k++];if(!b)break;
-   try{const d=await msSpark(b);for(const s in d){const x=d[s],c=x.c,L=c.length-1,pr=x.m.regularMarketPrice||c[L],tg=msTag(s),vol=x.m.regularMarketVolume||0;
-    if(tg==='ABD'&&(pr<5||vol<1e6))continue;const sig=scanSym(c);if(!sig.length)continue;const m50=maAt(c,L,50);
-    hits.push({s,tg,sg:sig,sc:sig.length*2+(m50&&c[L]>m50?1:0),pr,chg:(c[L]/c[L-1]-1)*100,dv:pr*vol})}}catch(e){fail++}
-   MS.txt='Taranıyor '+Math.min(k,bt.length)+'/'+bt.length+' · '+hits.length+' sinyal';msUpd()}};
+   let d=null;try{d=await msSpark(b)}catch(e){await sleep(900);try{d=await msSpark(b)}catch(e2){fail++;for(const q of b)ST[msTag(q)].f++}}
+   let n=0;
+   for(const s of b){done++;const x=d&&d[s];
+    if(x){const tg=msTag(s);ST[tg].d++;const c=x.c,L=c.length-1,pr=x.m.regularMarketPrice||c[L],vol=x.m.regularMarketVolume||0;
+     if(!(tg==='ABD'&&(pr<5||vol<1e6))){const sig=scanSym(c);if(sig.length){ST[tg].h++;const m50=maAt(c,L,50);
+      hits.push({s,tg,sg:sig,sc:sig.length*2+(m50&&c[L]>m50?1:0),pr,chg:(c[L]/c[L-1]-1)*100,dv:pr*vol})}}}
+    MS.txt=head+'\nTaranıyor '+done+'/'+TOT+' · '+nm(s)+' · '+hits.length+' sinyal veren hisse';msUpd();if(++n%4===0)await tick()}}};
   await Promise.all([1,2,3,4].map(w1));
   if(fail>=bt.length)throw new Error('Yahoo kaynağına ulaşılamadı');
-  hits.sort((a,b)=>b.sc-a.sc||b.dv-a.dv);const top=hits.slice(0,40),day=today();let j=0,n2=0;
-  const w2=async()=>{while(!MS.stop){const r=top[j++];if(!r)break;
-   try{const H=await _histFetch(r.s);if(H){r.m=simSym(H,r.pr,SIMC,seedOf(r.s+day));r.b=backSig(H,SIMC,r.sg);if(r.m)r.m.fq=null}}catch(e){}
-   n2++;MS.txt='Analiz ediliyor '+n2+'/'+top.length;msUpd()}};
-  await Promise.all([1,2,3].map(w2));
+  if(MS.stop){MS.txt='Durduruldu · '+done+'/'+TOT+' tarandı, '+hits.length+' sinyal veren hisse';MS.run=false;renderSim();return}
+  hits.sort((a,b)=>b.sc-a.sc||b.dv-a.dv);const top=hits.slice(0,40),day=today(),line2='Tarama tamamlandı · '+done+'/'+TOT+' · '+hits.length+' sinyal veren hisse';
+  MS.txt=head+'\n'+line2;msUpd();await sleep(400);
+  const HM=new Map();let hj=0;
+  const hw=async()=>{while(!MS.stop){const r=top[hj++];if(!r)break;try{HM.set(r.s,await _histFetch(r.s)||null)}catch(e){HM.set(r.s,null)}}};
+  const hws=[1,2,3].map(()=>hw());
+  for(let i=0;i<top.length&&!MS.stop;i++){const r=top[i],N=SIMC.N||1000,pre=head+'\n'+line2+'\nSinyal veren hisseler analiz ediliyor '+(i+1)+'/'+top.length;
+   MS.txt=pre+'\n'+nm(r.s)+' analiz ediliyor (veriler alınıyor)';msUpd();
+   while(!HM.has(r.s)&&!MS.stop)await sleep(60);
+   const H=HM.get(r.s);
+   if(H){MS.txt=pre+'\n'+nm(r.s)+' analiz ediliyor';msUpd();await tick();
+    r.m=await simSymA(H,r.pr,SIMC,seedOf(r.s+day),kk=>{MS.txt=pre+'\n'+nm(r.s)+' verileri için test başlatılıyor · '+kk+'/'+N+' grafik denemesi';msUpd()});
+    r.b=backSig(H,SIMC,r.sg)}}
+  await Promise.all(hws);
   const keep=top.filter(r=>r.m&&r.m.avgR>0).sort((a,b)=>b.m.pT-a.m.pT);
-  MS.res=keep;MS.at=Date.now();msSave();MS.txt=(MS.stop?'Durduruldu · ':'')+hits.length+' sinyal, '+keep.length+' tanesi +R (artı beklentili)'}
+  MS.res=keep;MS.at=Date.now();msSave();
+  MS.txt=(MS.stop?'Durduruldu · ':'')+'Toplam '+TOT+' hisse tarandı · '+hits.length+' sinyal, '+keep.length+' tanesi +R (artı beklentili)\n'+Object.entries(ST).map(([t,v])=>t+': '+v.u+' hisse · '+v.d+' veri · '+v.h+' sinyal'+(v.f?' · '+v.f+' alınamadı':'')).join('\n')}
  catch(e){MS.txt='Tarama başarısız: '+(e.message||e)}
  MS.run=false;renderSim()}
 function msHTML(){const sel=['BIST','ABD','AVR','KRIPTO'].map(k=>`<button data-ms="${k}" class="${MS.sel[k]?'on':''}">${k==='AVR'?'Avrupa':k==='KRIPTO'?'Kripto':k}</button>`).join('');
- return simCfgHTML()+`<div class="card"><b>🌍 Piyasa taraması</b><div class="seg" style="margin-top:8px">${sel}</div><div class="btns"><button class="s" data-msrun="1">${MS.run?'■ Durdur':'▶ Tüm piyasayı tara'}</button></div><div class="mut sm" id="msP" style="margin-top:6px">${esc(MS.txt||(MS.at?'Son tarama '+dts(MS.at):'Henüz taranmadı. Birkaç dakika sürebilir.'))}</div><div class="mut sm" style="margin-top:4px">Sadece artı beklentili (+R) sinyaller, hedefe varma oranı yüksekten düşüğe sıralı. Karta dokununca ayrıntı açılır. Gün içinde son bar anlıktır; kesin sinyal için kapanıştan sonra tara.</div></div>`+MS.res.map(msCard).join('')}
+ return simCfgHTML()+`<div class="card"><b>🌍 Piyasa taraması</b><div class="seg" style="margin-top:8px">${sel}</div><div class="btns"><button class="s" data-msrun="1">${MS.run?'■ Durdur':'▶ Tüm piyasayı tara'}</button></div><div class="mut sm" id="msP" style="margin-top:6px;white-space:pre-line">${esc(MS.txt||(MS.at?'Son tarama '+dts(MS.at):'Henüz taranmadı. Birkaç dakika sürebilir.'))}</div><div class="mut sm" style="margin-top:4px">Sadece artı beklentili (+R) sinyaller, hedefe varma oranı yüksekten düşüğe sıralı. Karta dokununca ayrıntı açılır. Gün içinde son bar anlıktır; kesin sinyal için kapanıştan sonra tara.</div></div>`+MS.res.map(msCard).join('')}
 function msBind(el){el.onchange=e=>{const t=e.target;if(t.dataset&&t.dataset.k){SIMC[t.dataset.k]=+t.value;try{localStorage.setItem('portfoy_simc2',JSON.stringify(SIMC))}catch(x){}renderSim()}};
  el.onclick=e=>{const cd=e.target.closest&&e.target.closest('.msc');if(cd){const d=cd.querySelector('.msd'),o=d.style.display==='none';d.style.display=o?'block':'none';MS.open=o?cd.dataset.k:'';return}const b=e.target.closest&&e.target.closest('button');if(!b)return;
  if(b.dataset.ms){MS.sel[b.dataset.ms]=MS.sel[b.dataset.ms]?0:1;msSave();renderSim()}
