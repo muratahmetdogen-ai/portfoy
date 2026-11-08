@@ -1645,34 +1645,52 @@ async function msUS(){let u=null;try{u=JSON.parse(localStorage.getItem('portfoy_
   if(!txt)continue;const L=txt.split(/\r?\n/),hd=L.find(x=>/Security Name/.test(x));if(!hd)continue;const H=hd.split('|'),iN=H.indexOf('Security Name'),iT=H.indexOf('Test Issue'),iE=H.indexOf('ETF');
   for(const ln of L){const p=ln.split('|');if(p.length<5||ln===hd)continue;const s=p[0];if(!/^[A-Z]{1,5}$/.test(s)||p[iT]==='Y'||p[iE]==='Y')continue;const n=p[iN]||'';if(bad.test(n)||!ok.test(n))continue;out.add(s)}}
  const a=[...out];if(a.length>500)try{localStorage.setItem('portfoy_usuni',JSON.stringify({t:Date.now(),s:a}))}catch(e){}return a}
-async function msSpark(b){const j=await yJSON('https://query1.finance.yahoo.com/v7/finance/spark?symbols='+b.join(',')+'&range=6mo&interval=1d'),out={};
+const BNH=['https://data-api.binance.vision','https://api.binance.com'];let BNOK=false;
+async function bnGet(path,ms){let le=null;for(const h of BNH){try{return await getJSON(h+path,ms||9000)}catch(e){le=e}}throw le||new Error('binance')}
+async function msCryptoList(){try{const c=JSON.parse(localStorage.getItem('portfoy_mscr')||'null');if(c&&Date.now()-c.t<24*36e5&&c.l&&c.l.length>50)return c.l}catch(e){}
+ const j=await bnGet('/api/v3/ticker/24hr',25000),bad=/^(USDC|FDUSD|TUSD|BUSD|USDP|DAI|USDT|EUR|EURI|AEUR|GBP|TRY|BRL|ARS|UAH|PAXG|XUSD|USD1|USDE|RLUSD|WBTC|WBETH|BFUSD)$/;
+ const l=(Array.isArray(j)?j:[]).filter(x=>/USDT$/.test(x.symbol)&&+x.quoteVolume>=1e6).map(x=>({b:x.symbol.slice(0,-4),v:+x.quoteVolume})).filter(x=>/^[A-Z0-9]{1,12}$/.test(x.b)&&!bad.test(x.b)).sort((a,b)=>b.v-a.v).slice(0,400).map(x=>x.b);
+ if(l.length>50)try{localStorage.setItem('portfoy_mscr',JSON.stringify({t:Date.now(),l}))}catch(e){}
+ return l}
+async function bnKl(base,lim){const j=await bnGet('/api/v3/klines?symbol='+base+'USDT&interval=1d&limit='+lim,9000);if(!Array.isArray(j))return null;
+ const t=[],c=[],v=[],h=[],l=[];for(const k of j){const cl=+k[4];if(!(cl>0))continue;t.push(+k[0]);c.push(cl);h.push(+k[2]);l.push(+k[3]);v.push(+k[5]||0)}
+ return c.length>=35?{t,c,v,h,l}:null}
+async function msHist(s){if(BNOK&&/-USD$/.test(s)){try{const d=await bnKl(s.replace(/-USD$/,''),365);if(d)return d}catch(e){}}return await _histFetch(s)}
+async function msSpark(b){const j=await yJSON('https://query1.finance.yahoo.com/v7/finance/spark?symbols='+b.join(',')+'&range=6mo&interval=1d',8000),out={};
  for(const it of(j.spark&&j.spark.result)||[]){const r=(it.response||[])[0];if(!r)continue;const q=((r.indicators||{}).quote||[{}])[0]||{},c=(q.close||[]).filter(x=>x>0);if(c.length>=35)out[it.symbol]={c,m:r.meta||{}}}return out}
 async function msRun(){if(MS.run)return;MS.run=true;MS.stop=false;MS.txt='Sistem hazırlanıyor…';renderSim();
  const tick=()=>new Promise(r=>setTimeout(r,0)),sleep=ms=>new Promise(r=>setTimeout(r,ms)),nm=s=>s.replace(/\.IS$/,'').replace(/-USD$/,'');
  try{const syms=[];
   if(MS.sel.BIST)syms.push(...new Set([...MS_BIST,...Object.keys(SYMAP).filter(k=>/^[A-Z0-9]{3,6}$/.test(k)).map(k=>k+'.IS')]));
-  if(MS.sel.AVR)syms.push(...MS_EU);if(MS.sel.KRIPTO)syms.push(...MS_CR);
+  if(MS.sel.AVR)syms.push(...MS_EU);
+  if(MS.sel.KRIPTO){MS.txt='Sistem hazırlanıyor…\nKripto listesi alınıyor…';msUpd();let cl=null;try{cl=await msCryptoList()}catch(e){}if(cl&&cl.length>50){BNOK=true;syms.push(...cl.map(x=>x+'-USD'))}else{BNOK=false;syms.push(...MS_CR)}}
   if(MS.sel.ABD){MS.txt='Sistem hazırlanıyor…\nABD hisse listesi alınıyor…';msUpd();try{syms.push(...await msUS())}catch(e){}}
   if(!syms.length)throw new Error('evren listesi alınamadı');
   const TOT=syms.length,head='Toplam '+TOT+' hisse mevcut',ST={};
   for(const q of syms){const t=msTag(q);(ST[t]??={u:0,d:0,h:0,f:0}).u++}
   MS.txt=head;msUpd();await sleep(500);
-  const bt=[];for(let i=0;i<syms.length;i+=20)bt.push(syms.slice(i,i+20));let k=0,fail=0,done=0,hits=[];
-  const w1=async()=>{while(!MS.stop){const b=bt[k++];if(!b)break;
-   let d=null;try{d=await msSpark(b)}catch(e){await sleep(900);try{d=await msSpark(b)}catch(e2){fail++;for(const q of b)ST[msTag(q)].f++}}
-   let n=0;
+  const ySy=syms.filter(q=>!(BNOK&&/-USD$/.test(q))),cSy=syms.filter(q=>BNOK&&/-USD$/.test(q));
+  const bt=[],ct=[];for(let i=0;i<ySy.length;i+=20)bt.push(ySy.slice(i,i+20));for(let i=0;i<cSy.length;i+=5)ct.push(cSy.slice(i,i+5));
+  let k=0,kc=0,fail=0,done=0,hits=[];
+  const procB=async(b,d)=>{let n=0;
    for(const s of b){done++;const x=d&&d[s];
     if(x){const tg=msTag(s);ST[tg].d++;const c=x.c,L=c.length-1,pr=x.m.regularMarketPrice||c[L],vol=x.m.regularMarketVolume||0;
      if(!(tg==='ABD'&&(pr<5||vol<1e6))){const sig=scanSym(c);if(sig.length){ST[tg].h++;const m50=maAt(c,L,50);
       hits.push({s,tg,sg:sig,sc:sig.length*2+(m50&&c[L]>m50?1:0),pr,chg:(c[L]/c[L-1]-1)*100,dv:pr*vol})}}}
-    MS.txt=head+'\nTaranıyor '+done+'/'+TOT+' · '+nm(s)+' · '+hits.length+' sinyal veren hisse';msUpd();if(++n%4===0)await tick()}}};
-  await Promise.all([1,2,3,4].map(w1));
-  if(fail>=bt.length)throw new Error('Yahoo kaynağına ulaşılamadı');
+    MS.txt=head+'\nTaranıyor '+done+'/'+TOT+' · '+nm(s)+' · '+hits.length+' sinyal veren hisse';msUpd();if(++n%4===0)await tick()}};
+  const w1=async()=>{while(!MS.stop){const b=bt[k++];if(!b)break;
+   let d=null;try{d=await msSpark(b)}catch(e){await sleep(900);try{d=await msSpark(b)}catch(e2){fail++;for(const q of b)ST[msTag(q)].f++}}
+   await procB(b,d);await sleep(250)}};
+  const wc=async()=>{while(!MS.stop){const b=ct[kc++];if(!b)break;const d={};
+   await Promise.all(b.map(async s=>{try{const H=await bnKl(s.replace(/-USD$/,''),180);if(H)d[s]={c:H.c,m:{regularMarketPrice:H.c[H.c.length-1],regularMarketVolume:0}};else ST.Kripto.f++}catch(e){ST.Kripto.f++}}));
+   await procB(b,d)}};
+  await Promise.all([w1(),w1(),wc(),wc(),wc(),wc()]);
+  if(bt.length&&fail>=bt.length&&!cSy.length)throw new Error('Yahoo kaynağına ulaşılamadı');
   if(MS.stop){MS.txt='Durduruldu · '+done+'/'+TOT+' tarandı, '+hits.length+' sinyal veren hisse';MS.run=false;renderSim();return}
   hits.sort((a,b)=>b.sc-a.sc||b.dv-a.dv);const top=hits.slice(0,40),day=today(),line2='Tarama tamamlandı · '+done+'/'+TOT+' · '+hits.length+' sinyal veren hisse';
   MS.txt=head+'\n'+line2;msUpd();await sleep(400);
   const HM=new Map();let hj=0;
-  const hw=async()=>{while(!MS.stop){const r=top[hj++];if(!r)break;try{HM.set(r.s,await _histFetch(r.s)||null)}catch(e){HM.set(r.s,null)}}};
+  const hw=async()=>{while(!MS.stop){const r=top[hj++];if(!r)break;try{HM.set(r.s,await msHist(r.s)||null)}catch(e){HM.set(r.s,null)}}};
   const hws=[1,2,3].map(()=>hw());
   for(let i=0;i<top.length&&!MS.stop;i++){const r=top[i],N=SIMC.N||1000,pre=head+'\n'+line2+'\nSinyal veren hisseler analiz ediliyor '+(i+1)+'/'+top.length;
    MS.txt=pre+'\n'+nm(r.s)+' analiz ediliyor (veriler alınıyor)';msUpd();
@@ -1718,9 +1736,9 @@ async function yAlias(sym,cur){
   const pick=qs.find(x=>x.toUpperCase()===U2)||qs.find(x=>x.toUpperCase()===U2+'.IS')||qs.find(x=>x.toUpperCase().startsWith(U2)&&/\.IS$/.test(x))||qs.find(x=>x.toUpperCase().startsWith(U2)&&/\.DE$/.test(x))||qs.find(x=>x.toUpperCase()===U2&&!x.includes('.'))||qs.find(x=>x.toUpperCase().startsWith(U2)&&x.length>U2.length)||qs.find(x=>x.toUpperCase().startsWith(U2));
   if(pick&&pick.toUpperCase()!==ySym(sym,cur).toUpperCase()){YALIAS[sym]=pick;ySaveAlias();return pick}}catch(e){}
  return null}
-async function yJSON(url){
+async function yJSON(url,ms){
  const order=[HPX,0,1,2,3,4].filter((v,i2,a)=>a.indexOf(v)===i2);let lastErr=null;
- for(const ti of order){try{const t=await getText(YTR[ti](url),15000);
+ for(const ti of order){try{const t=await getText(YTR[ti](url),ms||15000);
   const j=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
   if(j&&typeof j==='object'){if(ti!==HPX){HPX=ti;try{localStorage.setItem('portfoy_hpx',String(ti))}catch(e){}}return j}}catch(e){lastErr=e}}
  throw lastErr||new Error('tüm kaynaklar başarısız')}
