@@ -10546,7 +10546,7 @@ $('nseg').addEventListener('click', e => {
 const SIM_LIMITS = { H: [1, 365], N: [100, 200000] };
 
 let SIMC = (() => {
-  const base = { H: 20, K: 2, R: 1.5, N: 10000 };
+  const base = { H: 20, K: 2, R: 1.5, N: 10000, F1: 1, F2: 1, F3: 0 };
   try {
     const saved = JSON.parse(localStorage.getItem('portfoy_simc2') || '{}');
     if (saved.N === 1000) delete saved.N;
@@ -10803,9 +10803,25 @@ function backSig(H, cfg, names) {
   return m >= 3 ? { w: w / m, s: s / m, t: t / m, avgR: sr / m, m } : null;
 }
 
+function passFilters(r, H) {
+  if (SIMC.F1 && !(r.b && r.b.avgR > 0)) return false;
+  const c = H.c,
+    L = c.length - 1;
+  if (SIMC.F2) {
+    const m = maAt(c, L, 200);
+    if (m && c[L] < m) return false;
+  }
+  if (SIMC.F3) {
+    const v = H.v || [],
+      a = v.slice(-21, -1).filter(x => x > 0);
+    if (a.length >= 10 && v[L] > 0 && v[L] < a.reduce((x, y) => x + y, 0) / a.length) return false;
+  }
+  return true;
+}
+
 function simCfgHTML() {
   const opt = (a, v) => a.map(x => `<option${x === v ? ' selected' : ''}>${x}</option>`).join('');
-  return `<div class="card"><b>⚙️ Analiz ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <input type="number" inputmode="numeric" data-k="H" value="${SIMC.H}" min="1" max="365" style="width:84px;padding:6px 8px"></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5, 2, 3], SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1, 1.5, 2, 3], SIMC.R)}</select></label><label class="mut sm">Deneme sayısı <input type="number" inputmode="numeric" data-k="N" value="${SIMC.N}" min="100" max="200000" style="width:104px;padding:6px 8px"></label></div><div class="mut sm" style="margin-top:6px">Stop = fiyat − günlük oynaklık×katsayı. Hedef = stop mesafesinin R katı. Ayarı değiştirince taramayı yeniden çalıştır.</div></div>`;
+  return `<div class="card"><b>⚙️ Analiz ayarı</b><div class="row" style="margin-top:6px;gap:8px;flex-wrap:wrap"><label class="mut sm">Vade (gün) <input type="number" inputmode="numeric" data-k="H" value="${SIMC.H}" min="1" max="365" style="width:84px;padding:6px 8px"></label><label class="mut sm">Stop (×ATR) <select data-k="K">${opt([1.5, 2, 3], SIMC.K)}</select></label><label class="mut sm">Hedef (R) <select data-k="R">${opt([1, 1.5, 2, 3], SIMC.R)}</select></label><label class="mut sm">Deneme sayısı <input type="number" inputmode="numeric" data-k="N" value="${SIMC.N}" min="100" max="200000" style="width:104px;padding:6px 8px"></label></div><div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap"><label class="mut sm"><input type="checkbox" data-k="F1" style="width:auto"${SIMC.F1 ? ' checked' : ''}> Geri test pozitif</label><label class="mut sm"><input type="checkbox" data-k="F2" style="width:auto"${SIMC.F2 ? ' checked' : ''}> SMA200 üstü</label><label class="mut sm"><input type="checkbox" data-k="F3" style="width:auto"${SIMC.F3 ? ' checked' : ''}> Hacim ortalama üstü</label></div><div class="mut sm" style="margin-top:6px">Stop = fiyat − günlük oynaklık×katsayı. Hedef = stop mesafesinin R katı. Ayarı değiştirince taramayı yeniden çalıştır.</div></div>`;
 }
 
 function msCard(r) {
@@ -11226,10 +11242,11 @@ async function msRun() {
           msUpd();
         });
         r.b = backSig(H, SIMC, r.sg);
+        r.ok = passFilters(r, H);
       }
     }
     await Promise.all(hws);
-    const keep = top.filter(r => r.m && r.m.avgR > 0).sort((a, b) => b.m.pT - a.m.pT);
+    const keep = top.filter(r => r.m && r.m.avgR > 0 && r.ok).sort((a, b) => b.m.pT - a.m.pT);
     MS.res = keep;
     MS.at = Date.now();
     msSave();
@@ -11241,7 +11258,7 @@ async function msRun() {
       hits.length +
       ' sinyal, ' +
       keep.length +
-      ' tanesi +R (artı beklentili)\n' +
+      ' tanesi +R ve seçili filtreleri geçti\n' +
       Object.entries(ST)
         .map(
           ([t, v]) =>
@@ -11283,6 +11300,13 @@ function msBind(el) {
     if (t.dataset && t.dataset.k) {
       const k = t.dataset.k,
         lim = SIM_LIMITS[k];
+      if (t.type === 'checkbox') {
+        SIMC[k] = t.checked ? 1 : 0;
+        try {
+          localStorage.setItem('portfoy_simc2', JSON.stringify(SIMC));
+        } catch (x) {}
+        return renderSim();
+      }
       if (t.value.trim() === '') return renderSim();
       let v = +t.value;
       if (lim) v = Math.min(lim[1], Math.max(lim[0], Math.round(v)));
