@@ -1763,7 +1763,6 @@ const _ls = (k, d) => {
 const today = () =>
   new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 
-const num = v => parseFloat(String(v ?? '').replace(',', '.'));
 
 const heldDays = d => Math.max(0, Math.floor((Date.now() - new Date(d + 'T00:00:00')) / 864e5));
 
@@ -2033,7 +2032,6 @@ let armed = null,
   editing = null,
   snaps = [],
   meta = {},
-  goals = {},
   rng = 180,
   repYear = null,
   pfq = '',
@@ -2281,14 +2279,12 @@ function apply(m) {
   prices = {};
   snaps = [];
   meta = {};
-  goals = {};
   Object.entries(m).forEach(([id, x]) => {
     if (!x) return;
     if (x.kind === 'trade') trades.push({ ...x, id });
     else if (x.kind === 'price' && x.price != null) prices[x.sym] = x;
     else if (x.kind === 'snap') snaps.push(x);
     else if (x.kind === 'meta') meta[x.sym] = x;
-    else if (x.kind === 'goal') goals[x.sym] = x;
   });
   snaps.sort((a, b) => a.date.localeCompare(b.date));
   if (RH > 0) {
@@ -3805,21 +3801,7 @@ function render() {
   } catch (e) {}
   $('alerts').innerHTML =
     bakWarn() +
-    cashWarn(all) +
-    open
-      .flatMap(s => {
-        const g = goals[s.sym],
-          p = s.p;
-        if (!g || p == null) return [];
-        const r = [];
-        if (g.target > 0 && p >= g.target)
-          r.push(`🎯 ${esc(s.sym)} hedef fiyata ulaştı (${fmt(p)} ≥ ${fmt(g.target)})`);
-        if (g.stop > 0 && p <= g.stop)
-          r.push(`🛑 ${esc(s.sym)} zarar-kes seviyesinde (${fmt(p)} ≤ ${fmt(g.stop)})`);
-        return r;
-      })
-      .map(t => `<div class="al">${t}</div>`)
-      .join('');
+    cashWarn(all);
 
   const openD = new Set(
       [...document.querySelectorAll('#pos .card[data-card] details[open]')].map(
@@ -3909,13 +3891,8 @@ function render() {
 
 function posCard(s, totVal) {
   const m = mk(s),
-    g = goals[s.sym],
     me = meta[s.sym] || {};
   const tg =
-    (g && s.p != null
-      ? (g.target > 0 && s.p >= g.target ? '<span class="tg up">🎯 Hedefte</span>' : '') +
-        (g.stop > 0 && s.p <= g.stop ? '<span class="tg dn">🛑 Zarar-kes</span>' : '')
-      : '') +
     (me.manual ? '<span class="tg">elle</span>' : '') +
     (HLT[s.sym] ? '<span class="tg dn" title="' + esc(HLT[s.sym][0].txt) + '">⚠ Veri</span>' : '');
   const main =
@@ -4338,75 +4315,6 @@ async function loadMkt(cfg) {
   }
 }
 
-function wiUpdate(box) {
-  const sym = box.dataset.box,
-    s = calc(trades)[sym];
-  if (!s) return;
-  const mode = box.querySelector('.wm').value,
-    q = num(box.querySelector('.wq').value),
-    p = num(box.querySelector('.wp').value),
-    o = box.querySelector('.wo'),
-    c = cs(s.cur),
-    pr = prices[sym] && prices[sym].price;
-  if (!(q > 0) || !(p > 0)) {
-    o.textContent = 'Adet ve fiyat gir';
-    return;
-  }
-  if (mode === 'buy') {
-    const nq = s.qty + q,
-      nc = s.cost + q * p,
-      na = nc / nq;
-    o.innerHTML =
-      `Yeni ort. maliyet <b>${fmt(na)} ${c}</b> (şimdi ${fmt(s.avg)})<br>Toplam ${qf(nq)} adet · maliyet ${fmt(nc)} ${c}` +
-      (pr ? `<br>Güncel fiyatla K/Z: ${pct((pr / na - 1) * 100)}` : '');
-  } else {
-    if (q > s.qty + 1e-9) {
-      o.textContent = 'Elinde sadece ' + qf(s.qty) + ' adet var';
-      return;
-    }
-    let r = q,
-      cost = 0;
-    for (const l of s.lots) {
-      if (r <= 1e-9) break;
-      const u = Math.min(r, l.q);
-      cost += u * l.p;
-      r -= u;
-    }
-    const k = q * p - cost;
-    o.innerHTML = `Satış tutarı ${fmt(q * p)} ${c}<br>Kâr/zarar (FIFO): <b class="${cls(k)}">${sg(k)} ${c} (${pct(cost ? (k / cost) * 100 : 0)})</b><br>Kalan ${qf(s.qty - q)} adet`;
-  }
-}
-
-async function saveGoal(box) {
-  const sym = box.dataset.box,
-    t = num(box.querySelector('.gt').value),
-    st = num(box.querySelector('.gs').value);
-  try {
-    if (t > 0 || st > 0)
-      await S.set('g_' + sym, { kind: 'goal', sym, target: t > 0 ? t : 0, stop: st > 0 ? st : 0 });
-    else if (goals[sym]) await S.del('g_' + sym);
-    msg('Hedef kaydedildi ✓');
-  } catch (e) {
-    msg('Kaydedilemedi', 1);
-  }
-}
-
-async function saveMeta(box) {
-  const sym = box.dataset.box;
-  try {
-    await S.set('m_' + sym, {
-      ...(meta[sym] || {}),
-      kind: 'meta',
-      sym,
-      market: box.querySelector('.mty').value,
-      manual: box.querySelector('.mman').checked
-    });
-    msg('Ayar kaydedildi ✓');
-  } catch (e) {
-    msg('Kaydedilemedi', 1);
-  }
-}
-
 async function saveYt(inp) {
   const card = inp.closest('.card[data-card]');
   if (!card) return;
@@ -4544,20 +4452,9 @@ $('pos').addEventListener(
   true
 );
 
-$('pos').addEventListener('input', e => {
-  const b = e.target.closest && e.target.closest('.wiBox');
-  if (b) wiUpdate(b);
-});
-
 $('pos').addEventListener('change', e => {
-  const t = e.target,
-    w = t.closest && t.closest('.wiBox'),
-    g = t.closest && t.closest('.goalBox'),
-    m = t.closest && t.closest('.metaBox');
+  const t = e.target;
   if (t.classList && t.classList.contains('yt')) return saveYt(t);
-  if (w) wiUpdate(w);
-  if (g) saveGoal(g);
-  if (m) saveMeta(m);
   const sb = t.closest && t.closest('.secBox');
   if (sb) saveSector(sb);
 });
@@ -5096,8 +4993,7 @@ function toJSON() {
       trades: trades.map(({ id, ...t }) => t),
       prices: Object.values(prices),
       snaps: snaps,
-      meta: Object.values(meta),
-      goals: Object.values(goals)
+      meta: Object.values(meta)
     },
     null,
     1
@@ -5255,8 +5151,6 @@ async function importText(txt) {
         await S.set('s_' + q.date, { ...q, kind: 'snap' });
     for (const q of ex.meta || [])
       if (q && q.sym && !meta[q.sym]) await S.set('m_' + q.sym, { ...q, kind: 'meta' });
-    for (const q of ex.goals || [])
-      if (q && q.sym && !goals[q.sym]) await S.set('g_' + q.sym, { ...q, kind: 'goal' });
   } catch (e) {
     return msg('Yükleme yarıda kaldı: ' + (e.message || e.code), 1);
   }
@@ -5870,6 +5764,150 @@ function taCalc(sym) {
   };
 }
 
+function momFlags(t) {
+  const ob = [],
+    os = [],
+    chk = (nm, v, hi, lo) => {
+      if (v == null) return;
+      if (v >= hi) ob.push(nm + ' ' + Math.round(v));
+      else if (v <= lo) os.push(nm + ' ' + Math.round(v));
+    };
+  chk('RSI', t.rsi.v, TA_CONF.rsiHi, TA_CONF.rsiLo);
+  if (t.st) chk('Stokastik', t.st.k, 80, 20);
+  if (t.mfi) chk('MFI', t.mfi.v, 80, 20);
+  if (t.cci) chk('CCI', t.cci.v, 100, -100);
+  if (t.wpr) chk('Williams %R', t.wpr.v, -20, -80);
+  return { ob, os };
+}
+
+function relStrength(sym, m) {
+  const key = m === 'BIST' ? 'XU100' : m === 'ABD' ? 'GSPC' : m === 'Avrupa' ? 'GDAXI' : null,
+    B = benchLoad(),
+    H = HIST[sym];
+  if (!key || !B[key] || !H || !H.c || H.c.length < 64) return null;
+  const n = H.c.length,
+    i0 = n - 64,
+    bc = B[key].c,
+    bt = B[key].t;
+  let j = bt.length - 1;
+  while (j > 0 && bt[j] > H.t[i0]) j--;
+  if (!(bc[j] > 0) || !(H.c[i0] > 0)) return null;
+  const sr = (H.c[n - 1] / H.c[i0] - 1) * 100,
+    br = (bc[bc.length - 1] / bc[j] - 1) * 100;
+  return { d: sr - br, sr, br, bn: BENCH[key].n };
+}
+
+function taVerdict(s, t) {
+  const p = s.p != null ? s.p : t.last,
+    ref = [t.s200, t.s50].filter(x => x != null),
+    base = ref.length ? ref : [t.s20].filter(x => x != null),
+    trend = !base.length
+      ? 'Yatay'
+      : base.every(x => p >= x)
+        ? 'Yukarı'
+        : base.every(x => p < x)
+          ? 'Aşağı'
+          : 'Yatay',
+    votes = [
+      t.macd && t.macd.h != null ? t.macd.h > 0 : null,
+      t.rsi.v != null ? t.rsi.v > 50 : null,
+      t.st ? t.st.k > 50 : null,
+      t.mfi ? t.mfi.v > 50 : null
+    ].filter(x => x !== null),
+    ratio = votes.length ? votes.filter(Boolean).length / votes.length : 0.5,
+    mom = ratio >= 0.67 ? 'Güçlü' : ratio <= 0.34 ? 'Zayıf' : 'Nötr',
+    atrp = t.atr > 0 && p > 0 ? (t.atr / p) * 100 : null,
+    risk =
+      t.vol != null
+        ? t.vol < 30
+          ? 'Düşük'
+          : t.vol < 50
+            ? 'Orta'
+            : 'Yüksek'
+        : atrp != null
+          ? atrp < 2.5
+            ? 'Düşük'
+            : atrp < 5
+              ? 'Orta'
+              : 'Yüksek'
+          : 'Orta',
+    mf = momFlags(t),
+    conflict = (trend === 'Yukarı' && mom === 'Zayıf') || (trend === 'Aşağı' && mom === 'Güçlü');
+  let tag, text;
+  if (conflict) {
+    tag = 'Çelişki';
+    text = 'Göstergeler çelişiyor (trend ' + trend.toLowerCase() + ', momentum ' + mom.toLowerCase() + '): net sinyal yok, bekle.';
+  } else if (mf.ob.length >= 2) {
+    tag = 'Aşırı alım';
+    text = 'Yükseliş sürüyor ama aşırı alım var: yeni alım için geri çekilme beklemek daha güvenli.';
+  } else if (mf.os.length >= 2) {
+    tag = 'Aşırı satım';
+    text = 'Satış baskısı tükeniyor olabilir; trend dönmeden alım için acele etme.';
+  } else if (trend === 'Yukarı' && mom === 'Güçlü') {
+    tag = 'Net yükseliş';
+    text = 'Net yükseliş: trend ve momentum aynı yönde.';
+  } else if (trend === 'Aşağı' && mom === 'Zayıf') {
+    tag = 'Net düşüş';
+    text = 'Net düşüş: alım için erken.';
+  } else {
+    tag = 'Belirsiz';
+    text = 'Yön belirsiz: net sinyal yok, kırılım bekle.';
+  }
+  const lv =
+    t.atr > 0
+      ? {
+          stop: p - SIMC.K * t.atr,
+          tgt: p + SIMC.R * SIMC.K * t.atr,
+          zone: t.s20 != null ? { lo: t.s20 - 0.5 * t.atr, hi: t.s20 + 0.5 * t.atr } : null,
+          res: t.sRes,
+          p
+        }
+      : null;
+  return { trend, mom, risk, tag, text, lv, rs: relStrength(s.sym, mk(s)) };
+}
+
+const TAK = {
+  Yukarı: 'g',
+  Aşağı: 'r',
+  Güçlü: 'g',
+  Zayıf: 'r',
+  Düşük: 'g',
+  Yüksek: 'r',
+  'Net yükseliş': 'g',
+  'Net düşüş': 'r',
+  'Aşırı alım': 'r',
+  'Aşırı satım': 'g'
+};
+
+function taVerdictHTML(s, t) {
+  const v = taVerdict(s, t),
+    c = cs(s.cur),
+    chip = (nm, l) => `<span class="kchip ${TAK[l] || ''}">${nm}: ${l}</span>`;
+  let lines = '';
+  if (v.lv) {
+    const z = v.lv.zone,
+      p = v.lv.p,
+      zt = !z
+        ? ''
+        : p > z.hi
+          ? `bölgenin %${fmt((p / z.hi - 1) * 100)} üstünde`
+          : p < z.lo
+            ? 'bölgenin altında'
+            : 'şu an bölgede';
+    lines += `<div class="sm" style="margin-top:6px">${z ? `Alım bölgesi ${fmt(z.lo)} – ${fmt(z.hi)} ${c} (${zt}) · ` : ''}Stop ${fmt(v.lv.stop)} ${c} · Hedef ${fmt(v.lv.tgt)} ${c}${v.lv.res ? ' · Direnç ' + fmt(v.lv.res) + ' ' + c : ''}</div>`;
+  }
+  if (v.rs)
+    lines += `<div class="sm">${esc(v.rs.bn)} ile kıyas (3 ay): hisse ${pct(v.rs.sr)}, endeks ${pct(v.rs.br)} → <b class="${cls(v.rs.d)}">${v.rs.d >= 0 ? 'endeksten güçlü' : 'endeksten zayıf'} (${pct(v.rs.d)})</b></div>`;
+  return `<div class="aib" style="margin-top:8px"><div class="chips-row" style="margin-top:0">${chip('Trend', v.trend)}${chip('Momentum', v.mom)}${chip('Risk', v.risk)}</div><div style="margin-top:6px"><b>${v.text}</b></div>${lines}<div class="mut sm" style="margin-top:4px">Seviyeler fiyat geçmişinden (ATR ve 20 günlük ortalama) hesaplanır, tahmin değildir.</div></div>`;
+}
+
+function taRow(s) {
+  const t = s.ta,
+    v = taVerdict(s, t),
+    col = l => (TAK[l] === 'g' ? 'up' : TAK[l] === 'r' ? 'dn' : 'mut');
+  return `<tr class="trow" data-hs="${esc(s.sym)}"><td><b>${esc(s.sym)}</b></td><td><b class="${cls(t.score - 50)}">${t.score}</b></td><td class="${col(v.trend)}">${v.trend}</td><td class="${col(v.mom)}">${v.mom}</td><td class="${col(v.risk)}">${v.risk}</td><td>${v.rs ? `<span class="${cls(v.rs.d)}">${pct(v.rs.d)}</span>` : '—'}</td><td class="${col(v.tag)}" style="white-space:normal;min-width:110px">${v.tag}</td></tr>`;
+}
+
 function scanSignals(openAll) {
   SIGS = [];
   if (!taOn) return;
@@ -5880,18 +5918,14 @@ function scanSignals(openAll) {
     macd_dn: 0,
     golden: 0,
     death: 0,
-    st_x_up: 0,
-    st_x_dn: 0,
-    cci_x_up: 0,
-    cci_x_dn: 0,
     rsi_hi: 1,
     rsi_lo: 1,
+    mom_ob: 1,
+    mom_os: 1,
     near52h: 1,
     volspike: 1,
     bb_up: 1,
     bb_lo: 1,
-    mfi_hi: 1,
-    mfi_lo: 1,
     don_up: 1,
     don_dn: 1,
     roc: 1,
@@ -5906,11 +5940,15 @@ function scanSignals(openAll) {
   openAll.forEach(s => {
     const t = s.ta || (taOn ? taCalc(s.sym) : null);
     if (!t) return;
-    const add = (k, sev, txt) => SIGS.push({ sym: s.sym, k, sev, txt });
+    const add = (k, sev, txt) => SIGS.push({ sym: s.sym, k, sev, txt }),
+      mf = momFlags(t);
+    if (mf.ob.length >= 2) add('mom_ob', 'dn', `Aşırı alım: ${mf.ob.join(', ')} aynı anda doyumda`);
+    else if (mf.os.length >= 2)
+      add('mom_os', 'up', `Aşırı satım: ${mf.os.join(', ')} aynı anda dipte`);
     if (t.rsi.v != null) {
-      if (t.rsi.v >= TA_CONF.rsiHi)
+      if (mf.ob.length < 2 && t.rsi.v >= TA_CONF.rsiHi)
         add('rsi_hi', 'dn', `RSI ${Math.round(t.rsi.v)} — aşırı alım (doyum) bölgesinde`);
-      else if (t.rsi.v <= TA_CONF.rsiLo)
+      else if (mf.os.length < 2 && t.rsi.v <= TA_CONF.rsiLo)
         add('rsi_lo', 'up', `RSI ${Math.round(t.rsi.v)} — aşırı satım bölgesinde`);
       if (t.rsi.p != null) {
         if (t.rsi.p < TA_CONF.rsiHi && t.rsi.v >= TA_CONF.rsiHi)
@@ -5957,18 +5995,6 @@ function scanSignals(openAll) {
           add('bb_lo', 'up', 'Bollinger alt bandının dışında — panik satışı olabilir');
       }
     }
-    if (t.st && t.st.d != null) {
-      if (t.st.p >= 80 && t.st.p >= t.st.pd && t.st.k < t.st.d)
-        add('st_x_dn', 'dn', 'Stokastik %80 üstünden aşağı kesti — doyum sinyali');
-      else if (t.st.p <= 20 && t.st.p <= t.st.pd && t.st.k > t.st.d)
-        add('st_x_up', 'up', 'Stokastik %20 altından yukarı kesti — toparlanma sinyali');
-    }
-    if (t.mfi && t.mfi.v != null) {
-      if (t.mfi.p < 80 && t.mfi.v >= 80)
-        add('mfi_hi', 'dn', `MFI ${Math.round(t.mfi.v)} — para girişi doyum seviyesinde`);
-      else if (t.mfi.p > 20 && t.mfi.v <= 20)
-        add('mfi_lo', 'up', `MFI ${Math.round(t.mfi.v)} — satış baskısı tükeniyor olabilir`);
-    }
     if (t.adx && t.adx.v >= 25) {
       if (t.adx.pdi > t.adx.mdi)
         add('adx_up', 'up', `ADX ${Math.round(t.adx.v)} — güçlü YÜKSELİŞ trendi (DI+ baskın)`);
@@ -5984,12 +6010,6 @@ function scanSignals(openAll) {
         if (p > t.ich.top) add('ich_up', 'up', 'Ichimoku bulutunun üzerinde — boğa yapısı');
         else if (p < t.ich.bot) add('ich_dn', 'dn', 'Ichimoku bulutunun altında — ayı yapısı');
       }
-    }
-    if (t.cci && t.cci.p != null) {
-      if (t.cci.p <= -100 && t.cci.v > -100)
-        add('cci_x_up', 'up', 'CCI −100’ü yukarı kesti — dip dönüşü');
-      else if (t.cci.p >= 100 && t.cci.v < 100)
-        add('cci_x_dn', 'dn', 'CCI +100’ü aşağı kesti — zirve dönüşü');
     }
     if (t.roc != null && Math.abs(t.roc) >= 12)
       add('roc', t.roc > 0 ? 'up' : 'dn', `10 günde %${fmt(Math.abs(t.roc))} — olağandışı hareket`);
@@ -6797,7 +6817,7 @@ function taDetailsHTML(s) {
         : 'normal';
   const mm2 = marketOf(s.sym, s.cur),
     tv = mm2 === 'BIST' ? 'BIST%3A' + encodeURIComponent(s.sym) : encodeURIComponent(s.sym);
-  return `<details style="margin-top:8px"><summary>📊 Teknik göstergeler</summary>
+  return `${taVerdictHTML(s, t)}<details style="margin-top:8px"><summary>📊 Teknik göstergeler</summary>
   <div class="spark">${sparkSVG(HIST[s.sym] && HIST[s.sym].c ? HIST[s.sym].c.slice(-90) : null)}<div class="mut sm" style="text-align:right;margin-top:2px">son 90 gün · <a href="https://tr.tradingview.com/chart/?symbol=${tv}" target="_blank" rel="noopener" style="color:var(--ac)">TradingView’de aç ↗</a></div></div>
   <table class="tat">
   ${kv('Teknik skor', `<b class="${cls(t.score - 50)} sk" style="background:var(--bg)">${t.score}</b> · ${scLab}`)}
@@ -6887,44 +6907,8 @@ function renderTa(open) {
   })()}</div>
   ${
     rows.length
-      ? `<div style="overflow-x:auto"><table><tr><th>Hisse</th><th>Skor</th><th>RSI</th><th>Stoch</th><th>MACD</th><th>ADX</th><th>MFI</th><th>SMA 20/50/200</th><th>52H</th><th>Hacim</th></tr>
-  ${rows
-    .map(s => {
-      const t = s.ta,
-        R = t.rsi.v,
-        md = t.macd;
-      const mdSt =
-        !md || md.h == null
-          ? '—'
-          : md.ph != null && md.ph <= 0 && md.h > 0
-            ? '<span class="up">⚡AL</span>'
-            : md.ph != null && md.ph >= 0 && md.h < 0
-              ? '<span class="dn">⚡SAT</span>'
-              : md.h > 0
-                ? '+'
-                : '−';
-      const stC =
-        t.st && t.st.k != null
-          ? `<span class="${t.st.k >= 80 ? 'dn' : t.st.k <= 20 ? 'up' : ''}">${Math.round(t.st.k)}</span>`
-          : '—';
-      const adxC = t.adx
-        ? `<span class="${t.adx.v >= 25 ? (t.adx.pdi > t.adx.mdi ? 'up' : 'dn') : 'mut'}">${Math.round(t.adx.v)}</span>`
-        : '—';
-      const mfiC = t.mfi
-        ? `<span class="${t.mfi.v >= 80 ? 'dn' : t.mfi.v <= 20 ? 'up' : ''}">${Math.round(t.mfi.v)}</span>`
-        : '—';
-      const ab = ['20', '50', '200']
-        .map((nm, i) => {
-          const sv = [t.s20, t.s50, t.s200][i];
-          return sv == null
-            ? '<span class="mut">·</span>'
-            : `<span class="${s.p != null ? (s.p >= sv ? 'up' : 'dn') : 'mut'}">${nm}</span>`;
-        })
-        .join(' ');
-      const h52 = t.dHi == null ? '—' : '%' + fmt(Math.abs(t.dHi));
-      return `<tr class="trow" data-hs="${esc(s.sym)}"><td><b>${esc(s.sym)}</b></td><td><b class="${cls(t.score - 50)}">${t.score}</b></td><td class="${R == null ? '' : R >= TA_CONF.rsiHi ? 'dn' : R <= TA_CONF.rsiLo ? 'up' : ''}">${R == null ? '—' : Math.round(R)}</td><td>${stC}</td><td>${mdSt}</td><td>${adxC}</td><td>${mfiC}</td><td>${ab}</td><td>${h52}</td><td>${t.vr == null ? '—' : '×' + t.vr.toFixed(1)}</td></tr>`;
-    })
-    .join('')}
+      ? `<div style="overflow-x:auto"><table><tr><th>Hisse</th><th>Skor</th><th>Trend</th><th>Momentum</th><th>Risk</th><th>Endekse göre</th><th>Sonuç</th></tr>
+  ${rows.map(taRow).join('')}
   </table></div>`
       : '<div class="mut sm" style="margin-top:8px">Geçmiş verisi henüz yok. “Güncel fiyatları çek” ilk indirmeyi yapar; sembol başına bir yıllık günlük kapanışlar indirilir (günde en fazla bir tazeleme).</div>'
   }</div>`;
@@ -6996,7 +6980,7 @@ $('tav').addEventListener('click', e => {
 });
 
 const HS_CONF = Object.assign(
-  { maxw: 15, vollo: 15, volhi: 45, cashlo: 5 },
+  { maxw: 15, vollo: 15, volhi: 45, cashlo: 5, sec: 40, cur: 85 },
   (() => {
     try {
       return JSON.parse(localStorage.getItem('portfoy_hsc') || '{}');
@@ -7577,6 +7561,46 @@ function srcHTML() {
   );
 }
 
+function concCalc() {
+  const rows = posRows(),
+    tot = rows.reduce((a, r) => a + r.val, 0);
+  if (!(tot > 0)) return null;
+  const sec = {},
+    cur = {};
+  for (const r of rows) {
+    const k = (meta[r.sym] && meta[r.sym].sec) || 'Belirtilmemiş',
+      c = r.m === 'Döviz' ? r.sym : r.cur;
+    sec[k] = (sec[k] || 0) + r.val;
+    cur[c] = (cur[c] || 0) + r.val;
+  }
+  const sh = o =>
+    Object.entries(o)
+      .map(([k, v]) => ({ k, p: (v / tot) * 100 }))
+      .sort((a, b) => b.p - a.p);
+  return { sec: sh(sec), cur: sh(cur) };
+}
+
+function concHTML() {
+  const c = concCalc();
+  if (!c) return '';
+  const CN = { TRY: 'TL', USD: 'Dolar', EUR: 'Euro' },
+    chips = arr => arr.slice(0, 6).map(x => `<span class="kchip">${esc(CN[x.k] || x.k)} %${Math.round(x.p)}</span>`).join(''),
+    w = [],
+    known = c.sec.filter(x => x.k !== 'Belirtilmemiş'),
+    nos = c.sec.find(x => x.k === 'Belirtilmemiş');
+  if (known[0] && known[0].p > HS_CONF.sec)
+    w.push(`${esc(known[0].k)} sektörü portföyün %${Math.round(known[0].p)}'i (sınır %${HS_CONF.sec}); sektörü etkileyen tek bir haber portföyü sarsabilir.`);
+  if (nos && nos.p > 50)
+    w.push(`Portföyün %${Math.round(nos.p)}'inde sektör girilmemiş; sektör bilgisini hisse kartından girersen bu uyarı doğru çalışır.`);
+  if (c.cur[0] && c.cur[0].p > HS_CONF.cur)
+    w.push(
+      c.cur[0].k === 'TRY'
+        ? `Portföyün %${Math.round(c.cur[0].p)}'i TL varlıklarda; kur ve enflasyon riskine karşı dolar/euro payın düşük.`
+        : `Portföyün %${Math.round(c.cur[0].p)}'i ${CN[c.cur[0].k] || c.cur[0].k} cinsinden; kur düşerse TL değerin birlikte düşer.`
+    );
+  return `<div class="card"><div class="row"><b>⚖️ Sektör ve Para Birimi Dağılımı</b><span class="mut sm">sınırlar %${HS_CONF.sec} / %${HS_CONF.cur}</span></div><div class="chips-row"><span class="mut sm">Sektör:</span>${chips(c.sec)}</div><div class="chips-row"><span class="mut sm">Para birimi:</span>${chips(c.cur)}</div>${anlzB(w.length ? w.join(' ') : 'Sektör ve para birimi dağılımı sınırların içinde.')}</div>`;
+}
+
 function renderRisk() {
   riskFetch();
   const h = healthCalc();
@@ -7589,6 +7613,7 @@ function renderRisk() {
    <div class="hs">${ring}<div style="flex:1;min-width:0">${hsBar('Çeşitlendirme', h.p1, 'etkin sayı ≈ ' + h.effN.toFixed(1))}${hsBar('Tek hisse yoğunluğu', h.p2, 'en büyük: ' + esc(h.los) + ' %' + Math.round(h.wmax) + ' · sınır %' + HS_CONF.maxw)}${hsBar('Oynaklık dengesi', h.p3, h.vol != null ? 'yıllık ≈ ±%' + Math.round(h.vol) : 'geçmiş gerekli')}${hsBar('Nakit tamponu', h.p4, 'nakit payı ≈ %' + Math.round(h.cw))}</div></div>
    ${anlzB(hA)}</div>`;
   }
+  out += concHTML();
   const k = riskCalc();
   out += `<div class="card"><div class="row"><b>🌧️ Risk Kartı</b><span class="mut sm">geçmiş verilere dayanmaktadır</span></div>`;
   if (!k)
@@ -10839,6 +10864,118 @@ function msCard(r) {
 <div class="mut sm" style="margin-top:4px">Sinyal: ${r.sg.length ? esc(r.sg.join(', ')) : 'yok'} · Stop ${fmt(m.stop)} · Hedef ${fmt(m.tgt)} · Ort. R ${sg(m.avgR)} · Vade sonu 5–95%: ${P(m.q5)} … ${P(m.q95)}</div></div></div>`;
 }
 
+const MSJ_KEY = 'portfoy_msj';
+
+let MSJ_BUSY = false;
+
+function msjLoad() {
+  try {
+    return JSON.parse(localStorage.getItem(MSJ_KEY) || '[]') || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function msjSave(a) {
+  try {
+    localStorage.setItem(MSJ_KEY, JSON.stringify(a.slice(-400)));
+  } catch (e) {}
+}
+
+function msjRecord(list) {
+  const a = msjLoad(),
+    day = today();
+  for (const r of list) {
+    if (a.some(x => x.s === r.s && x.d === day)) continue;
+    a.push({
+      s: r.s,
+      d: day,
+      t: Date.now(),
+      pr: r.pr,
+      stop: r.m.stop,
+      tgt: r.m.tgt,
+      h: SIMC.H,
+      sg: r.sg,
+      res: null
+    });
+  }
+  msjSave(a);
+}
+
+function msjResult(x, H) {
+  const c = H.c,
+    hi = H.h || c,
+    lo = H.l || c,
+    start = new Date(x.d + 'T00:00:00').getTime();
+  let i0 = H.t.findIndex(t => t >= start);
+  if (i0 < 0 || i0 + x.h >= c.length) return null;
+  let out = 'süre',
+    up = 0,
+    dn = 0;
+  for (let i = i0 + 1; i <= i0 + x.h; i++) {
+    up = Math.max(up, (hi[i] / x.pr - 1) * 100);
+    dn = Math.min(dn, (lo[i] / x.pr - 1) * 100);
+    if (out === 'süre') {
+      if (lo[i] <= x.stop) out = 'stop';
+      else if (hi[i] >= x.tgt) out = 'hedef';
+    }
+  }
+  return { ret: (c[i0 + x.h] / x.pr - 1) * 100, out, up, dn, at: Date.now() };
+}
+
+async function msjEval(force) {
+  if (MSJ_BUSY || !navigator.onLine) return;
+  if (!force && Date.now() - +_ls('portfoy_msj_at', 0) < 3 * 3600e3) return;
+  const a = msjLoad(),
+    due = a.filter(x => !x.res && Date.now() - x.t >= x.h * 864e5).slice(0, 30);
+  if (!due.length) return;
+  MSJ_BUSY = true;
+  let n = 0;
+  for (let i = 0; i < due.length; i += 3)
+    await Promise.all(
+      due.slice(i, i + 3).map(async x => {
+        try {
+          const H = await msHist(x.s),
+            r = H && msjResult(x, H);
+          if (r) {
+            x.res = r;
+            n++;
+          }
+        } catch (e) {}
+      })
+    );
+  msjSave(a);
+  _ss('portfoy_msj_at', String(Date.now()));
+  MSJ_BUSY = false;
+  if (n && $('smv') && $('smv').classList.contains('on')) renderSim();
+}
+
+function msjHTML() {
+  const a = msjLoad(),
+    done = a.filter(x => x.res).sort((x, y) => y.t - x.t),
+    pend = a.filter(x => !x.res);
+  let b = '';
+  if (done.length) {
+    const avg = done.reduce((q, x) => q + x.res.ret, 0) / done.length,
+      win = done.filter(x => x.res.ret > 0).length,
+      cnt = k => done.filter(x => x.res.out === k).length,
+      lab = { hedef: 'hedefe değdi', stop: 'stopa değdi', süre: 'süre doldu' };
+    b += `<div class="sm" style="margin-top:6px">${done.length} sinyal sonuçlandı · ortalama <b class="${cls(avg)}">${pct(avg)}</b> · %${Math.round((win / done.length) * 100)} kârda · hedef ${cnt('hedef')}, stop ${cnt('stop')}, süre ${cnt('süre')}</div>`;
+    b += done
+      .slice(0, 12)
+      .map(
+        x =>
+          `<div class="row sm" style="padding:3px 0"><span><b>${esc(x.s.replace(/\.IS$/, '').replace(/-USD$/, ''))}</b> ${esc(x.d)} · giriş ${fmt(x.pr)}</span><span><b class="${cls(x.res.ret)}">${pct(x.res.ret)}</b> <span class="mut">${lab[x.res.out]}</span></span></div>`
+      )
+      .join('');
+  }
+  if (pend.length)
+    b += `<div class="mut sm" style="margin-top:6px">${pend.length} sinyal vadesini bekliyor (en eskisi ${esc(pend[0].d)}, vade ${pend[0].h} gün).</div>`;
+  if (!a.length)
+    b = '<div class="mut sm" style="margin-top:6px">Taramada çıkan sinyaller burada saklanır. Vade günü dolunca “sinyali alsaydın ne olurdu” sonucu görünür.</div>';
+  return `<div class="card"><b>📒 Sinyal günlüğü</b>${b}<div class="mut sm" style="margin-top:6px">Giriş fiyatı taramadaki fiyattır; komisyon ve kayma dahil değil.</div></div>`;
+}
+
 function renderSim() {
   const el = $('smv');
   if (!el) return;
@@ -10871,7 +11008,7 @@ function renderSim() {
     });
   }
   mine.sort((a, b) => b.m.pT - a.m.pT);
-  let h = msHTML();
+  let h = msHTML() + msjHTML();
   h += mine.length
     ? `<div class="card"><b>📂 Elimdekiler</b><div class="mut sm">Aynı hesap, portföyündeki hisseler için (hedefe varma oranına göre).</div></div>` +
       mine.map(msCard).join('')
@@ -10884,6 +11021,7 @@ function renderSim() {
   }
   el.innerHTML = h;
   msBind(el);
+  msjEval();
 }
 
 const MS_BIST =
@@ -11248,6 +11386,7 @@ async function msRun() {
     await Promise.all(hws);
     const keep = top.filter(r => r.m && r.m.avgR > 0 && r.ok).sort((a, b) => b.m.pT - a.m.pT);
     MS.res = keep;
+  msjRecord(keep);
     MS.at = Date.now();
     msSave();
     MS.txt =
