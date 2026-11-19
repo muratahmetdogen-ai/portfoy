@@ -5859,7 +5859,7 @@ function taVerdict(s, t) {
           stop: p - SIMC.K * t.atr,
           tgt: p + SIMC.R * SIMC.K * t.atr,
           zone: t.s20 != null ? { lo: t.s20 - 0.5 * t.atr, hi: t.s20 + 0.5 * t.atr } : null,
-          res: t.sRes,
+          res: (() => { const q = srCalc(s.sym); return q && q.res != null ? q.res : null; })(),
           p
         }
       : null;
@@ -6851,10 +6851,8 @@ function taDetailsHTML(s) {
   ${kv('MFI (14)', t.mfi ? Math.round(t.mfi.v) + (t.mfi.v >= 80 ? ' <span class="dn">doyum</span>' : t.mfi.v <= 20 ? ' <span class="up">tükeniş</span>' : '') : '—')}
   ${t.vr != null ? kv('Hacim (son / 20g ort.)', '×' + t.vr.toFixed(1) + (t.vr >= TA_CONF.vol ? ' 💥 patlama' : '')) : ''}
   ${kv('OBV uyumu', obvSt)}
-  ${kv('Destek / Direnç (60g)', sl(t.sSup) + ' — ' + sl(t.sRes))}
   </table>
   ${srHTML(s)}
-  <div class="aib">🤖 <b>AI Analiz</b><div style="margin-top:4px">${aiCached(s, t)}</div></div>
   <div class="mut sm" style="margin-top:6px">${t.n} günlük geçmiş · ${dts(t.at)} indirildi${HIST[s.sym] && HIST[s.sym].adj ? ' · geçmiş seri fiyat ölçeğine uyarlandı (×' + HIST[s.sym].adj.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ')' : ''}${t.noHL ? ' · <b>kanal göstergeleri için “Analiz Verilerini Güncelle” önerilir</b>' : ''} · yatırım tavsiyesi değildir.</div></details>`;
 }
 
